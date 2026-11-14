@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Check, CircleCheck, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpen, Check, CircleCheck, GitBranch, Plus, Scale } from "lucide-react";
 import { AskBar } from "@/components/hub/ask-bar";
 import { ComponentIcon } from "@/components/hub/icons";
 import { reviewTone } from "@/components/hub/panels";
@@ -35,13 +35,13 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
   return (
     <div className="space-y-5">
       <nav aria-label="Breadcrumb" className="-mt-2 text-xs text-muted-foreground"><Link href={`${base}?tab=components`} className="hover:text-foreground">Components</Link> <span className="mx-1">›</span> <span className="text-foreground">{sub.name}</span></nav>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent"><ComponentIcon name={sub.name} className="h-5 w-5" /></span>
-          <div><h2 className="text-xl font-semibold tracking-tight">{sub.name}</h2><div className="mt-1 flex flex-wrap gap-1.5"><Badge tone={c.status.tone}>{c.status.label}</Badge><Badge tone={reviewTone(c.reviewState)}>{reviewStateLabel(c.reviewState)}</Badge></div></div></div>
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface px-5 py-5 sm:px-6">
+        <div className="flex min-w-0 items-center gap-4"><span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-accent/20 bg-accent-soft text-accent"><ComponentIcon name={sub.name} className="h-6 w-6" /></span>
+          <div className="min-w-0"><p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Component workspace</p><h2 className="mt-1 break-words text-2xl font-semibold tracking-tight">{sub.name}</h2><div className="mt-2 flex flex-wrap gap-1.5"><Badge tone={c.status.tone}>{c.status.label}</Badge><Badge tone={reviewTone(c.reviewState)}>{reviewStateLabel(c.reviewState)}</Badge></div></div></div>
         <div className="flex gap-2"><SubsystemActions subsystem={sub} redirectTo={`${base}?tab=components`} /></div>
       </div>
-      <div className="flex gap-1 border-b border-border" role="tablist">
-        {TABS.map(([k, label]) => <Link key={k} role="tab" aria-selected={tab === k} href={`${base}/components/${sid}?tab=${k}`} className={cn("-mb-px border-b-2 px-3.5 py-2.5 text-[13px] font-medium", tab === k ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>{label}</Link>)}
+      <div className="flex gap-1 overflow-x-auto border-b border-border" role="tablist" aria-label="Component sections">
+        {TABS.map(([k, label]) => <Link key={k} role="tab" aria-selected={tab === k} href={`${base}/components/${sid}?tab=${k}`} className={cn("-mb-px shrink-0 border-b-2 px-4 py-3 text-[13px] font-medium transition-colors", tab === k ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground")}>{label}</Link>)}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[210px_minmax(0,1fr)_330px]">
@@ -56,11 +56,17 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
         <section className="order-1 min-w-0 xl:order-2">
           {tab === "summary" && (
             <div className="space-y-4">
-              <Card>
-                <div className="p-5">
-                  <h3 className="text-[17px] font-semibold">Why this design?</h3>
+              <Card className="overflow-hidden border-border-strong">
+                <div className="bg-gradient-to-br from-accent-soft via-surface to-surface p-5 sm:p-6">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-accent">The design story</p>
+                  <h3 className="mt-2 text-xl font-semibold tracking-tight">Why this design?</h3>
                   <p className="mt-1.5 max-w-prose text-[13px] leading-relaxed text-muted-foreground">{sub.description || <span className="text-warning">No description recorded for this component.</span>}</p>
                   <p className="mt-2 text-[12px] text-muted-foreground">Everything below is built from recorded decisions, revisions and research. Nothing is inferred.</p>
+                </div>
+                <div className="grid grid-cols-3 divide-x divide-border border-t border-border">
+                  {[{ label: "Decisions", count: c.decisions.length, icon: Scale }, { label: "Sources", count: c.research.length, icon: BookOpen }, { label: "Revisions", count: c.revisions.length, icon: GitBranch }].map((item) => (
+                    <div key={item.label} className="flex items-center gap-2 px-3 py-3 sm:px-5"><item.icon className="h-4 w-4 shrink-0 text-accent" aria-hidden /><span className="text-xs text-muted-foreground"><strong className="mr-1 font-semibold text-foreground">{item.count}</strong>{item.label}</span></div>
+                  ))}
                 </div>
               </Card>
               {c.decisions.length === 0 ? (
@@ -69,8 +75,8 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
               ) : c.decisions.map((d) => {
                 const ev = b.evidence.filter((e) => e.decision_id === d.id);
                 return (
-                  <Link key={d.id} href={refHref(id, "decision", d.id)} className="group block rounded-lg border border-border bg-surface p-4 shadow-card transition-colors hover:border-border-strong">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[14px] font-semibold">{d.title}</p>
+                  <Link key={d.id} href={refHref(id, "decision", d.id)} className="group block rounded-xl border border-border bg-surface p-5 shadow-card transition-colors hover:border-accent/50">
+                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-accent">Design decision</p><p className="text-[15px] font-semibold">{d.title}</p>
                       <p className="mt-1 text-[13px] text-muted-foreground"><span className="text-foreground/90">Selected:</span> {clip(d.selected_solution, 200) || "—"}</p></div>
                       <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent" /></div>
                     <p className="mt-2 text-[13px] leading-relaxed">{d.reasoning.trim() ? clip(d.reasoning, 280) : <span className="inline-flex items-center gap-1.5 text-warning"><AlertTriangle className="h-3.5 w-3.5" />No reasoning recorded for this decision.</span>}</p>
