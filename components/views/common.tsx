@@ -51,12 +51,11 @@ export function SubsystemTag({ id, subsystems }: { id: string | null; subsystems
 export function TagList({ tags, onClick, active }: { tags: string[]; onClick?: (t: string) => void; active?: string }) {
   return (
     <>
-      {tags.map((t) => (
-        <button key={t} type="button" onClick={onClick ? (e) => { e.stopPropagation(); onClick(t); } : undefined}
-          className={cn("rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors", active === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-muted-foreground", onClick && "hover:border-border-strong")}>
-          #{t}
-        </button>
-      ))}
+      {tags.map((t) => {
+        const className = cn("inline-block rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors", active === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-muted-foreground", onClick && "hover:border-border-strong");
+        return onClick ? <button key={t} type="button" onClick={(e) => { e.stopPropagation(); onClick(t); }} className={className}>#{t}</button>
+          : <span key={t} className={className}>#{t}</span>;
+      })}
     </>
   );
 }
