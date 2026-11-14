@@ -35,6 +35,8 @@ If Supabase isn't configured the app redirects to a `/setup` page that says exac
 
 **Deploying to Vercel:** import the repo, set the same three environment variables, deploy. No other configuration is needed.
 
+The current team deployment, verified behavior, remaining checks, and secret-safe collaboration instructions are recorded in [`docs/DEPLOYMENT_STATUS.md`](docs/DEPLOYMENT_STATUS.md).
+
 ## Project hub (the main screen)
 
 Opening a project lands on its hub: persistent left navigation (Home, Research, Decisions, Reviews, Documentation), search (`Ctrl/⌘+K`, real queries over saved records), and three tabs.
