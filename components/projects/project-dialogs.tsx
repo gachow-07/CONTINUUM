@@ -1,13 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Archive, ArchiveRestore, FlaskConical, ImagePlus, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, FlaskConical, ImagePlus, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { ConfirmDialog } from "@/components/ui/misc";
 import { act, uploadToProject } from "@/lib/client";
-import { createProject, createSampleProject, deleteProject, updateProject } from "@/app/actions/projects";
+import { createProject, createSampleProject, updateProject } from "@/app/actions/projects";
 import type { Project } from "@/lib/types";
 
 const CATEGORIES = ["Mechanical", "Mechanical / Vehicle", "Aerospace", "Electrical", "Robotics", "Embedded / Software", "Civil / Structural", "Biomedical", "Research", "General"];
@@ -121,7 +121,6 @@ export function ProjectMenu({ project }: { project: Project }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
-  const [del, setDel] = useState(false);
   const [archive, setArchive] = useState(false);
   return (
     <div className="relative">
@@ -134,15 +133,12 @@ export function ProjectMenu({ project }: { project: Project }) {
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); if (project.archived) act(updateProject(project.id, { archived: false }), "Project restored").then(() => router.refresh()); else setArchive(true); }}>
               {project.archived ? <ArchiveRestore className="h-4 w-4 text-muted-foreground" /> : <Archive className="h-4 w-4 text-muted-foreground" />}{project.archived ? "Restore project" : "Archive project"}
             </button>
-            <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-danger hover:bg-danger-soft" onClick={() => { setOpen(false); setDel(true); }}><Trash2 className="h-4 w-4" />Delete project</button>
           </div>
         </>
       )}
       {edit && <ProjectFormDialog open={edit} onOpenChange={setEdit} project={project} />}
       <ConfirmDialog open={archive} onOpenChange={setArchive} title="Archive this project?" description="It will be hidden from your dashboard and lists but all knowledge is kept. You can restore it any time." confirmLabel="Archive"
         onConfirm={async () => { const r = await act(updateProject(project.id, { archived: true }), "Project archived"); if (r.ok) router.push("/projects"); }} />
-      <ConfirmDialog open={del} onOpenChange={setDel} title={`Delete “${project.name}”?`} description="This permanently deletes the project and all of its research, files, revisions, decisions, reviews and documents. This cannot be undone."
-        onConfirm={async () => { const r = await act(deleteProject(project.id), "Project deleted"); if (r.ok) { router.push("/projects"); router.refresh(); } }} />
     </div>
   );
 }

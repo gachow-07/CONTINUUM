@@ -17,7 +17,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 
 1. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
-   - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) then [`0002_model.sql`](supabase/migrations/0002_model.sql) and [`0003_markers.sql`](supabase/migrations/0003_markers.sql). The first creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies; the second adds the 3D model table and an atomic `replace_model` save function; the third adds the manually placed component markers.
+   - In the SQL editor, run the files in `supabase/migrations/` in numeric order. The initial migrations create the tables, RLS policies, triggers, private `project-files` storage bucket, 3D model persistence, and component markers. Later migrations harden production behavior. Migration `0005` disables user-facing project deletion; projects are archived and restored instead.
    - For quick demos, disable *Authentication → Providers → Email → Confirm email* (otherwise new users must click an email link first).
 2. **Environment** — copy `.env.example` to `.env.local`:
    ```bash
