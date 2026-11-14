@@ -84,6 +84,10 @@ Explore routes with the same sample content and compare readability, distinctive
 - **Logo and naming:** The team prefers the original third concept: three repeated, open, angled modular forms suggesting continuity and work carried forward. Preserve the shape of that original concept when developing or using the symbol; subsequent redrawn variations did not match the preferred original. The selected direction is provisional, not a finalized logo. Transparent raster exports have been prepared for presentations and app exploration; verify small-size legibility and develop faithful vector artwork before finalizing. The diamond in the Figma concepts is not the chosen logo. Names and wordmarks remain open; test pronunciation, meaning, distinctiveness, and practical availability before selection. No trademark or domain clearance has been performed.
 - **Imagery:** Prefer real project assemblies, component detail, and evidence relationships where permission and fidelity allow. Use illustrative sample data clearly labeled as such. The Figma 3D assembly is a placeholder, not a finished product asset.
 
+### Provisional logo files
+
+The selected original concept is available as transparent raster images: [white for dark backgrounds](brand-assets/original-symbol-white-transparent.png) and [dark for light backgrounds](brand-assets/original-symbol-dark-transparent.png). The [app icon package](brand-assets/continuum-app-icons.zip) contains both versions in 32, 48, 64, 128, 256, and 512 px sizes; individual files are in [app-icons](brand-assets/app-icons/). These are extracted and resized from the original image, not vector artwork. Background removal and resizing change pixels at the edges; test legibility in context.
+
 ## Application expression
 
 - **Project hub:** Make the assembly a meaningful entry point to project knowledge. Pair selections or markers with component names and accessible list navigation; a 3D view should not be the only way to find information.
