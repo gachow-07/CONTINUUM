@@ -96,11 +96,25 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
   } catch (e) { return fail(e); }
 }
 
-export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; content_text?: string }): Promise<ActionResult> {
+export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; content_text?: string; url?: string; site_name?: string; type?: "url" | "article" | "paper" }): Promise<ActionResult> {
   try {
     if (patch.title !== undefined && !patch.title.trim()) return fail("Title is required");
+    if (patch.title !== undefined && patch.title.trim().length > 300) return fail("Title is too long");
+    if (patch.description !== undefined && !z.string().max(4000).safeParse(patch.description).success) return fail("Description is too long");
     if (patch.content_text !== undefined && !z.string().max(200_000).safeParse(patch.content_text).success) return fail("Excerpt or notes are too long");
+    if (patch.site_name !== undefined && !z.string().max(200).safeParse(patch.site_name).success) return fail("Website name is too long");
+    if (patch.type !== undefined && !z.enum(["url", "article", "paper"]).safeParse(patch.type).success) return fail("Invalid source type");
+    if (patch.url !== undefined) {
+      try { if (!["http:", "https:"].includes(new URL(patch.url).protocol)) return fail("Enter a valid http or https URL"); }
+      catch { return fail("Enter a valid http or https URL"); }
+    }
     const c = await ctx();
+    const changingWebFields = patch.url !== undefined || patch.site_name !== undefined || patch.type !== undefined;
+    if (changingWebFields) {
+      const { data: source, error } = await c.supabase.from("research_sources").select("type,file_path").eq("id", id).maybeSingle();
+      if (error || !source) return fail("Could not find the research source.");
+      if (source.file_path || !["url", "article", "paper"].includes(source.type)) return fail("Only website sources can change their URL, website name, or source type.");
+    }
     if (patch.subsystem_id) {
       if (!uuid.safeParse(patch.subsystem_id).success) return fail("Invalid component");
       const { data: source, error: sourceError } = await c.supabase.from("research_sources").select("project_id").eq("id", id).maybeSingle();
@@ -109,7 +123,7 @@ export async function updateResearch(id: string, patch: { title?: string; subsys
       if (error) return fail("Could not verify the component. Please try again.");
       if (!component) return fail("The component must belong to this project.");
     }
-    const { error } = await c.supabase.from("research_sources").update({ ...patch, ...(patch.content_text !== undefined ? { ai_summary: null } : {}) }).eq("id", id);
+    const { error } = await c.supabase.from("research_sources").update({ ...patch, ...(patch.content_text !== undefined || patch.description !== undefined ? { ai_summary: null } : {}) }).eq("id", id);
     if (error) return fail(error.message);
     refresh();
     return { ok: true };
