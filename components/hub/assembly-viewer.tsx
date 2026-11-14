@@ -15,7 +15,7 @@ const Loading = () => <div className="flex h-full items-center justify-center ga
 
 export interface HubComponent {
   id: string; name: string; marker: Vec3 | null; done: number; total: number; statusLabel: string; statusTone: Tone;
-  latestDecision: { id: string; title: string } | null; reviewLabel: string; reviewTone: Tone; href: string;
+  latestDecision: { id: string; title: string; href?: string } | null; reviewLabel: string; reviewTone: Tone; href: string;
 }
 
 function ToolBtn({ on, onClick, children, label, disabled }: { on?: boolean; onClick: () => void; children: React.ReactNode; label: string; disabled?: boolean }) {
@@ -82,7 +82,7 @@ export function AssemblyViewer({ projectId, parts, components, revisionLabel, pl
             </div>
             <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-accent" style={{ width: `${(sel.done / sel.total) * 100}%` }} /></div>
             <p className="mt-2.5 text-[11px] text-muted-foreground">Latest documented decision</p>
-            <p className="text-[12px] leading-snug">{sel.latestDecision ? <Link href={`/projects/${projectId}/decisions?open=${sel.latestDecision.id}`} className="hover:text-accent hover:underline">{sel.latestDecision.title}</Link> : <span className="text-warning">None with recorded reasoning</span>}</p>
+            <p className="text-[12px] leading-snug">{sel.latestDecision ? <Link href={sel.latestDecision.href ?? `/projects/${projectId}/decisions?open=${sel.latestDecision.id}`} className="hover:text-accent hover:underline">{sel.latestDecision.title}</Link> : <span className="text-warning">None with recorded reasoning</span>}</p>
             <div className="mt-2 flex flex-wrap gap-1.5"><Badge tone={sel.reviewTone}>{sel.reviewLabel}</Badge><Badge tone={sel.statusTone}>{sel.statusLabel}</Badge></div>
             <Link href={sel.href} className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-accent text-[12px] font-semibold text-white hover:bg-accent/85">Open component <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
