@@ -18,6 +18,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 1. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
    - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) then [`0002_model.sql`](supabase/migrations/0002_model.sql) and [`0003_markers.sql`](supabase/migrations/0003_markers.sql). The first creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies; the second adds the 3D model table and an atomic `replace_model` save function; the third adds the manually placed component markers.
+   - Run [`0004_ai_rate_limits.sql`](supabase/migrations/0004_ai_rate_limits.sql) before enabling paid AI. It caps paid requests at 4 per user per minute, 20 per user per day, and 60 total per day across the deployment.
    - For quick demos, disable *Authentication → Providers → Email → Confirm email* (otherwise new users must click an email link first).
 2. **Environment** — copy `.env.example` to `.env.local`:
    ```bash
@@ -34,6 +35,8 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 If Supabase isn't configured the app redirects to a `/setup` page that says exactly what's missing. If only OpenAI is missing, everything else works and each AI feature shows a clear "not configured" message — nothing is faked.
 
 **Deploying to Vercel:** import the repo, set the same three environment variables, deploy. No other configuration is needed.
+
+**AI cost and prompt safety:** keep OpenAI project auto-recharge disabled (or configure a billing limit you are comfortable with) as the account-level backstop. The app also requires authentication and project access, enforces shared database request limits before contacting OpenAI, limits output tokens, redacts common credential formats from prompts, and treats project records and user text as untrusted data. The model is never given the repository, server environment, or API key. Do not store secrets inside project records.
 
 The current team deployment, verified behavior, remaining checks, and secret-safe collaboration instructions are recorded in [`docs/DEPLOYMENT_STATUS.md`](docs/DEPLOYMENT_STATUS.md).
 

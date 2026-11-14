@@ -6,10 +6,11 @@ import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { DOC_SCHEMA, DOC_SYSTEM, DOC_TYPES } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
 import type { DocSection } from "@/lib/types";
+import { claimAiRequest } from "@/lib/ai/guard";
 
 export const maxDuration = 120;
 
-const ids = z.array(z.string().uuid()).default([]);
+const ids = z.array(z.string().uuid()).max(200).default([]);
 const body = z.object({
   projectId: z.string().uuid(),
   docType: z.string(),
@@ -65,6 +66,7 @@ SOURCES:
 ${sources}`;
 
   try {
+    await claimAiRequest(supabase, "generate-doc");
     const out = await callJson<{ sections: { key: string; content: string; status: DocSection["status"]; sources: string[] }[] }>({
       system: DOC_SYSTEM, name: "project_document", schema: DOC_SCHEMA, messages: [{ role: "user", content: prompt }], temperature: 0.3,
     });
