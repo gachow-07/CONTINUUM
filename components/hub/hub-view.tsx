@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Layers } from "lucide-react";
 import { AddComponentButton } from "@/components/hub/add-component";
 import { AssemblyViewer, type HubComponent } from "@/components/hub/assembly-viewer";
+import { ProjectModel } from "@/components/hub/project-model";
 import { HubResearchPanel } from "@/components/hub/research-panel";
 import { ComponentIcon } from "@/components/hub/icons";
 import { LivingSummary, NeedsAttention, ReadinessPanel, reviewTone } from "@/components/hub/panels";
@@ -19,6 +20,7 @@ const TABS = [["overview", "Overview"], ["components", "Components"], ["history"
 
 export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string }) {
   const id = b.project.id;
+  const viewerModel = b.files.find((file) => file.id === b.project.viewer_model_file_id) ?? null;
   const comps = buildComponents(b);
   const hubComps: HubComponent[] = comps.map((c) => ({
     id: c.subsystem.id, name: c.subsystem.name, marker: c.subsystem.marker_position, done: c.done, total: c.total, statusLabel: c.status.label, statusTone: c.status.tone,
@@ -40,7 +42,8 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
       {tab === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />
+            <ProjectModel projectId={id} model={viewerModel} />
+            {!viewerModel && <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />}
             <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
           </div>
