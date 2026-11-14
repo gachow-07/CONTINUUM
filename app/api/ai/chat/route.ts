@@ -6,6 +6,7 @@ import { nothingRelevant, retrieve } from "@/lib/ai/retrieve";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { CHAT_SCHEMA, GAP_SENTENCE, GROUNDING_RULES } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
+import { claimAiRequest } from "@/lib/ai/guard";
 import type { AnswerSegment, Citation } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -29,7 +30,11 @@ export async function POST(req: Request) {
   let conversationId = parsed.data.conversationId ?? null;
   let history: { role: "user" | "assistant"; content: string }[] = [];
   if (conversationId) {
-    const { data } = await supabase.from("ai_messages").select("role,content").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(12);
+    const { data: conversation } = await supabase.from("ai_conversations").select("id")
+      .eq("id", conversationId).eq("project_id", projectId).eq("user_id", auth.user.id).maybeSingle();
+    if (!conversation) return Response.json({ error: "Conversation not found for this project." }, { status: 404 });
+    const { data } = await supabase.from("ai_messages").select("role,content")
+      .eq("conversation_id", conversationId).eq("project_id", projectId).order("created_at", { ascending: true }).limit(12);
     history = (data ?? []) as typeof history;
   }
 
@@ -50,6 +55,7 @@ export async function POST(req: Request) {
     const idx = new Map(hits.map((h, i) => [`S${i + 1}`, h.chunk]));
     const sources = hits.map((h, i) => `[S${i + 1}] (${h.chunk.type}) ${h.chunk.title}\n${h.chunk.text}`).join("\n\n---\n\n");
     try {
+      await claimAiRequest(supabase, "chat");
       const out = await callJson<{ segments: AnswerSegment[]; followups: string[] }>({
         system: GROUNDING_RULES,
         name: "project_answer",

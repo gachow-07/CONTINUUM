@@ -5,6 +5,7 @@ import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { DECISION_SCHEMA, DECISION_SYSTEM } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/utils";
+import { claimAiRequest } from "@/lib/ai/guard";
 
 export const maxDuration = 60;
 
@@ -13,7 +14,7 @@ const body = z.object({
   draft: z.object({
     title: z.string().max(300).default(""), subsystem: z.string().max(100).default(""), problem: z.string().max(6000).default(""),
     selected_solution: z.string().max(6000).default(""), reasoning: z.string().max(6000).default(""),
-    alternatives: z.array(z.object({ name: z.string(), reason_rejected: z.string() })).max(10).default([]),
+    alternatives: z.array(z.object({ name: z.string().max(300), reason_rejected: z.string().max(2000) })).max(10).default([]),
     free_text: z.string().max(8000).default(""),
   }),
 });
@@ -51,6 +52,7 @@ PROJECT RECORDS:
 ${recs.map((r, i) => `[S${i + 1}] ${r.line}`).join("\n") || "(none yet)"}`;
 
   try {
+    await claimAiRequest(supabase, "decision-assist");
     const out = await callJson<{
       organized: { problem: string; selected_solution: string; alternatives: { name: string; reason_rejected: string }[]; reasoning: string };
       missing: { field: string; question: string }[]; questions: string[]; summary: string; suggested_evidence: { source: string; why: string }[];
