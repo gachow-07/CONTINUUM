@@ -30,6 +30,7 @@ Create an account in the production app to use shared data. Gabe can then use th
 
 ## Not yet verified or configured
 
+- `supabase/migrations/0005_disable_project_deletion.sql` has not yet been applied to the shared Supabase project. Apply it before deploying this change so authenticated clients cannot delete projects directly; archiving remains available.
 - Teammate sign-up, project sharing, and simultaneous access from separate accounts.
 - The complete demo path: Suspension component -> reasoning -> linked source -> decision -> handoff.
 - Source URLs in the sample are placeholder `example.com` links and should be replaced with real sources before judging.

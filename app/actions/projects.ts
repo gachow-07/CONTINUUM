@@ -63,23 +63,6 @@ export async function updateProject(id: string, input: Partial<z.input<typeof pr
   }
 }
 
-export async function deleteProject(id: string): Promise<ActionResult> {
-  try {
-    const c = await ctx();
-    // Remove stored files first (the database cascade only removes rows).
-    const { data: files } = await c.supabase.from("files").select("storage_path").eq("project_id", id);
-    const paths = (files ?? []).map((f) => f.storage_path as string);
-    if (paths.length) await c.supabase.storage.from("project-files").remove(paths);
-    const { error, count } = await c.supabase.from("projects").delete({ count: "exact" }).eq("id", id);
-    if (error) return fail(error.message);
-    if (!count) return fail("Only the project owner can delete a project.");
-    refresh();
-    return { ok: true };
-  } catch (e) {
-    return fail(e);
-  }
-}
-
 export async function addMemberByEmail(projectId: string, email: string, role: "editor" | "viewer"): Promise<ActionResult> {
   try {
     const c = await ctx();
