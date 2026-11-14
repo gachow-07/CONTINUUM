@@ -12,6 +12,7 @@ import type { Part } from "@/lib/cad/types";
 import { attentionItems, buildComponents, reviewStateLabel } from "@/lib/readiness";
 import { scopeFromBundle } from "@/lib/scope";
 import { cn } from "@/lib/utils";
+import { modelPartEntries } from "@/lib/cad/part-markers";
 
 const TABS = [["overview", "Overview"], ["components", "Components"], ["history", "Design History"]] as const;
 
@@ -23,6 +24,11 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
     latestDecision: c.latestDecision ? { id: c.latestDecision.id, title: c.latestDecision.title } : null, reviewLabel: reviewStateLabel(c.reviewState), reviewTone: reviewTone(c.reviewState),
     href: `/projects/${id}/components/${c.subsystem.id}`,
   }));
+  const hubParts: HubComponent[] = placeholder ? [] : modelPartEntries(parts).map(({ part, name, marker }) => ({
+    id: `part-${part.id}`, partId: part.id, name, marker, done: 0, total: 0,
+    statusLabel: "Model part", statusTone: "neutral", reviewLabel: "Model part", reviewTone: "neutral",
+    latestDecision: null, href: `/projects/${id}/parts/${part.id}`,
+  }));
   const currentRev = [...b.revisions].filter((r) => ["initial", "design_change"].includes(r.kind)).sort((a, c) => c.occurred_on.localeCompare(a.occurred_on))[0];
   return (
     <div>
@@ -33,7 +39,7 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
       {tab === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <AssemblyViewer projectId={id} parts={parts} components={hubComps} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />
+            <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />
             <LivingSummary b={b} comps={comps} />
           </div>
           <div className="space-y-5">
