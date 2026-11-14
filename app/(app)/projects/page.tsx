@@ -5,6 +5,7 @@ import { CreateProjectButton, LoadSampleButton } from "@/components/projects/pro
 import { ProjectCard } from "@/components/projects/project-card";
 import { loadAll } from "@/lib/bundle";
 import { requireSession } from "@/lib/session";
+import { loadModel } from "@/lib/cad/load";
 
 export const metadata = { title: "My Projects" };
 
@@ -14,6 +15,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   const { supabase } = await requireSession();
   const s = await loadAll(supabase, true);
   const projects = s.projects.filter((p) => p.archived === showArchived);
+  const models = new Map(await Promise.all(projects.map(async (project) => [project.id, await loadModel(supabase, project.id)] as const)));
   return (
     <div className="animate-fade-in">
       <PageHeader title="My Projects" description="Each project is a workspace for its research, design history, decisions and reviews." actions={<CreateProjectButton />} />
@@ -26,7 +28,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         <EmptyState icon={<FolderKanban className="h-5 w-5" />} title={showArchived ? "No archived projects" : "No projects yet"} description={showArchived ? "Projects you archive appear here." : "Create a project or load the sample to explore the platform."}
           action={!showArchived && <div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{projects.map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{projects.map((p) => <ProjectCard key={p.id} project={p} scope={s} model={models.get(p.id)} />)}</div>
       )}
     </div>
   );
