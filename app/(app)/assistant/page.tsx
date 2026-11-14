@@ -16,7 +16,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
   const { data } = await supabase.from("projects").select("*").eq("archived", false).order("updated_at", { ascending: false });
   const projects = (data ?? []) as Project[];
   if (projects.length === 0) {
-    return <div><PageHeader title="AI Assistant" /><EmptyState icon={Sparkles} title="Create a project first" description="The assistant answers from a project's documented history, so it needs a project to read." action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} /></div>;
+    return <div><PageHeader title="AI Assistant" /><EmptyState icon={<Sparkles className="h-5 w-5" />} title="Create a project first" description="The assistant answers from a project's documented history, so it needs a project to read." action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} /></div>;
   }
   const current = projects.find((p) => p.id === project) ?? projects[0];
   const conv = await loadLatestConversation(supabase, current.id, user.id);

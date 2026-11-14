@@ -35,7 +35,7 @@ export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; p
         <Button variant="accent" onClick={() => setAdding(true)} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Request review</Button>
       </div>
       {rows.length === 0 ? (
-        <EmptyState icon={ClipboardCheck} title={scope.reviews.length ? "No reviews match your filters" : "No reviews yet"} description="Ask a teammate to review a decision or a revision. Comments, questions and their resolutions stay on the record."
+        <EmptyState icon={<ClipboardCheck className="h-5 w-5" />} title={scope.reviews.length ? "No reviews match your filters" : "No reviews yet"} description="Ask a teammate to review a decision or a revision. Comments, questions and their resolutions stay on the record."
           action={!scope.reviews.length && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Request a review</Button>} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">

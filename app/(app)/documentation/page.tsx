@@ -13,7 +13,7 @@ export default async function Page() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Documentation" description="Turn accumulated project knowledge into summaries, reports, handoffs and portfolio write-ups." />
-      {scope.projects.length === 0 ? <EmptyState icon={FileText} title="No projects to document" description="Create a project or load the sample to generate documentation." action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} /> : <DocsView scope={scope} aiEnabled={openaiConfigured()} />}
+      {scope.projects.length === 0 ? <EmptyState icon={<FileText className="h-5 w-5" />} title="No projects to document" description="Create a project or load the sample to generate documentation." action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} /> : <DocsView scope={scope} aiEnabled={openaiConfigured()} />}
     </div>
   );
 }

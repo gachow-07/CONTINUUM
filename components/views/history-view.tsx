@@ -44,7 +44,7 @@ export function HistoryView({ scope, projectId, subsystemId }: { scope: Scope; p
       </div>
 
       {entries.length === 0 ? (
-        <EmptyState icon={GitCompareIcon} title="No design history yet" description="Upload a CAD screenshot, calculation or simulation result and explain what changed and why. The timeline builds itself from there."
+        <EmptyState icon={<GitCompareIcon className="h-5 w-5" />} title="No design history yet" description="Upload a CAD screenshot, calculation or simulation result and explain what changed and why. The timeline builds itself from there."
           action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Record the first revision</Button>} />
       ) : (
         <ol className="relative ml-3 border-l-2 border-border pl-7">

@@ -33,7 +33,7 @@ export function FilesView({ scope, projectId, subsystemId }: { scope: Scope; pro
         <Button variant="accent" onClick={() => setAdding(true)}><FileUp className="h-4 w-4" />Upload files</Button>
       </div>
       {rows.length === 0 ? (
-        <EmptyState icon={FolderOpen} title={scope.files.some((f) => f.project_id === projectId) ? "No files match your filters" : "No files uploaded yet"} description="Upload CAD screenshots, calculations, FEA/CFD results and documents. Files are private to this project's team."
+        <EmptyState icon={<FolderOpen className="h-5 w-5" />} title={scope.files.some((f) => f.project_id === projectId) ? "No files match your filters" : "No files uploaded yet"} description="Upload CAD screenshots, calculations, FEA/CFD results and documents. Files are private to this project's team."
           action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Upload files</Button>} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -23,7 +23,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         ))}
       </div>
       {projects.length === 0 ? (
-        <EmptyState icon={FolderKanban} title={showArchived ? "No archived projects" : "No projects yet"} description={showArchived ? "Projects you archive appear here." : "Create a project or load the sample to explore the platform."}
+        <EmptyState icon={<FolderKanban className="h-5 w-5" />} title={showArchived ? "No archived projects" : "No projects yet"} description={showArchived ? "Projects you archive appear here." : "Create a project or load the sample to explore the platform."}
           action={!showArchived && <div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{projects.map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>
