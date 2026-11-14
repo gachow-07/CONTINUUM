@@ -1,7 +1,7 @@
 "use client";
 import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Edges, Environment, GizmoHelper, GizmoViewcube, Grid, Html, Lightformer, OrbitControls, TransformControls } from "@react-three/drei";
+import { ContactShadows, Edges, Environment, GizmoHelper, GizmoViewcube, Grid, Lightformer, OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { descendantIds } from "@/lib/cad/ops";
 import type { DisplayMode, Part, Tool, Vec3, ViewPreset } from "@/lib/cad/types";
@@ -28,18 +28,48 @@ interface Props {
 }
 
 export default function Viewport(props: Props) {
+  const markerLayer = useRef<HTMLDivElement>(null);
   return (
     <ViewportBoundary>
+      <div className="relative h-full w-full">
       <Canvas shadows dpr={[1, 2]} camera={{ fov: 35, near: 1, far: 20000, position: [600, 420, 600] }} gl={{ antialias: true, alpha: true }}
         onCreated={props.onReady} onPointerMissed={(e) => { if (e.button === 0) props.onSelect(null); }}>
-        <Scene {...props} />
+        <Scene {...props} markerLayer={markerLayer} />
       </Canvas>
+      <div ref={markerLayer} className="pointer-events-none absolute inset-0 overflow-hidden">
+        {props.markers?.map((m) => (
+          <button key={m.id} data-marker-id={m.id} type="button" onClick={() => props.onMarker?.(m.id)} aria-pressed={m.active} aria-label={`${m.name}: ${m.summary}. Select component`}
+            className="group pointer-events-auto absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full outline-none" style={{ visibility: "hidden" }}>
+            <span className={`absolute inset-0 rounded-full border-2 transition-all ${m.active ? "scale-110 border-[#3d8bff] bg-[#3d8bff]/25" : "border-[#3d8bff]/70 bg-[#0b0f16]/55 group-hover:border-[#3d8bff] group-focus-visible:border-[#3d8bff]"}`} />
+            <span className={`relative h-2.5 w-2.5 rounded-full ${m.active ? "bg-white" : "bg-[#3d8bff]"}`} />
+            <span className="absolute inset-[-3px] rounded-full ring-2 ring-white/0 group-focus-visible:ring-white/90" />
+            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2b3649] bg-[#090c12]/95 px-2 py-1 text-[11px] font-medium text-[#e4e9f2] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{m.name}</span>
+          </button>
+        ))}
+      </div>
+      </div>
     </ViewportBoundary>
   );
 }
 
-function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows, viewRequest, onTransform, pickable = true, highlightIds, leftMouse = "rotate", showGizmo = true, markers, showMarkers = true, onMarker }: Props) {
+function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows, viewRequest, onTransform, pickable = true, highlightIds, leftMouse = "rotate", showGizmo = true, markers, showMarkers = true, markerLayer }: Props & { markerLayer: React.RefObject<HTMLDivElement | null> }) {
   const modelRef = useRef<THREE.Group>(null);
+  const { camera, size } = useThree();
+  const raycaster = useMemo(() => new THREE.Raycaster(), []);
+  useFrame(() => {
+    if (!markerLayer.current || !modelRef.current) return;
+    for (const marker of markers ?? []) {
+      const button = Array.from(markerLayer.current.children).find((el) => (el as HTMLElement).dataset.markerId === marker.id) as HTMLElement | undefined;
+      if (!button) continue;
+      const point = new THREE.Vector3(...marker.position);
+      const projected = point.clone().project(camera);
+      raycaster.setFromCamera(new THREE.Vector2(projected.x, projected.y), camera);
+      const intersection = raycaster.intersectObject(modelRef.current, true)[0];
+      const hidden = !showMarkers || projected.z < -1 || projected.z > 1 || (intersection && intersection.distance < camera.position.distanceTo(point));
+      button.style.visibility = hidden ? "hidden" : "visible";
+      button.style.transform = `translate(${(projected.x * 0.5 + 0.5) * size.width - 14}px, ${(-projected.y * 0.5 + 0.5) * size.height - 14}px)`;
+    }
+  });
   const [hover, setHover] = useState<string | null>(null);
   const selectedSet = useMemo(() => highlightIds ?? (selectedId ? descendantIds(parts, selectedId) : new Set<string>()), [parts, selectedId, highlightIds]);
   const byParent = useMemo(() => {
@@ -108,18 +138,6 @@ function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows,
 
       <OrbitControls makeDefault enableDamping dampingFactor={0.12} minDistance={25} maxDistance={4000} zoomToCursor
         mouseButtons={{ LEFT: leftMouse === "pan" ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: leftMouse === "pan" ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN }} />
-      {showMarkers && markers?.map((m) => (
-        // Markers live at fixed model-space positions, so they follow the model as the camera moves. `occlude` hides them behind geometry.
-        <Html key={m.id} position={m.position} center zIndexRange={[30, 0]} occlude={[modelRef as React.RefObject<THREE.Object3D>]} style={{ transition: "opacity .2s", pointerEvents: "none" }}>
-          <button type="button" onClick={(e) => { e.stopPropagation(); onMarker?.(m.id); }} onPointerDown={(e) => e.stopPropagation()} aria-pressed={m.active} aria-label={`${m.name}: ${m.summary}. Select component`}
-            className="group relative flex h-7 w-7 items-center justify-center rounded-full outline-none" style={{ pointerEvents: "auto" }}>
-            <span className={`absolute inset-0 rounded-full border-2 transition-all ${m.active ? "scale-110 border-[#3d8bff] bg-[#3d8bff]/25" : "border-[#3d8bff]/70 bg-[#0b0f16]/55 group-hover:border-[#3d8bff] group-focus-visible:border-[#3d8bff]"}`} />
-            <span className={`relative h-2.5 w-2.5 rounded-full ${m.active ? "bg-white" : "bg-[#3d8bff]"}`} />
-            <span className="absolute inset-[-3px] rounded-full ring-2 ring-white/0 group-focus-visible:ring-white/90" />
-            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2b3649] bg-[#090c12]/95 px-2 py-1 text-[11px] font-medium text-[#e4e9f2] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{m.name}</span>
-          </button>
-        </Html>
-      ))}
       <CameraRig request={viewRequest} modelRef={modelRef} />
       {showGizmo && (
         <GizmoHelper alignment="bottom-right" margin={[76, 76]}>
