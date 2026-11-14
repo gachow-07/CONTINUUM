@@ -40,8 +40,8 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
       {tab === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <HubResearchPanel bundle={b} />
             <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />
+            <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
           </div>
           <div className="space-y-5">
