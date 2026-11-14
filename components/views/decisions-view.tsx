@@ -40,7 +40,7 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon={Scale} title={scope.decisions.length ? "No decisions match your filters" : "No design decisions yet"}
+        <EmptyState icon={<Scale className="h-5 w-5" />} title={scope.decisions.length ? "No decisions match your filters" : "No design decisions yet"}
           description={scope.decisions.length ? "Try clearing a filter." : "Record what you decided, what you rejected, and why — with the research and revisions that back it up."}
           action={!scope.decisions.length && <Button variant="accent" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />Add decision</Button>} />
       ) : (

@@ -59,7 +59,7 @@ export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { sco
       )}
 
       {rows.length === 0 ? (
-        <EmptyState icon={BookOpen} title={scope.research.length ? "No research matches your filters" : "No research saved yet"}
+        <EmptyState icon={<BookOpen className="h-5 w-5" />} title={scope.research.length ? "No research matches your filters" : "No research saved yet"}
           description={scope.research.length ? "Try clearing a filter or searching for something else." : "Save links, PDFs and notes — with why they matter — so the reasoning behind your design never gets lost."}
           action={scope.research.length === 0 && scope.projects.length > 0 && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add research</Button>} />
       ) : (

@@ -59,7 +59,7 @@ export function SubsystemsView({ scope, projectId }: { scope: Scope; projectId: 
         <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />New subsystem</Button>
       </div>
       {subs.length === 0 ? (
-        <EmptyState icon={Layers} title="No subsystems yet" description="Break the project into parts — for an RC car: Suspension, Steering, Chassis, Drivetrain." action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Create subsystem</Button>} />
+        <EmptyState icon={<Layers className="h-5 w-5" />} title="No subsystems yet" description="Break the project into parts — for an RC car: Suspension, Steering, Chassis, Drivetrain." action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Create subsystem</Button>} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {subs.map((s) => {

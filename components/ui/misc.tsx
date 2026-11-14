@@ -5,12 +5,12 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "./button";
 import { Dialog, DialogContent } from "./dialog";
 
-export function EmptyState({ icon: Icon, title, description, action }: {
-  icon: React.ComponentType<{ className?: string }>; title: string; description?: string; action?: React.ReactNode;
+export function EmptyState({ icon, title, description, action }: {
+  icon: React.ReactNode; title: string; description?: string; action?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-strong bg-surface/60 px-6 py-12 text-center">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground"><Icon className="h-5 w-5" /></div>
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">{icon}</div>
       <h3 className="text-sm font-semibold">{title}</h3>
       {description && <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">{description}</p>}
       {action && <div className="mt-4">{action}</div>}

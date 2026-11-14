@@ -102,7 +102,7 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
 
       <section>
         <h2 className="mb-3 text-sm font-semibold">Saved documents</h2>
-        {saved.length === 0 ? <EmptyState icon={FileText} title="No saved documents" description="Generate a document above and save it to the project." /> : (
+        {saved.length === 0 ? <EmptyState icon={<FileText className="h-5 w-5" />} title="No saved documents" description="Generate a document above and save it to the project." /> : (
           <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card"><ul className="divide-y divide-border">{saved.map((d) => (
             <li key={d.id} className="flex items-center gap-3 px-5 py-3.5">
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
