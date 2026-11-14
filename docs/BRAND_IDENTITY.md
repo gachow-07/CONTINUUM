@@ -88,7 +88,7 @@ Deloitte Engineering: typography is the selected reference. Its green graphic an
 
 Editable concepts: https://www.figma.com/design/Ti5JKelG61EeFJHxsX17jr
 
-The project hub, component workspace, research, decisions, reviews, and documentation use illustrative RC car content. The hub’s 3D assembly is a placeholder. Screens are static mockups, not yet a clickable prototype or a working app.
+The application home, project hub, component workspace, research, decisions, reviews, documentation, and handoff screens use illustrative RC car content. The hub’s 3D assembly is a placeholder. Screens are static mockups, not yet a clickable prototype or a working app.
 
 ## Decisions for the team
 
