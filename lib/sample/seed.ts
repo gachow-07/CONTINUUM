@@ -30,7 +30,7 @@ export async function buildSampleProject(supabase: SupabaseClient, user: { id: s
   const [project] = await ins(supabase, "projects", {
     owner_id: user.id, org_id: user.orgId, name: "RC Car Design", category: "Mechanical / Vehicle", status: "active", is_sample: true,
     description:
-      "A student team's 1/10-scale 4WD off-road RC buggy, built over one semester. Sample project: it demonstrates how Project Memory preserves research, design revisions, decisions and reviews so the next team can pick up where this one stopped.",
+      "A student team's 1/10-scale 4WD off-road RC buggy, built over one semester. Sample project: it demonstrates how CONTINUUM preserves research, design revisions, decisions and reviews so the next team can pick up where this one stopped.",
   });
   const pid = project.id;
 

@@ -108,7 +108,7 @@ function FileDrawer({ f, scope, onClose }: { f: FileRow; scope: Scope; onClose: 
       {rev && <Section title="Part of revision"><RefChip projectId={f.project_id} type="revision" id={rev.id} label={`${rev.rev_label} — ${rev.title}`} onNavigate={onClose} /></Section>}
       {decisions.length > 0 && <Section title="Evidence for decisions"><ul className="space-y-1.5">{decisions.map((d) => d && <li key={d.id}><RefChip projectId={f.project_id} type="decision" id={d.id} label={d.title} onNavigate={onClose} /></li>)}</ul></Section>}
       {f.extracted_text ? <Section title="Extracted text"><p className="max-h-60 overflow-y-auto whitespace-pre-wrap rounded-md bg-muted/60 p-3 text-xs">{f.extracted_text.slice(0, 4000)}</p></Section>
-        : <p className="text-[11px] text-muted-foreground">No text was extracted. Project Memory stores images, CAD and simulation files but does not analyse their contents — add a description so the AI assistant and teammates know what this file shows.</p>}
+        : <p className="text-[11px] text-muted-foreground">No text was extracted. CONTINUUM stores images, CAD and simulation files but does not analyse their contents — add a description so the AI assistant and teammates know what this file shows.</p>}
       <ConfirmDialog open={del} onOpenChange={setDel} title="Delete this file?" description="The stored file is permanently removed, and any decision evidence links to it are dropped." onConfirm={async () => { const r = await act(deleteFile(f.id), "File deleted"); if (r.ok) { onClose(); router.refresh(); } }} />
     </DrawerContent>
   );

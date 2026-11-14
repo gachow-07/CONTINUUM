@@ -50,7 +50,7 @@ export default async function Dashboard() {
       <section aria-label="Active projects">
         <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold">Active projects</h2><Link href="/projects" className="text-xs font-medium text-accent hover:underline">View all</Link></div>
         {s.projects.length === 0 ? (
-          <EmptyState icon={<FolderKanban className="h-5 w-5" />} title="Create your first project" description="Start a project workspace, or explore a prepopulated example to see how Project Memory captures what was built and why."
+          <EmptyState icon={<FolderKanban className="h-5 w-5" />} title="Create your first project" description="Start a project workspace, or explore a prepopulated example to see how CONTINUUM captures what was built and why."
             action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{s.projects.slice(0, 6).map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>

@@ -105,7 +105,7 @@ function RevisionDrawer({ r, scope, onClose }: { r: Revision; scope: Scope; onCl
               <a href={fileUrl(f.storage_path)} target="_blank" rel="noopener noreferrer" className="block aspect-[16/10] overflow-hidden bg-muted"><FileThumb file={f} /></a>
               <div className="p-2.5"><p className="truncate text-xs font-medium">{f.name}</p><p className="text-[11px] capitalize text-muted-foreground">{f.category.replace("_", " ")}</p>{f.description && <p className="mt-1 text-[11px] text-muted-foreground">{f.description}</p>}</div>
             </div>))}</div>)}
-        <p className="mt-2 text-[11px] text-muted-foreground">Project Memory stores these files; it does not analyse CAD geometry or simulation results.</p>
+        <p className="mt-2 text-[11px] text-muted-foreground">CONTINUUM stores these files; it does not analyse CAD geometry or simulation results.</p>
       </Section>
       {decisions.length > 0 && <Section title="Used as evidence in decisions"><ul className="space-y-1.5">{decisions.map((d) => d && <li key={d.id}><RefChip projectId={r.project_id} type="decision" id={d.id} label={d.title} onNavigate={onClose} /></li>)}</ul></Section>}
       {reviews.length > 0 && <Section title="Peer reviews"><ul className="space-y-1.5">{reviews.map((rv) => <li key={rv.id} className="flex items-center gap-1.5"><ClipboardCheck className="h-3.5 w-3.5 text-muted-foreground" /><RefChip projectId={r.project_id} type="review" id={rv.id} label={rv.title} onNavigate={onClose} /></li>)}</ul></Section>}
