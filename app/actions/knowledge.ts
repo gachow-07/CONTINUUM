@@ -161,6 +161,28 @@ export async function createFileRecords(projectId: string, subsystemId: string |
   } catch (e) { return fail(e); }
 }
 
+/** Link an existing project file to a decision without replacing its other evidence. */
+export async function linkFileToDecision(projectId: string, decisionId: string, fileId: string): Promise<ActionResult> {
+  try {
+    if (![projectId, decisionId, fileId].every((id) => uuid.safeParse(id).success)) return fail("Invalid project, decision, or file");
+    const c = await ctx();
+    const [decision, file] = await Promise.all([
+      c.supabase.from("design_decisions").select("id").eq("id", decisionId).eq("project_id", projectId).maybeSingle(),
+      c.supabase.from("files").select("id").eq("id", fileId).eq("project_id", projectId).maybeSingle(),
+    ]);
+    if (decision.error || file.error) return fail("Could not verify the decision and file. Please try again.");
+    if (!decision.data || !file.data) return fail("The decision and file must belong to this project.");
+    const { data: existing, error: lookupError } = await c.supabase.from("decision_evidence").select("id").eq("decision_id", decisionId).eq("file_id", fileId).limit(1);
+    if (lookupError) return fail(lookupError.message);
+    if (existing?.length) return { ok: true };
+    const { error } = await c.supabase.from("decision_evidence").insert({ project_id: projectId, decision_id: decisionId, kind: "file", file_id: fileId, note: "" });
+    if (error) return fail(error.message);
+    await logActivity(c, projectId, "decision", "Linked a file to a design decision", "decision", decisionId);
+    refresh();
+    return { ok: true };
+  } catch (e) { return fail(e); }
+}
+
 export async function updateFile(id: string, patch: { description?: string; subsystem_id?: string | null; category?: string }): Promise<ActionResult> {
   try {
     const c = await ctx();
