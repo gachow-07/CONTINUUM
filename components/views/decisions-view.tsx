@@ -23,10 +23,11 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
   const [project, setProject] = useState(projectId ?? "");
   const [sub, setSub] = useState(subsystemId ?? "");
   const [status, setStatus] = useState("");
+  const [view, setView] = useState<"decisions" | "tradeoffs">("decisions");
 
   const rows = scope.decisions.filter((d) =>
     (!project || d.project_id === project) && (!sub || d.subsystem_id === sub) && (!status || d.status === status) &&
-    (!q || `${d.title} ${d.problem} ${d.selected_solution}`.toLowerCase().includes(q.toLowerCase())));
+    (!q || `${d.title} ${d.problem} ${d.selected_solution} ${d.alternatives.map((a) => `${a.name} ${a.reason_rejected}`).join(" ")}`.toLowerCase().includes(q.toLowerCase())));
   const selected = scope.decisions.find((d) => d.id === open) ?? null;
 
   return (
@@ -39,10 +40,33 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
         <Button variant="accent" onClick={() => setEditing("new")} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add decision</Button>
       </div>
 
+      <div className="mb-4 flex gap-1 border-b border-border" role="group" aria-label="Decision views">
+        {([ ["decisions", "Decisions"], ["tradeoffs", "Tradeoffs"] ] as const).map(([value, label]) => (
+          <button key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)} className={`-mb-px border-b-2 px-4 py-2.5 text-[13px] font-medium ${view === value ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{label}</button>
+        ))}
+      </div>
+
       {rows.length === 0 ? (
         <EmptyState icon={<Scale className="h-5 w-5" />} title={scope.decisions.length ? "No decisions match your filters" : "No design decisions yet"}
           description={scope.decisions.length ? "Try clearing a filter." : "Record what you decided, what you rejected, and why — with the research and revisions that back it up."}
           action={!scope.decisions.length && <Button variant="accent" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />Add decision</Button>} />
+      ) : view === "tradeoffs" ? (
+        <div className="space-y-4">
+          <p className="text-[13px] text-muted-foreground">Compare the recorded selection and alternatives for each decision. Missing details are shown as undocumented.</p>
+          {rows.map((d) => (
+            <section key={d.id} className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
+                <div><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold">{d.title}</h3><Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge>{d.is_sample && <SampleBadge />}</div>
+                  <p className="mt-1 text-[13px] text-muted-foreground">{d.problem || "No problem or design question documented."}</p></div>
+                <button type="button" onClick={() => setOpen(d.id)} className="text-xs font-medium text-accent hover:underline">Open decision →</button>
+              </div>
+              <div className="grid gap-3 p-4 md:grid-cols-2">
+                <div className="rounded-md border border-accent/30 bg-accent-soft/40 p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-accent">Recorded selection</p><p className="mt-1 text-sm font-medium">{d.selected_solution || "Not documented"}</p><p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{d.reasoning || "Reasoning not documented."}</p></div>
+                {d.alternatives.length ? d.alternatives.map((a, i) => <div key={i} className="rounded-md border border-border bg-background p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Alternative considered</p><p className="mt-1 text-sm font-medium">{a.name}</p><p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{a.reason_rejected ? `Reason not selected: ${a.reason_rejected}` : "Reason not selected is not documented."}</p></div>) : <div className="rounded-md border border-dashed border-border-strong p-3 text-xs text-muted-foreground">No alternatives documented. Open the decision to add them.</div>}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
           <ul className="divide-y divide-border">
