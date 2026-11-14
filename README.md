@@ -17,7 +17,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 
 1. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
-   - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql). It creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies.
+   - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) and then [`0002_model.sql`](supabase/migrations/0002_model.sql). The first creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies; the second adds the 3D model table and an atomic `replace_model` save function.
    - For quick demos, disable *Authentication → Providers → Email → Confirm email* (otherwise new users must click an email link first).
 2. **Environment** — copy `.env.example` to `.env.local`:
    ```bash
@@ -29,11 +29,20 @@ Research, design revisions, decisions, peer reviews and documentation live in on
    npm install
    npm run dev
    ```
-4. Sign up, then click **Load sample project (RC Car Design)** on the dashboard.
+4. Open `http://localhost:3000`: with no account (or no backend configured) it opens the **3D demo workspace** at `/demo`. Then sign up and click **Load sample project (RC Car Design)** on the dashboard.
 
 If Supabase isn't configured the app redirects to a `/setup` page that says exactly what's missing. If only OpenAI is missing, everything else works and each AI feature shows a clear "not configured" message — nothing is faked.
 
 **Deploying to Vercel:** import the repo, set the same three environment variables, deploy. No other configuration is needed.
+
+## 3D workspace
+
+Opening a project lands in a CAD-style workspace (`/projects/[id]/workspace`) with the model as the centrepiece: a large viewport (about 65-70% of the width, more when panels are collapsed), a collapsible parts hierarchy on the left, an inspector on the right (Properties / Knowledge / Ask AI) and a status bar. The knowledge features (research, decisions, revisions, reviews, files, the AI assistant, documentation, handoff) are reachable from the inspector and the *Project* menu without losing the model. `/demo` is a public, data-free version of the same screen.
+
+- **Rendering:** three.js through React Three Fiber. PBR materials, image-based + directional lighting, shadows, orbit / pan / zoom, view cube, Front / Side / Top / Iso views, fit and reset, solid / solid-with-edges / wireframe, click selection that stays in sync with the hierarchy and inspector.
+- **What the model is (and isn't):** an assembly of parametric **primitives** (box, cylinder, sphere) in groups, with transform, material and visibility. three.js is a *rendering* library, not a CAD kernel, so there are **no** booleans, fillets, sketches, STEP/IGES import or exact solid properties. The operations offered are the ones primitives support: edit dimensions, position, rotation, material and visibility, move/rotate gizmos, add, duplicate, delete, undo/redo, and JSON import/export. Volumes are analytic per primitive and summed (overlaps are double-counted). Precise solid modelling would need a B-rep engine such as OpenCascade.
+- **Persistence:** *Save* writes the whole assembly atomically (`replace_model`, RLS-protected). A project with no saved model shows the built-in sample assembly, clearly labelled, until you save.
+- **Shortcuts:** V/G/R tools, 1-4 views, F fit, H hide, Del delete, Ctrl+Z / Ctrl+Shift+Z, Ctrl+D duplicate, Ctrl+S save.
 
 ## The demo (RC Car Design)
 
@@ -64,7 +73,7 @@ app/
   api/ai/…           chat (RAG), decision-assist, generate-doc, summarize
   api/research/metadata   URL metadata fetch (SSRF-guarded)
   api/storage        signed-URL redirect — only succeeds if storage RLS lets the user read the object
-components/          ui/ primitives, shell/, projects/, views/ (one per feature), ai/chat-panel
+components/          cad/ (3D workspace), ui/ primitives, shell/, projects/, views/ (one per feature), ai/chat-panel
 lib/                 supabase clients, data loading, ai/ (corpus, retrieval, prompts, OpenAI), sample/ (demo seed), pdf-export
 supabase/migrations  schema + RLS + storage policies
 proxy.ts             session refresh + auth gate (Next 16 "proxy", formerly middleware)
@@ -83,3 +92,4 @@ Every record carries a `project_id`; policies key off `project_members` (`owner`
 - PDF export is a clean text document (headings, bullets, status labels, sources) — not a styled layout.
 - Retrieval is lexical (BM25); very paraphrased questions may need rewording.
 - Presentation output is a slide *outline* in text form, not a `.pptx`.
+- The 3D model is primitive-based (see above). There is no import of CAD files such as STEP or STL and no simulation.

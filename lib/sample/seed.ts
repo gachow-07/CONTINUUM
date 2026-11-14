@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createSampleAssembly } from "@/lib/cad/sample";
 import { calcNote, chassisPlate, coverImage, suspensionRevA, suspensionRevB } from "./svg";
 
 const BUCKET = "project-files";
@@ -63,6 +64,13 @@ export async function buildSampleProject(supabase: SupabaseClient, user: { id: s
     { project_id: pid, name: "Drivetrain", position: 3, is_sample: true, description: "Motor, pinion/spur gearing, differentials and driveshafts." },
   ], "id,name");
   const sub = (n: string) => subs.find((s) => s.name === n)!.id;
+
+  // ── 3D model (parametric primitives; illustrative, flagged by the project\'s sample banner) ──
+  const model = createSampleAssembly();
+  await ins(supabase, "model_parts", model.map((m, i) => ({
+    id: m.id, project_id: pid, parent_id: m.parentId, subsystem_id: m.subsystemName ? sub(m.subsystemName) : null, name: m.name, kind: m.kind,
+    params: m.params, position: m.position, rotation: m.rotation, material: m.material, visible: m.visible, sort: i,
+  })));
 
   // ── Research ──
   const R = (r: object) => ({ project_id: pid, is_sample: true, created_by: user.id, ...r });

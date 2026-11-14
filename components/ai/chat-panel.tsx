@@ -25,11 +25,11 @@ function AssistantMessage({ m, onNavigate }: { m: ChatMessage; onNavigate?: () =
   return (
     <div className="space-y-2.5">
       {segs.map((s, i) => s.kind === "gap" ? (
-        <div key={i} className="flex gap-2.5 rounded-lg border border-[#f3e2b3] bg-warning-soft p-3 text-[13px] text-[#6b4a10]">
+        <div key={i} className="flex gap-2.5 rounded-lg border border-[#f3e2b3] bg-warning-soft p-3 text-[13px] text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><div><p className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide">Not documented</p>{s.text}{s.citations.map((c) => <CiteNum key={c} n={num(c)} cite={cites.find((x) => x.id === c)} onNavigate={onNavigate} />)}</div>
         </div>
       ) : (
-        <p key={i} className={cn("text-[13px] leading-relaxed", s.kind === "interpretation" && "border-l-2 border-border-strong pl-3 italic text-[#475467]")}>
+        <p key={i} className={cn("text-[13px] leading-relaxed", s.kind === "interpretation" && "border-l-2 border-border-strong pl-3 italic text-muted-foreground")}>
           {s.kind === "interpretation" && <span className="mr-1.5 rounded bg-muted px-1 py-0.5 text-[10px] font-semibold not-italic uppercase tracking-wide">Interpretation</span>}
           {s.text}{s.citations.map((c) => <CiteNum key={c} n={num(c)} cite={cites.find((x) => x.id === c)} onNavigate={onNavigate} />)}
         </p>
@@ -40,7 +40,7 @@ function AssistantMessage({ m, onNavigate }: { m: ChatMessage; onNavigate?: () =
           <ul className="space-y-1">{cites.map((c, i) => (
             <li key={c.id}><Link href={c.href} onClick={onNavigate} className="group flex items-start gap-2 rounded-md px-1.5 py-1 text-xs hover:bg-muted">
               <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded bg-accent-soft text-[10px] font-semibold text-accent">{i + 1}</span>
-              <span className="min-w-0"><span className="font-medium text-[#1d2433] group-hover:text-accent">{c.title}</span><span className="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{c.type}</span></span>
+              <span className="min-w-0"><span className="font-medium text-foreground group-hover:text-accent">{c.title}</span><span className="ml-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{c.type}</span></span>
             </Link></li>))}
           </ul>
         </div>)}
@@ -95,7 +95,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
             <h3 className="text-sm font-semibold">Ask anything about {projectName}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">Answers come only from what&apos;s documented in this project — research, decisions, revisions, reviews and notes — with sources. If something isn&apos;t documented, it will say so.</p>
             {!aiEnabled && <div className="mt-4 text-left"><SetupNotice title="AI assistant not configured">Add <code className="rounded bg-white/60 px-1">OPENAI_API_KEY</code> to your environment and restart to enable answers.</SetupNotice></div>}
-            <div className="mt-5 flex flex-wrap justify-center gap-2">{suggestions.map((s) => <button key={s} onClick={() => send(s)} disabled={!aiEnabled} className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-[#344054] transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50">{s}</button>)}</div>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">{suggestions.map((s) => <button key={s} onClick={() => send(s)} disabled={!aiEnabled} className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50">{s}</button>)}</div>
           </div>
         )}
         {messages.map((m) => m.role === "user" ? (
@@ -105,7 +105,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
         ))}
         {busy && <div className="flex gap-3"><div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-soft text-accent"><Sparkles className="h-3.5 w-3.5 animate-pulse" /></div><div className="flex items-center gap-1 pt-2"><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.3s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:-0.15s]" /><span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground" /><span className="ml-2 text-xs text-muted-foreground">Searching the project record…</span></div></div>}
         {error && (error.setup ? <SetupNotice title="AI assistant not configured">{error.text}</SetupNotice> : <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error.text}</p>)}
-        {followups.length > 0 && !busy && <div className="flex flex-wrap gap-2 pl-10">{followups.map((f) => <button key={f} onClick={() => send(f)} className="rounded-full border border-border px-3 py-1 text-xs text-[#344054] hover:border-accent hover:text-accent">{f}</button>)}</div>}
+        {followups.length > 0 && !busy && <div className="flex flex-wrap gap-2 pl-10">{followups.map((f) => <button key={f} onClick={() => send(f)} className="rounded-full border border-border px-3 py-1 text-xs text-foreground hover:border-accent hover:text-accent">{f}</button>)}</div>}
         <div ref={endRef} />
       </div>
       {messages.length > 0 && !busy && messages.length < 3 && <div className="flex flex-wrap gap-1.5 px-4 pb-2">{suggestions.slice(0, 3).map((s) => <button key={s} onClick={() => send(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground hover:border-accent hover:text-accent">{s}</button>)}</div>}

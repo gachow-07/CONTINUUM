@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  ["", "Overview"], ["/subsystems", "Subsystems"], ["/research", "Research"], ["/history", "Design History"], ["/files", "Files"],
+  ["/workspace", "3D Model"], ["", "Overview"], ["/subsystems", "Subsystems"], ["/research", "Research"], ["/history", "Design History"], ["/files", "Files"],
   ["/decisions", "Design Decisions"], ["/reviews", "Reviews"], ["/docs", "Documentation"], ["/handoff", "Handoff"], ["/assistant", "Ask AI"],
 ] as const;
 

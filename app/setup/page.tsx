@@ -28,7 +28,7 @@ export default function SetupPage() {
         <Row ok={sb} title="Supabase — database, authentication, storage">
           {sb ? "Connected." : (<ol className="list-decimal space-y-1 pl-4">
             <li>Create a project at supabase.com.</li>
-            <li>Open the SQL editor and run <code className={code}>supabase/migrations/0001_schema.sql</code>.</li>
+            <li>Open the SQL editor and run <code className={code}>supabase/migrations/0001_schema.sql</code>, then <code className={code}>0002_model.sql</code>.</li>
             <li>For quick demos, turn off “Confirm email” under Authentication → Providers → Email.</li>
             <li>Copy <code className={code}>.env.example</code> to <code className={code}>.env.local</code> and set <code className={code}>NEXT_PUBLIC_SUPABASE_URL</code> and <code className={code}>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, then restart.</li>
           </ol>)}

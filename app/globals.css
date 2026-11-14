@@ -79,3 +79,27 @@ body {
 .prose-doc ul { list-style: disc; padding-left: 1.25em; margin: 0 0 .75em; }
 .prose-doc ol { list-style: decimal; padding-left: 1.25em; margin: 0 0 .75em; }
 .prose-doc strong { font-weight: 600; }
+
+/* ───────── 3D workspace (dark engineering theme, one accent) ───────── */
+.cad-root {
+  --c-bg: #0a0d12; --c-panel: #11151c; --c-panel2: #161b24; --c-line: #222a36; --c-line2: #2c3646;
+  --c-text: #d6dce6; --c-muted: #8592a6; --c-accent: #3db4ff; --c-accent-soft: rgba(61, 180, 255, 0.14);
+  color-scheme: dark; color: var(--c-text); font-size: 12.5px;
+  /* Re-theme the shared light components (chat panel etc.) for the dark workspace. */
+  --surface: #11151c; --foreground: #d6dce6; --muted: #1a202b; --muted-foreground: #8592a6; --border: #222a36; --border-strong: #2c3646;
+  --accent: #3db4ff; --accent-soft: rgba(61, 180, 255, 0.14); --primary: #26405e; --primary-foreground: #ffffff;
+  --warning: #e2b25a; --warning-soft: rgba(226, 178, 90, 0.12); --danger-soft: rgba(220, 80, 70, 0.14); --danger: #f08a80; --background: #0a0d12;
+}
+.cad-root ::selection { background: rgba(61, 180, 255, 0.35); }
+.cad-root .scroll-thin::-webkit-scrollbar-thumb { background: #2c3646; }
+.cad-root input[type="range"] { accent-color: var(--c-accent); }
+.cad-root input[type="color"] { -webkit-appearance: none; appearance: none; padding: 0; border: 1px solid var(--c-line2); border-radius: 5px; background: none; cursor: pointer; }
+.cad-root input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.cad-root input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+[data-tip] { position: relative; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 60;
+  background: #05070a; color: #dfe6f1; border: 1px solid var(--c-line2); border-radius: 5px; padding: 3px 7px; font-size: 11px; pointer-events: none;
+}
+[data-tip].tip-up:hover::after { top: auto; bottom: calc(100% + 7px); }
+[data-tip].tip-right:hover::after { top: 50%; left: calc(100% + 7px); transform: translateY(-50%); }
