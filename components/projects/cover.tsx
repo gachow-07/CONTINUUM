@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { fileUrl } from "@/lib/client";
+
+const fileUrl = (path: string) => `/api/storage?path=${encodeURIComponent(path)}`;
 
 // Deterministic blueprint-style thumbnail used when a project has no cover image.
 export function ProjectCover({ path, name, className }: { path: string | null; name: string; className?: string }) {
