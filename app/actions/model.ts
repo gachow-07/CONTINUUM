@@ -69,3 +69,20 @@ export async function setComponentMarker(subsystemId: string, position: [number,
     return fail(e);
   }
 }
+
+/** Associate one imported mesh with a component. Mesh paths are local to a GLB file. */
+export async function linkGlbComponent(projectId: string, fileId: string, partKey: string, componentId: string | null): Promise<ActionResult> {
+  try {
+    if (!z.string().uuid().safeParse(projectId).success || !z.string().uuid().safeParse(fileId).success || !z.string().min(1).max(512).safeParse(partKey).success || (componentId && !z.string().uuid().safeParse(componentId).success)) return fail("Invalid model part or component.");
+    const c = await ctx();
+    if (componentId) {
+      const { error } = await c.supabase.from("glb_component_links").upsert({ project_id: projectId, file_id: fileId, subsystem_id: componentId, part_key: partKey }, { onConflict: "file_id,part_key" });
+      if (error) return fail(error.message);
+    } else {
+      const { error } = await c.supabase.from("glb_component_links").delete().eq("project_id", projectId).eq("file_id", fileId).eq("part_key", partKey);
+      if (error) return fail(error.message);
+    }
+    refresh();
+    return { ok: true };
+  } catch (e) { return fail(e); }
+}

@@ -15,5 +15,8 @@ export default async function ProjectHub({ params, searchParams }: { params: Pro
   const placeholder = saved.length === 0;
   // With no saved model, show the labelled placeholder assembly so the hub is never an empty box.
   const parts = placeholder ? createSampleAssembly().map((p) => ({ ...p, subsystemId: p.subsystemName ? b.subsystems.find((s) => s.name.toLowerCase() === p.subsystemName!.toLowerCase())?.id ?? null : null })) : saved;
-  return <HubView b={b} parts={parts} placeholder={placeholder} tab={tab} />;
+  const { data: modelLinks } = b.project.viewer_model_file_id
+    ? await supabase.from("glb_component_links").select("part_key,subsystem_id").eq("project_id", id).eq("file_id", b.project.viewer_model_file_id)
+    : { data: [] };
+  return <HubView b={b} parts={parts} placeholder={placeholder} tab={tab} modelLinks={modelLinks ?? []} />;
 }

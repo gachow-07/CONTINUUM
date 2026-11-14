@@ -18,7 +18,7 @@ import { modelPartEntries } from "@/lib/cad/part-markers";
 
 const TABS = [["overview", "Overview"], ["components", "Components"], ["history", "Design History"]] as const;
 
-export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string }) {
+export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string; modelLinks: { part_key: string; subsystem_id: string }[] }) {
   const id = b.project.id;
   const viewerModel = b.files.find((file) => file.id === b.project.viewer_model_file_id) ?? null;
   const comps = buildComponents(b);
@@ -42,7 +42,7 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
       {tab === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <ProjectModel projectId={id} model={viewerModel} />
+            <ProjectModel key={viewerModel?.id ?? "empty"} projectId={id} model={viewerModel} components={hubComps} modelLinks={modelLinks} />
             {!viewerModel && <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />}
             <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
