@@ -170,6 +170,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const canEditExcerpt = !r.file_path && ["url", "article", "paper"].includes(r.type);
+  const canEditNote = r.type === "note" && !r.file_path;
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Edit research">
@@ -178,15 +179,20 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
           const x = await act(updateResearch(r.id, {
             title: String(f.get("title")), why_important: String(f.get("why")), subsystem_id: String(f.get("sub")) || null,
             tags: String(f.get("tags")).split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean),
-            ...(canEditExcerpt && String(f.get("excerpt")) !== (r.content_text ?? "") ? { content_text: String(f.get("excerpt")) } : {}),
+            ...(String(f.get("description") ?? "") !== r.description ? { description: String(f.get("description") ?? "") } : {}),
+            ...((canEditExcerpt || canEditNote) && String(f.get("excerpt")) !== (r.content_text ?? "") ? { content_text: String(f.get("excerpt")) } : {}),
+            ...(canEditExcerpt ? { url: String(f.get("url")).trim(), site_name: String(f.get("site_name")).trim(), type: String(f.get("type")) as "url" | "article" | "paper" } : {}),
           }), "Research updated");
           setBusy(false); if (x.ok) { onClose(); router.refresh(); }
         }}>
-          <Field label="Title" required><Input name="title" defaultValue={r.title} /></Field>
+          {canEditExcerpt && <Field label="URL" required><Input name="url" type="url" defaultValue={r.url ?? ""} required /></Field>}
+          <Field label="Title" required><Input name="title" defaultValue={r.title} maxLength={300} required /></Field>
+          {canEditExcerpt && <div className="grid gap-4 sm:grid-cols-2"><Field label="Source type"><Select name="type" defaultValue={r.type}><option value="url">Website</option><option value="article">Technical article</option><option value="paper">Research paper</option></Select></Field><Field label="Website name"><Input name="site_name" defaultValue={r.site_name ?? ""} maxLength={200} /></Field></div>}
+          <Field label="Description"><Textarea name="description" defaultValue={r.description} maxLength={4000} /></Field>
           <Field label="Subsystem"><Select name="sub" defaultValue={r.subsystem_id ?? ""}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === r.project_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <Field label="Tags" hint="Comma-separated"><Input name="tags" defaultValue={r.tags.join(", ")} /></Field>
           <Field label="Why is this important?"><Textarea name="why" defaultValue={r.why_important} /></Field>
-          {canEditExcerpt && <Field label="Excerpt or research notes" hint="Record the relevant passage or your notes. Keep quotations attributed to the original source."><Textarea name="excerpt" defaultValue={r.content_text ?? ""} maxLength={200000} /></Field>}
+          {(canEditExcerpt || canEditNote) && <Field label={canEditNote ? "Note" : "Excerpt or research notes"} hint={canEditNote ? undefined : "Record the relevant passage or your notes. Keep quotations attributed to the original source."}><Textarea name="excerpt" defaultValue={r.content_text ?? ""} maxLength={200000} /></Field>}
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>Save</Button></div>
         </form>
       </DialogContent>
@@ -238,7 +244,8 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
       let r;
       if (mode === "url") {
         if (!url.trim()) { setBusy(false); return setError("Paste a URL."); }
-        r = await act(createResearch({ ...common, type: kind, url: url.trim(), title: meta.title.trim() || url.trim(), site_name: meta.site_name, description: meta.description, content_text: excerpt.trim() || null }), "Research saved");
+        if (!meta.title.trim()) { setBusy(false); return setError("Enter a title for this source. You can use Fetch details or type one yourself."); }
+        r = await act(createResearch({ ...common, type: kind, url: url.trim(), title: meta.title.trim(), site_name: meta.site_name, description: meta.description, content_text: excerpt.trim() || null }), "Research saved");
       } else if (mode === "note") {
         r = await act(createResearch({ ...common, type: "note", title: String(f.get("title")), content_text: noteText, description: noteText.slice(0, 200) }), "Note saved");
       } else {
@@ -265,7 +272,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
                 <Button type="button" variant="outline" onClick={fetchMeta} loading={fetching}><Wand2 className="h-4 w-4" />Fetch details</Button></div>
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="Title" className="sm:col-span-2"><Input value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} placeholder="Fetched automatically, or type one" /></Field>
+              <Field label="Title" required className="sm:col-span-2"><Input value={meta.title} onChange={(e) => setMeta({ ...meta, title: e.target.value })} placeholder="Fetch details or enter a title" maxLength={300} required /></Field>
               <Field label="Source type"><Select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}><option value="url">Website</option><option value="article">Technical article</option><option value="paper">Research paper</option></Select></Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
