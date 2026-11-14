@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Box, ChevronDown, Copy, Cuboid, Download, EyeOff, Folder, Grid3x3, Hexagon, Loader2, Maximize, MousePointer2, Move3d, PanelLeft, PanelRight, Plus, Redo2, RotateCcw, Rotate3d, Save, Scan, Sun, Trash2, Undo2, CircleDot, Cylinder } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
+import { Logo } from "@/components/shell/logo";
 import { cn } from "@/lib/utils";
 import { act } from "@/lib/client";
 import { saveModel, setComponentMarker } from "@/app/actions/model";
@@ -134,7 +135,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
   };
   const importRef = useRef<HTMLInputElement>(null);
   const importJson = async (file: File) => {
-    try { const j = JSON.parse(await file.text()); const ps = validateParts(j.parts); if (!ps) throw new Error("not a Project Memory model file"); commit(ps.map((p) => ({ ...p, subsystemName: undefined }))); setSelectedId(null); toast.success(`Imported ${ps.length} parts`); setTimeout(() => setView("iso"), 50); }
+    try { const j = JSON.parse(await file.text()); const ps = validateParts(j.parts); if (!ps) throw new Error("not a CONTINUUM model file"); commit(ps.map((p) => ({ ...p, subsystemName: undefined }))); setSelectedId(null); toast.success(`Imported ${ps.length} parts`); setTimeout(() => setView("iso"), 50); }
     catch (e) { toast.error(`Couldn't import: ${(e as Error).message}`); }
   };
 
@@ -176,7 +177,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-[var(--c-line)] bg-[var(--c-panel)] px-2.5">
         <IconBtn tip={leftOpen ? "Hide parts panel" : "Show parts panel"} active={leftOpen} onClick={() => setLeftOpen((o) => !o)}><PanelLeft /></IconBtn>
         <Link href={project ? "/projects" : "/"} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-[var(--c-panel2)]" aria-label="Back to projects">
-          <span className="h-2.5 w-2.5 rounded-full bg-[var(--c-accent)] shadow-[0_0_0_3px_var(--c-accent-soft)]" /><span className="hidden text-[13px] font-semibold sm:inline">Project Memory</span>
+          <Logo />
         </Link>
         <span className="text-[var(--c-line2)]">/</span>
         <span className="max-w-[28vw] truncate text-[13px] font-medium" title={project?.name ?? "RC Car Design"}>{project?.name ?? "RC Car Design (demo)"}</span>

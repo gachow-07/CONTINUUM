@@ -21,7 +21,7 @@ export async function exportDocPdf(opts: { title: string; projectName: string; s
   doc.setFontSize(20); doc.setTextColor(15, 22, 35);
   for (const line of doc.splitTextToSize(opts.title, maxW) as string[]) { doc.text(line, M, y); y += 25; }
   doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(102, 112, 133);
-  doc.text(`${opts.projectName} · Generated ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} with Project Memory`, M, y); y += 12;
+  doc.text(`${opts.projectName} · Generated ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} with CONTINUUM`, M, y); y += 12;
   doc.setDrawColor(228, 231, 236); doc.line(M, y, W - M, y); y += 22;
 
   const label: Record<DocSection["status"], string> = { confirmed: "Documented", partial: "Partially documented", missing: "Not documented" };
@@ -43,6 +43,6 @@ export async function exportDocPdf(opts: { title: string; projectName: string; s
     y += 14;
   }
   const pages = doc.getNumberOfPages();
-  for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(152, 162, 179); doc.text(`Project Memory · ${opts.projectName}`, M, H - 28); doc.text(`${i} / ${pages}`, W - M, H - 28, { align: "right" }); }
+  for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(152, 162, 179); doc.text(`CONTINUUM · ${opts.projectName}`, M, H - 28); doc.text(`${i} / ${pages}`, W - M, H - 28, { align: "right" }); }
   doc.save(`${opts.title.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-") || "document"}.pdf`);
 }

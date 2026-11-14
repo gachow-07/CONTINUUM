@@ -41,7 +41,7 @@ ${wheel(190, 262)}${wheel(450, 262)}
 <path d="M270 172 L300 140 L380 140 L404 172" fill="none" stroke="#2563ff" stroke-width="3"/>
 <line x1="100" y1="308" x2="540" y2="308" stroke="#5b7bbf" stroke-dasharray="3 6"/>`, "RC Car Design — 1/10 scale off-road buggy (demo project)");
 
-export const calcNote = `SAMPLE DATA — written for the Project Memory demo. Not a real engineering calculation.
+export const calcNote = `SAMPLE DATA — written for the CONTINUUM demo. Not a real engineering calculation.
 
 Roll-stiffness comparison worksheet (illustrative structure only)
 ------------------------------------------------------------------

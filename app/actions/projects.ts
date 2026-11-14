@@ -86,7 +86,7 @@ export async function addMemberByEmail(projectId: string, email: string, role: "
     const { data: found, error } = await c.supabase.rpc("find_user_by_email", { p_email: email.trim() });
     if (error) return fail(error.message);
     const u = (found as { id: string; full_name: string | null; email: string }[] | null)?.[0];
-    if (!u) return fail("No Project Memory account uses that email yet. Ask them to sign up first, then add them.");
+    if (!u) return fail("No CONTINUUM account uses that email yet. Ask them to sign up first, then add them.");
     const { error: e2 } = await c.supabase.from("project_members").insert({
       project_id: projectId, user_id: u.id, display_name: u.full_name || u.email, email: u.email, role,
     });

@@ -7,7 +7,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Project Memory", template: "%s · Project Memory" },
+  title: { default: "CONTINUUM", template: "%s · CONTINUUM" },
   description: "An engineering workspace that preserves the knowledge behind engineering projects — what was built, and why.",
 };
 

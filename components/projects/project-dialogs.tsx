@@ -80,7 +80,7 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
           {!editing && (
             <>
               <Field label="Starting subsystems" hint="Comma-separated, e.g. Suspension, Steering, Chassis. You can change these any time."><Input name="subsystems" placeholder="Suspension, Steering, Chassis" /></Field>
-              <Field label="Team members" hint="Emails of teammates who already have a Project Memory account (comma-separated). You can add more later in Team."><Input name="members" placeholder="teammate@school.edu" /></Field>
+              <Field label="Team members" hint="Emails of teammates who already have a CONTINUUM account (comma-separated). You can add more later in Team."><Input name="members" placeholder="teammate@school.edu" /></Field>
             </>
           )}
           {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}

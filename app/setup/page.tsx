@@ -22,7 +22,7 @@ export default function SetupPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-14">
       <Logo className="mb-8" />
-      <h1 className="text-xl font-semibold tracking-tight">Finish setting up Project Memory</h1>
+      <h1 className="text-xl font-semibold tracking-tight">Finish setting up CONTINUUM</h1>
       <p className="mt-1 text-[13px] text-muted-foreground">The app needs a Supabase project (database, auth, file storage) and an OpenAI key for the AI features. Nothing here is mocked — until these are configured, the related features stay off.</p>
       <div className="mt-6 space-y-3">
         <Row ok={sb} title="Supabase — database, authentication, storage">
