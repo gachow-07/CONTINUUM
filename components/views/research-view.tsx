@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen, ExternalLink, FileText, Link2, Loader2, Plus, Sparkles, StickyNote, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -109,6 +110,7 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
   const [linking, setLinking] = useState(false);
   const [showText, setShowText] = useState(false);
   const links = scope.evidence.filter((e) => e.research_id === r.id);
+  const component = scope.subsystems.find((s) => s.id === r.subsystem_id && s.project_id === r.project_id);
   const decisions = scope.decisions.filter((d) => d.project_id === r.project_id);
   const linkable = decisions.filter((d) => !links.some((l) => l.decision_id === d.id));
 
@@ -128,12 +130,15 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
       {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" className="mb-5 inline-flex items-center gap-1.5 break-all text-[13px] font-medium text-accent hover:underline"><ExternalLink className="h-3.5 w-3.5 shrink-0" />{r.url}</a>}
       {r.file_path && <a href={fileUrl(r.file_path)} target="_blank" className="mb-5 flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline"><FileText className="h-3.5 w-3.5" />Open original file</a>}
       <Section title="Why this matters" action={<button className="text-xs text-accent hover:underline" onClick={() => setEdit(true)}>Edit</button>}>{r.why_important || <NotDocumented>The author hasn&apos;t said why this source matters</NotDocumented>}</Section>
+      <Section title="Related component">
+        {component ? <Link href={`/projects/${r.project_id}/components/${component.id}`} onClick={onClose} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium hover:border-accent hover:text-accent">{component.name} <span aria-hidden>→</span></Link> : <NotDocumented>No component linked. Edit this source to add one.</NotDocumented>}
+      </Section>
       {r.description && <Section title="Description"><p className="whitespace-pre-wrap">{r.description}</p></Section>}
       <Section title="AI summary" action={aiEnabled && (r.content_text || r.description) ? <button disabled={busy} onClick={summarize} className="inline-flex items-center gap-1 text-xs text-accent hover:underline disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{r.ai_summary ? "Regenerate" : "Summarize"}</button> : undefined}>
         {r.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{r.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.{!r.content_text && !r.description && " There is no text to summarize."}</span> : <SetupNotice title="AI not configured">Add OPENAI_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       {r.content_text && (
-        <Section title={r.type === "pdf" ? "Extracted text" : "Content"}>
+        <Section title={r.type === "pdf" ? "Extracted text" : r.type === "note" ? "Note" : "Saved excerpt or notes"}>
           <p className={`whitespace-pre-wrap rounded-md bg-muted/60 p-3 text-xs leading-relaxed ${showText ? "" : "line-clamp-6"}`}>{r.content_text}</p>
           <button className="mt-1 text-xs text-accent hover:underline" onClick={() => setShowText((s) => !s)}>{showText ? "Show less" : "Show more"}</button>
         </Section>
@@ -164,6 +169,7 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
 function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; onClose: () => void }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const canEditExcerpt = !r.file_path && ["url", "article", "paper"].includes(r.type);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Edit research">
@@ -172,6 +178,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
           const x = await act(updateResearch(r.id, {
             title: String(f.get("title")), why_important: String(f.get("why")), subsystem_id: String(f.get("sub")) || null,
             tags: String(f.get("tags")).split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean),
+            ...(canEditExcerpt && String(f.get("excerpt")) !== (r.content_text ?? "") ? { content_text: String(f.get("excerpt")) } : {}),
           }), "Research updated");
           setBusy(false); if (x.ok) { onClose(); router.refresh(); }
         }}>
@@ -179,6 +186,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
           <Field label="Subsystem"><Select name="sub" defaultValue={r.subsystem_id ?? ""}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === r.project_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <Field label="Tags" hint="Comma-separated"><Input name="tags" defaultValue={r.tags.join(", ")} /></Field>
           <Field label="Why is this important?"><Textarea name="why" defaultValue={r.why_important} /></Field>
+          {canEditExcerpt && <Field label="Excerpt or research notes" hint="Record the relevant passage or your notes. Keep quotations attributed to the original source."><Textarea name="excerpt" defaultValue={r.content_text ?? ""} maxLength={200000} /></Field>}
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>Save</Button></div>
         </form>
       </DialogContent>
@@ -198,6 +206,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
   const [fetching, setFetching] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [excerpt, setExcerpt] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const subs = scope.subsystems.filter((s) => s.project_id === pid);
@@ -229,7 +238,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
       let r;
       if (mode === "url") {
         if (!url.trim()) { setBusy(false); return setError("Paste a URL."); }
-        r = await act(createResearch({ ...common, type: kind, url: url.trim(), title: meta.title.trim() || url.trim(), site_name: meta.site_name, description: meta.description }), "Research saved");
+        r = await act(createResearch({ ...common, type: kind, url: url.trim(), title: meta.title.trim() || url.trim(), site_name: meta.site_name, description: meta.description, content_text: excerpt.trim() || null }), "Research saved");
       } else if (mode === "note") {
         r = await act(createResearch({ ...common, type: "note", title: String(f.get("title")), content_text: noteText, description: noteText.slice(0, 200) }), "Note saved");
       } else {
@@ -263,6 +272,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
               <Field label="Website name"><Input value={meta.site_name} onChange={(e) => setMeta({ ...meta, site_name: e.target.value })} /></Field>
               <Field label="Description"><Input value={meta.description} onChange={(e) => setMeta({ ...meta, description: e.target.value })} /></Field>
             </div>
+            <Field label="Excerpt or research notes" hint="Optional. Record the relevant passage or your notes, and attribute quotations to their source."><Textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} maxLength={200000} placeholder="What did this source say, and what do you want to remember?" /></Field>
           </>)}
           {(mode === "pdf" || mode === "image") && (<>
             <Field label={mode === "pdf" ? "PDF file" : "Image file"} required>
