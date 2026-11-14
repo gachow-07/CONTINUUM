@@ -17,6 +17,23 @@ const partSchema = z.object({
   visible: z.boolean(),
 });
 
+/** Select an existing project file as the hub's GLB model, or return to the built-in assembly. */
+export async function setViewerModel(projectId: string, fileId: string | null): Promise<ActionResult> {
+  try {
+    if (!z.string().uuid().safeParse(projectId).success || (fileId && !z.string().uuid().safeParse(fileId).success)) return fail("Invalid project or file.");
+    const c = await ctx();
+    if (fileId) {
+      const { data: file, error } = await c.supabase.from("files").select("id,name").eq("id", fileId).eq("project_id", projectId).maybeSingle();
+      if (error || !file || !file.name.toLowerCase().endsWith(".glb")) return fail("Choose a GLB file from this project.");
+    }
+    const { data, error } = await c.supabase.from("projects").update({ viewer_model_file_id: fileId }).eq("id", projectId).select("id").maybeSingle();
+    if (error) return fail(error.message);
+    if (!data) return fail("Could not update the model. Check your project permissions.");
+    refresh();
+    return { ok: true };
+  } catch (e) { return fail(e); }
+}
+
 /** Replaces the project's whole assembly atomically (see replace_model in the migration). Row-level security applies. */
 export async function saveModel(projectId: string, parts: unknown): Promise<ActionResult<{ count: number }>> {
   try {
@@ -51,4 +68,21 @@ export async function setComponentMarker(subsystemId: string, position: [number,
   } catch (e) {
     return fail(e);
   }
+}
+
+/** Associate one imported mesh with a component. Mesh paths are local to a GLB file. */
+export async function linkGlbComponent(projectId: string, fileId: string, partKey: string, componentId: string | null): Promise<ActionResult> {
+  try {
+    if (!z.string().uuid().safeParse(projectId).success || !z.string().uuid().safeParse(fileId).success || !z.string().min(1).max(512).safeParse(partKey).success || (componentId && !z.string().uuid().safeParse(componentId).success)) return fail("Invalid model part or component.");
+    const c = await ctx();
+    if (componentId) {
+      const { error } = await c.supabase.from("glb_component_links").upsert({ project_id: projectId, file_id: fileId, subsystem_id: componentId, part_key: partKey }, { onConflict: "file_id,part_key" });
+      if (error) return fail(error.message);
+    } else {
+      const { error } = await c.supabase.from("glb_component_links").delete().eq("project_id", projectId).eq("file_id", fileId).eq("part_key", partKey);
+      if (error) return fail(error.message);
+    }
+    refresh();
+    return { ok: true };
+  } catch (e) { return fail(e); }
 }

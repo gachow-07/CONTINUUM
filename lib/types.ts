@@ -5,6 +5,7 @@ export interface Profile { id: string; email: string | null; full_name: string |
 export interface Project {
   id: string; org_id: string | null; owner_id: string; name: string; description: string; category: string;
   status: ProjectStatus; cover_path: string | null; archived: boolean; is_sample: boolean; created_at: string; updated_at: string;
+  viewer_model_file_id: string | null;
 }
 export interface Member { id: string; project_id: string; user_id: string | null; display_name: string; email: string | null; role: MemberRole; is_sample: boolean }
 export interface Subsystem { id: string; project_id: string; name: string; description: string; position: number; marker_position: [number, number, number] | null; is_sample: boolean; created_at: string; updated_at: string }
