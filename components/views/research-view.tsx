@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, ExternalLink, FileText, Link2, Loader2, Plus, Sparkles, StickyNote, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,8 @@ import { ConfirmDialog, EmptyState, SetupNotice } from "@/components/ui/misc";
 import { act, fileUrl, uploadToProject } from "@/lib/client";
 import { createResearch, deleteResearch, linkResearchToDecision, unlinkEvidence, updateResearch } from "@/app/actions/knowledge";
 import { formatDate } from "@/lib/utils";
+import { isDeploymentChangedError } from "@/lib/action-error.mjs";
+import { readResearchDraft } from "@/lib/research-draft.mjs";
 import type { Research, ResearchType } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
 import { FilterSelect, NotDocumented, RefChip, SearchBox, Section, SubsystemTag, TagList, useOpenParam } from "./common";
@@ -187,18 +189,31 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
 }
 
 type Mode = "url" | "pdf" | "note" | "image";
+type ResearchDraft = {
+  mode: Mode; pid: string; url: string; meta: { title: string; site_name: string; description: string }; kind: "url" | "article" | "paper";
+  noteText: string; title: string; desc: string; sub: string; tags: string; why: string;
+};
+
+function readDraft(key: string): ResearchDraft | null {
+  try { return readResearchDraft(sessionStorage, key) as ResearchDraft | null; }
+  catch { return null; }
+}
 
 export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope; projectId?: string; subsystemId?: string; onClose: () => void }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("url");
-  const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
-  const [url, setUrl] = useState("");
-  const [meta, setMeta] = useState({ title: "", site_name: "", description: "" });
-  const [kind, setKind] = useState<"url" | "article" | "paper">("url");
+  const draftKey = `continuum:research-draft:${projectId ?? "all-projects"}`;
+  const [draft] = useState(() => readDraft(draftKey));
+  const formRef = useRef<HTMLFormElement>(null);
+  const [mode, setMode] = useState<Mode>(draft?.mode ?? "url");
+  const [pid, setPid] = useState(projectId ?? (scope.projects.some((p) => p.id === draft?.pid) ? draft!.pid : scope.projects[0]?.id ?? ""));
+  const [url, setUrl] = useState(draft?.url ?? "");
+  const [meta, setMeta] = useState(draft?.meta ?? { title: "", site_name: "", description: "" });
+  const [kind, setKind] = useState<"url" | "article" | "paper">(draft?.kind ?? "url");
   const [fetching, setFetching] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [noteText, setNoteText] = useState("");
+  const [noteText, setNoteText] = useState(draft?.noteText ?? "");
   const [error, setError] = useState("");
+  const [needsReload, setNeedsReload] = useState(false);
   const [busy, setBusy] = useState(false);
   const subs = scope.subsystems.filter((s) => s.project_id === pid);
 
@@ -217,7 +232,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
   }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setError("");
+    e.preventDefault(); setError(""); setNeedsReload(false);
     const f = new FormData(e.currentTarget);
     const common = {
       project_id: pid, subsystem_id: String(f.get("sub")) || null,
@@ -238,8 +253,22 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
         r = await act(createResearch({ ...common, type: mode, title: String(f.get("title")) || file.name, file_path: path, description: String(f.get("desc")) }), "Research saved");
         if (r.ok && mode === "pdf") toast.message(r.extracted ? "Readable text was extracted from the PDF." : "No readable text found — this PDF may be scanned images.");
       }
-      if (r.ok) { onClose(); router.refresh(); } else setError(r.error);
+      if (r.ok) { try { sessionStorage.removeItem(draftKey); } catch { /* Storage may be unavailable. */ } onClose(); router.refresh(); }
+      else { setNeedsReload(isDeploymentChangedError(r.error)); setError(r.error); }
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
+  }
+
+  function saveDraftAndReload() {
+    if (!formRef.current) return;
+    const f = new FormData(formRef.current);
+    const value = (name: string) => String(f.get(name) ?? "");
+    const next: ResearchDraft = { mode, pid, url, meta, kind, noteText, title: value("title"), desc: value("desc"), sub: value("sub"), tags: value("tags"), why: value("why") };
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(next));
+      window.location.reload();
+    } catch {
+      setError("Your browser could not save a temporary draft. Copy your text before refreshing the page.");
+    }
   }
 
   const tabs: { id: Mode; label: string }[] = [{ id: "url", label: "Website / URL" }, { id: "pdf", label: "PDF" }, { id: "image", label: "Image" }, { id: "note", label: "Personal note" }];
@@ -249,7 +278,8 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
         <div className="mb-4 inline-flex rounded-md bg-muted p-0.5" role="tablist">
           {tabs.map((t) => <button key={t.id} role="tab" aria-selected={mode === t.id} type="button" onClick={() => { setMode(t.id); setError(""); }} className={`rounded px-3 py-1 text-xs font-medium transition-colors ${mode === t.id ? "bg-surface shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{t.label}</button>)}
         </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form ref={formRef} onSubmit={submit} className="space-y-4">
+          {draft && <p role="status" className="rounded-md bg-accent-soft p-3 text-xs">Your temporary draft was restored in this tab. Check the research list for duplicates before saving again.{(mode === "pdf" || mode === "image") && " Select your file again; files cannot be restored after a refresh."}</p>}
           {mode === "url" && (<>
             <Field label="URL" required>
               <div className="flex gap-2"><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" inputMode="url" />
@@ -269,20 +299,21 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
               <input type="file" accept={mode === "pdf" ? "application/pdf" : "image/*"} onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="block w-full text-[13px] file:mr-3 file:rounded-md file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5 file:text-[13px] file:font-medium hover:file:bg-muted" />
               {mode === "pdf" && <p className="text-xs text-muted-foreground">Readable text is extracted so the AI assistant can use it. Scanned PDFs without a text layer can&apos;t be read.</p>}
             </Field>
-            <Field label="Title"><Input name="title" placeholder={file?.name ?? "Defaults to the file name"} /></Field>
-            <Field label="Description"><Input name="desc" /></Field>
+            <Field label="Title"><Input name="title" defaultValue={draft?.title ?? ""} placeholder={file?.name ?? "Defaults to the file name"} /></Field>
+            <Field label="Description"><Input name="desc" defaultValue={draft?.desc ?? ""} /></Field>
           </>)}
           {mode === "note" && (<>
-            <Field label="Title" required><Input name="title" placeholder="e.g. Track test observations" /></Field>
+            <Field label="Title" required><Input name="title" defaultValue={draft?.title ?? ""} placeholder="e.g. Track test observations" /></Field>
             <Field label="Note" required><Textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} className="min-h-[120px]" placeholder="What did you learn or observe?" /></Field>
           </>)}
           <div className="grid gap-4 sm:grid-cols-2">
             {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => setPid(e.target.value)}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
-            <Field label="Subsystem"><Select name="sub" defaultValue={subsystemId ?? ""} key={pid}><option value="">None</option>{subs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
+            <Field label="Subsystem"><Select name="sub" defaultValue={(draft?.pid === pid ? draft.sub : subsystemId) ?? ""} key={pid}><option value="">None</option>{subs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           </div>
-          <Field label="Tags" hint="Comma-separated, e.g. suspension, roll, geometry"><Input name="tags" /></Field>
-          <Field label="Why is this source important?" hint="This is what future engineers will thank you for."><Textarea name="why" placeholder="What does it tell us, and how should it influence the design?" /></Field>
+          <Field label="Tags" hint="Comma-separated, e.g. suspension, roll, geometry"><Input name="tags" defaultValue={draft?.tags ?? ""} /></Field>
+          <Field label="Why is this source important?" hint="This is what future engineers will thank you for."><Textarea name="why" defaultValue={draft?.why ?? ""} placeholder="What does it tell us, and how should it influence the design?" /></Field>
           {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
+          {needsReload && <div className="space-y-2 rounded-md border border-warning/30 bg-warning-soft p-3 text-xs"><p>Keep a temporary copy of this form in this browser tab, then reload. Afterward, reopen Add research. Check for duplicates before saving.{(mode === "pdf" || mode === "image") && " Your file cannot be preserved; select it again and check project files before retrying."}</p><Button type="button" size="sm" variant="outline" onClick={saveDraftAndReload}>Save draft and reload</Button></div>}
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>Save research</Button></div>
         </form>
       </DialogContent>

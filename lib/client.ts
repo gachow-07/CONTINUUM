@@ -3,16 +3,21 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import type { FileCategory } from "@/lib/types";
 import type { ActionResult } from "@/app/actions/helpers";
+import { actionErrorMessage } from "@/lib/action-error.mjs";
 
 /** Runs a server action, shows a toast, and returns the result. */
 export async function act<T extends object = object>(p: Promise<ActionResult<T>>, success?: string): Promise<ActionResult<T>> {
   try {
     const r = await p;
     if (r.ok) { if (success) toast.success(success); }
-    else toast.error(r.error);
+    else {
+      const error = actionErrorMessage(r.error);
+      toast.error(error);
+      return { ok: false, error };
+    }
     return r;
   } catch (e) {
-    const error = e instanceof Error ? e.message : "Something went wrong";
+    const error = actionErrorMessage(e instanceof Error ? e.message : "Something went wrong");
     toast.error(error);
     return { ok: false, error };
   }
