@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, ChevronDown, ClipboardCheck, FileText, Home, LogOut, Menu, Scale, Settings, Users, X } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronDown, ClipboardCheck, FileText, Handshake, Home, LogOut, Menu, Scale, Settings, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn, initials } from "@/lib/utils";
 import { Logo } from "./logo";
 import { SearchPalette } from "./search-palette";
 
-export function AppShell({ user, children }: { user: { name: string; email: string; role: string | null; workspace: string }; children: React.ReactNode }) {
+export function AppShell({ user, projects, children }: { user: { name: string; email: string; role: string | null; workspace: string }; projects: { id: string; name: string }[]; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -17,11 +17,12 @@ export function AppShell({ user, children }: { user: { name: string; email: stri
   const base = pid ? `/projects/${pid}` : "";
   const isHome = pid ? pathname === base || pathname.startsWith(`${base}/components`) || pathname.startsWith(`${base}/subsystems`) : pathname === "/dashboard" || pathname === "/projects";
   const nav = [
-    { href: pid ? base : "/dashboard", label: "Home", icon: Home, on: isHome },
+    { href: pid ? base : "/dashboard", label: pid ? projects.find((project) => project.id === pid)?.name ?? "Project overview" : "Home", icon: Home, on: isHome },
     { href: pid ? `${base}/research` : "/research", label: "Research", icon: BookOpen, on: pathname.startsWith(`${base}/research`) || (!pid && pathname.startsWith("/research")) },
     { href: pid ? `${base}/decisions` : "/decisions", label: "Decisions", icon: Scale, on: pathname.startsWith(`${base}/decisions`) || (!pid && pathname.startsWith("/decisions")) },
     { href: pid ? `${base}/reviews` : "/reviews", label: "Reviews", icon: ClipboardCheck, on: pathname.startsWith(`${base}/reviews`) || (!pid && pathname.startsWith("/reviews")) },
-    { href: pid ? `${base}/docs` : "/documentation", label: "Documentation", icon: FileText, on: pid ? ["/docs", "/handoff", "/files", "/assistant"].some((s) => pathname.startsWith(base + s)) : pathname.startsWith("/documentation") },
+    { href: pid ? `${base}/docs` : "/documentation", label: "Documentation", icon: FileText, on: pid ? ["/docs", "/files", "/assistant"].some((s) => pathname.startsWith(base + s)) : pathname.startsWith("/documentation") },
+    ...(pid ? [{ href: `${base}/handoff`, label: "Handoff", icon: Handshake, on: pathname.startsWith(`${base}/handoff`) }] : []),
   ];
 
   async function signOut() { await createClient().auth.signOut(); router.replace("/login"); router.refresh(); }
@@ -30,10 +31,11 @@ export function AppShell({ user, children }: { user: { name: string; email: stri
     <div className="flex h-full flex-col bg-sidebar text-white">
       <div className="flex h-14 items-center justify-between px-4"><Logo /><button className="rounded p-1 text-sidebar-foreground lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu"><X className="h-5 w-5" /></button></div>
       <nav className="flex-1 space-y-1 px-3 pt-3" aria-label="Main">
+        {pid && <Link href="/dashboard" onClick={() => setOpen(false)} className="mb-3 flex items-center gap-2 rounded-md px-3 py-2 text-xs text-sidebar-foreground hover:bg-sidebar-hover hover:text-white"><ArrowLeft className="h-3.5 w-3.5" />Application home</Link>}
         {nav.map((n) => (
           <Link key={n.label} href={n.href} onClick={() => setOpen(false)} aria-current={n.on ? "page" : undefined}
             className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors", n.on ? "bg-accent text-white" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white")}>
-            <n.icon className="h-4 w-4" />{n.label}
+            <n.icon className="h-4 w-4 shrink-0" /><span className="truncate">{n.label}</span>
           </Link>
         ))}
         {pid && <Link href="/projects" className="mt-3 block px-3 py-1.5 text-xs text-sidebar-foreground hover:text-white">← All projects</Link>}

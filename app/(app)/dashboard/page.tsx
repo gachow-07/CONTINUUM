@@ -10,7 +10,7 @@ import { loadAll } from "@/lib/bundle";
 import { requireSession } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Home" };
 
 export default async function Dashboard() {
   const { supabase, profile, user } = await requireSession();
@@ -31,11 +31,21 @@ export default async function Dashboard() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight"><Greeting name={first} /></h1>
           <p className="mt-1 max-w-xl text-[13px] text-muted-foreground">
-            Your engineering memory. Every source, revision, decision and review your team records is kept here — so the next engineer never has to start from scratch.
+            Pick up where your team left off. Open a project to explore its decisions, research, and handoff.
           </p>
         </div>
         <CreateProjectButton />
       </div>
+
+      <section aria-label="Your projects">
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-semibold">Your projects</h2><Link href="/projects" className="text-xs font-medium text-accent hover:underline">All projects →</Link></div>
+        {s.projects.length === 0 ? (
+          <EmptyState icon={FolderKanban} title="Create your first project" description="Start a project workspace, or explore a prepopulated example to see how Project Memory captures what was built and why."
+            action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{s.projects.slice(0, 6).map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>
+        )}
+      </section>
 
       <section aria-label="Knowledge overview" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((st) => (
@@ -45,16 +55,6 @@ export default async function Dashboard() {
             <p className="text-xs text-muted-foreground">{st.label}</p>
           </Link>
         ))}
-      </section>
-
-      <section aria-label="Active projects">
-        <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold">Active projects</h2><Link href="/projects" className="text-xs font-medium text-accent hover:underline">View all</Link></div>
-        {s.projects.length === 0 ? (
-          <EmptyState icon={FolderKanban} title="Create your first project" description="Start a project workspace, or explore a prepopulated example to see how Project Memory captures what was built and why."
-            action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{s.projects.slice(0, 6).map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>
-        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-5">

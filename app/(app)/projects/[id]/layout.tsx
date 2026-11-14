@@ -15,7 +15,7 @@ export default async function ProjectLayout({ children, params }: { children: Re
   const st = STATUS_META[p.status];
   return (
     <div className="animate-fade-in">
-      <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground"><Link href="/projects" className="hover:text-foreground">Projects</Link> <span className="mx-1">›</span> <Link href={`/projects/${id}`} className="hover:text-foreground">{p.name}</Link></nav>
+      <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground"><Link href="/dashboard" className="hover:text-foreground">Home</Link> <span className="mx-1">›</span> <Link href="/projects" className="hover:text-foreground">Projects</Link> <span className="mx-1">›</span> <Link href={`/projects/${id}`} className="hover:text-foreground">{p.name}</Link></nav>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
           <h1 className="text-2xl font-semibold tracking-tight">{p.name}</h1>
