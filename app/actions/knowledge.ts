@@ -75,6 +75,11 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
     if ((v.type === "url" || v.type === "article" || v.type === "paper") && !v.url && !v.file_path) return fail("Add a URL or upload a file for this source type");
     if (v.type === "note" && !v.content_text?.trim()) return fail("Write the note text");
     const c = await ctx();
+    if (v.subsystem_id) {
+      const { data: component, error } = await c.supabase.from("subsystems").select("id").eq("id", v.subsystem_id).eq("project_id", v.project_id).maybeSingle();
+      if (error) return fail("Could not verify the component. Please try again.");
+      if (!component) return fail("The component must belong to this project.");
+    }
     let content = v.content_text ?? null;
     let extracted = false;
     if (v.file_path && /\.pdf$/i.test(v.file_path)) {
@@ -91,11 +96,34 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
   } catch (e) { return fail(e); }
 }
 
-export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string }): Promise<ActionResult> {
+export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; content_text?: string; url?: string; site_name?: string; type?: "url" | "article" | "paper" }): Promise<ActionResult> {
   try {
     if (patch.title !== undefined && !patch.title.trim()) return fail("Title is required");
+    if (patch.title !== undefined && patch.title.trim().length > 300) return fail("Title is too long");
+    if (patch.description !== undefined && !z.string().max(4000).safeParse(patch.description).success) return fail("Description is too long");
+    if (patch.content_text !== undefined && !z.string().max(200_000).safeParse(patch.content_text).success) return fail("Excerpt or notes are too long");
+    if (patch.site_name !== undefined && !z.string().max(200).safeParse(patch.site_name).success) return fail("Website name is too long");
+    if (patch.type !== undefined && !z.enum(["url", "article", "paper"]).safeParse(patch.type).success) return fail("Invalid source type");
+    if (patch.url !== undefined) {
+      try { if (!["http:", "https:"].includes(new URL(patch.url).protocol)) return fail("Enter a valid http or https URL"); }
+      catch { return fail("Enter a valid http or https URL"); }
+    }
     const c = await ctx();
-    const { error } = await c.supabase.from("research_sources").update(patch).eq("id", id);
+    const changingWebFields = patch.url !== undefined || patch.site_name !== undefined || patch.type !== undefined;
+    if (changingWebFields) {
+      const { data: source, error } = await c.supabase.from("research_sources").select("type,file_path").eq("id", id).maybeSingle();
+      if (error || !source) return fail("Could not find the research source.");
+      if (source.file_path || !["url", "article", "paper"].includes(source.type)) return fail("Only website sources can change their URL, website name, or source type.");
+    }
+    if (patch.subsystem_id) {
+      if (!uuid.safeParse(patch.subsystem_id).success) return fail("Invalid component");
+      const { data: source, error: sourceError } = await c.supabase.from("research_sources").select("project_id").eq("id", id).maybeSingle();
+      if (sourceError || !source) return fail("Could not find the research source.");
+      const { data: component, error } = await c.supabase.from("subsystems").select("id").eq("id", patch.subsystem_id).eq("project_id", source.project_id).maybeSingle();
+      if (error) return fail("Could not verify the component. Please try again.");
+      if (!component) return fail("The component must belong to this project.");
+    }
+    const { error } = await c.supabase.from("research_sources").update({ ...patch, ...(patch.content_text !== undefined || patch.description !== undefined ? { ai_summary: null } : {}) }).eq("id", id);
     if (error) return fail(error.message);
     refresh();
     return { ok: true };
@@ -158,6 +186,28 @@ export async function createFileRecords(projectId: string, subsystemId: string |
     await logActivity(c, projectId, "file", rows.length === 1 ? `Uploaded ${rows[0].name}` : `Uploaded ${rows.length} files`, "file", rows[0]?.id);
     refresh();
     return { ok: true, count: rows.length, ids: rows.map((x) => x.id as string) };
+  } catch (e) { return fail(e); }
+}
+
+/** Link an existing project file to a decision without replacing its other evidence. */
+export async function linkFileToDecision(projectId: string, decisionId: string, fileId: string): Promise<ActionResult> {
+  try {
+    if (![projectId, decisionId, fileId].every((id) => uuid.safeParse(id).success)) return fail("Invalid project, decision, or file");
+    const c = await ctx();
+    const [decision, file] = await Promise.all([
+      c.supabase.from("design_decisions").select("id").eq("id", decisionId).eq("project_id", projectId).maybeSingle(),
+      c.supabase.from("files").select("id").eq("id", fileId).eq("project_id", projectId).maybeSingle(),
+    ]);
+    if (decision.error || file.error) return fail("Could not verify the decision and file. Please try again.");
+    if (!decision.data || !file.data) return fail("The decision and file must belong to this project.");
+    const { data: existing, error: lookupError } = await c.supabase.from("decision_evidence").select("id").eq("decision_id", decisionId).eq("file_id", fileId).limit(1);
+    if (lookupError) return fail(lookupError.message);
+    if (existing?.length) return { ok: true };
+    const { error } = await c.supabase.from("decision_evidence").insert({ project_id: projectId, decision_id: decisionId, kind: "file", file_id: fileId, note: "" });
+    if (error) return fail(error.message);
+    await logActivity(c, projectId, "decision", "Linked a file to a design decision", "decision", decisionId);
+    refresh();
+    return { ok: true };
   } catch (e) { return fail(e); }
 }
 
@@ -291,7 +341,14 @@ export async function deleteDecision(id: string): Promise<ActionResult> {
 /** Quick-link a research source to a decision from the Research Library. */
 export async function linkResearchToDecision(projectId: string, researchId: string, decisionId: string, note: string): Promise<ActionResult> {
   try {
+    if (![projectId, researchId, decisionId].every((id) => uuid.safeParse(id).success)) return fail("Invalid project, research, or decision");
     const c = await ctx();
+    const [research, decision] = await Promise.all([
+      c.supabase.from("research_sources").select("id").eq("id", researchId).eq("project_id", projectId).maybeSingle(),
+      c.supabase.from("design_decisions").select("id").eq("id", decisionId).eq("project_id", projectId).maybeSingle(),
+    ]);
+    if (research.error || decision.error) return fail("Could not verify the research and decision. Please try again.");
+    if (!research.data || !decision.data) return fail("Research and decision must belong to this project.");
     const { data: ex } = await c.supabase.from("decision_evidence").select("id").eq("decision_id", decisionId).eq("research_id", researchId).limit(1);
     if (ex?.length) return fail("This source is already linked to that decision");
     const { error } = await c.supabase.from("decision_evidence").insert({ project_id: projectId, decision_id: decisionId, kind: "research", research_id: researchId, note: note.trim() });

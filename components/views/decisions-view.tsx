@@ -1,19 +1,20 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CheckCircle2, ClipboardCheck, FlaskConical, Loader2, Pencil, Plus, Scale, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardCheck, FileUp, FlaskConical, Loader2, Pencil, Plus, Scale, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge, SampleBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DrawerContent } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { ConfirmDialog, EmptyState, SetupNotice } from "@/components/ui/misc";
-import { act } from "@/lib/client";
-import { deleteDecision, saveDecision } from "@/app/actions/knowledge";
+import { act, CATEGORY_LABEL, fileUrl, guessCategory, isImage, uploadToProject } from "@/lib/client";
+import { createClient } from "@/lib/supabase/client";
+import { createFileRecords, deleteDecision, linkFileToDecision, saveDecision } from "@/app/actions/knowledge";
 import { formatDate } from "@/lib/utils";
-import type { Alternative, Decision } from "@/lib/types";
+import type { Alternative, Decision, FileCategory, FileRow } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
-import { FilterSelect, NotDocumented, RefChip, SearchBox, Section, SubsystemTag, useOpenParam } from "./common";
+import { FileThumb, FilterSelect, NotDocumented, RefChip, SearchBox, Section, SubsystemTag, useOpenParam } from "./common";
 import { DECISION_STATUS } from "./meta";
 
 export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { scope: Scope; projectId?: string; subsystemId?: string; aiEnabled: boolean }) {
@@ -23,10 +24,11 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
   const [project, setProject] = useState(projectId ?? "");
   const [sub, setSub] = useState(subsystemId ?? "");
   const [status, setStatus] = useState("");
+  const [view, setView] = useState<"decisions" | "tradeoffs">("decisions");
 
   const rows = scope.decisions.filter((d) =>
     (!project || d.project_id === project) && (!sub || d.subsystem_id === sub) && (!status || d.status === status) &&
-    (!q || `${d.title} ${d.problem} ${d.selected_solution}`.toLowerCase().includes(q.toLowerCase())));
+    (!q || `${d.title} ${d.problem} ${d.selected_solution} ${d.alternatives.map((a) => `${a.name} ${a.reason_rejected}`).join(" ")}`.toLowerCase().includes(q.toLowerCase())));
   const selected = scope.decisions.find((d) => d.id === open) ?? null;
 
   return (
@@ -39,10 +41,33 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
         <Button variant="accent" onClick={() => setEditing("new")} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add decision</Button>
       </div>
 
+      <div className="mb-4 flex gap-1 border-b border-border" role="group" aria-label="Decision views">
+        {([ ["decisions", "Decisions"], ["tradeoffs", "Tradeoffs"] ] as const).map(([value, label]) => (
+          <button key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)} className={`-mb-px border-b-2 px-4 py-2.5 text-[13px] font-medium ${view === value ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{label}</button>
+        ))}
+      </div>
+
       {rows.length === 0 ? (
         <EmptyState icon={<Scale className="h-5 w-5" />} title={scope.decisions.length ? "No decisions match your filters" : "No design decisions yet"}
           description={scope.decisions.length ? "Try clearing a filter." : "Record what you decided, what you rejected, and why — with the research and revisions that back it up."}
           action={!scope.decisions.length && <Button variant="accent" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />Add decision</Button>} />
+      ) : view === "tradeoffs" ? (
+        <div className="space-y-4">
+          <p className="text-[13px] text-muted-foreground">Compare the recorded selection and alternatives for each decision. Missing details are shown as undocumented.</p>
+          {rows.map((d) => (
+            <section key={d.id} className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
+                <div><div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-semibold">{d.title}</h3><Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge>{d.is_sample && <SampleBadge />}</div>
+                  <p className="mt-1 text-[13px] text-muted-foreground">{d.problem || "No problem or design question documented."}</p></div>
+                <button type="button" onClick={() => setOpen(d.id)} className="text-xs font-medium text-accent hover:underline">Open decision →</button>
+              </div>
+              <div className="grid gap-3 p-4 md:grid-cols-2">
+                <div className="rounded-md border border-accent/30 bg-accent-soft/40 p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-accent">Recorded selection</p><p className="mt-1 text-sm font-medium">{d.selected_solution || "Not documented"}</p><p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{d.reasoning || "Reasoning not documented."}</p></div>
+                {d.alternatives.length ? d.alternatives.map((a, i) => <div key={i} className="rounded-md border border-border bg-background p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Alternative considered</p><p className="mt-1 text-sm font-medium">{a.name}</p><p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{a.reason_rejected ? `Reason not selected: ${a.reason_rejected}` : "Reason not selected is not documented."}</p></div>) : <div className="rounded-md border border-dashed border-border-strong p-3 text-xs text-muted-foreground">No alternatives documented. Open the decision to add them.</div>}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
           <ul className="divide-y divide-border">
@@ -85,6 +110,11 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
   const router = useRouter();
   const [del, setDel] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+  const [fileCategory, setFileCategory] = useState<FileCategory>("other");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [fileInputKey, setFileInputKey] = useState(0);
   const ev = scope.evidence.filter((e) => e.decision_id === d.id);
   const pid = d.project_id;
   const research = ev.filter((e) => e.kind === "research");
@@ -92,6 +122,33 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
   const files = ev.filter((e) => e.kind === "file");
   const sims = ev.filter((e) => e.kind === "simulation");
   const reviews = scope.reviews.filter((r) => r.decision_id === d.id);
+
+  async function uploadEvidence() {
+    if (!evidenceFile) return setUploadError("Choose a file to upload.");
+    if (evidenceFile.size > 50 * 1024 * 1024) return setUploadError("Files must be 50 MB or smaller.");
+    setUploading(true); setUploadError("");
+    let path: string | null = null;
+    try {
+      path = await uploadToProject(pid, evidenceFile);
+      const saved = await createFileRecords(pid, d.subsystem_id, [{ name: evidenceFile.name, storage_path: path, mime: evidenceFile.type || null, size: evidenceFile.size, category: fileCategory, description: "" }]);
+      if (!saved.ok || !saved.ids.length) {
+        const { error } = await createClient().storage.from("project-files").remove([path]);
+        setUploadError(`${saved.ok ? "File record was not created." : saved.error}${error ? " The uploaded file could not be cleaned up; ask a project owner to check storage." : ""}`);
+        return;
+      }
+      const linked = await linkFileToDecision(pid, d.id, saved.ids[0]);
+      setEvidenceFile(null); setFileInputKey((key) => key + 1);
+      if (!linked.ok) {
+        setUploadError(`The file was saved to project files but could not be linked: ${linked.error} Open Edit decision to link the saved file.`);
+        router.refresh();
+        return;
+      }
+      toast.success("File uploaded and linked to this decision");
+      router.refresh();
+    } catch (e) {
+      setUploadError(`${e instanceof Error ? e.message : "Upload failed."}${path ? " Check project files before retrying; the upload may have completed." : " Please try again."}`);
+    } finally { setUploading(false); }
+  }
 
   async function summarize() {
     setBusy(true);
@@ -118,9 +175,17 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
           <div className="space-y-3">
             {research.length > 0 && <div><p className="mb-1.5 text-xs font-medium text-muted-foreground">Research</p><ul className="space-y-1.5">{research.map((e) => { const r = scope.research.find((x) => x.id === e.research_id); return r && <li key={e.id}><RefChip projectId={pid} type="research" id={r.id} label={r.title} onNavigate={onClose} />{e.note && <p className="ml-1 mt-0.5 text-xs text-muted-foreground">↳ {e.note}</p>}</li>; })}</ul></div>}
             {revisions.length > 0 && <div><p className="mb-1.5 text-xs font-medium text-muted-foreground">Design revisions</p><ul className="space-y-1.5">{revisions.map((e) => { const r = scope.revisions.find((x) => x.id === e.revision_id); return r && <li key={e.id}><RefChip projectId={pid} type="revision" id={r.id} label={`${r.rev_label} — ${r.title}`} onNavigate={onClose} />{e.note && <p className="ml-1 mt-0.5 text-xs text-muted-foreground">↳ {e.note}</p>}</li>; })}</ul></div>}
-            {files.length > 0 && <div><p className="mb-1.5 text-xs font-medium text-muted-foreground">Files</p><ul className="space-y-1.5">{files.map((e) => { const f = scope.files.find((x) => x.id === e.file_id); return f && <li key={e.id}><RefChip projectId={pid} type="file" id={f.id} label={f.name} onNavigate={onClose} />{e.note && <p className="ml-1 mt-0.5 text-xs text-muted-foreground">↳ {e.note}</p>}</li>; })}</ul></div>}
+            {files.length > 0 && <div><p className="mb-1.5 text-xs font-medium text-muted-foreground">Files</p><ul className="space-y-3">{files.map((e) => { const f = scope.files.find((x) => x.id === e.file_id); return f && <li key={e.id} className="rounded-md border border-border p-3"><div className="flex flex-wrap items-center gap-2"><RefChip projectId={pid} type="file" id={f.id} label={f.name} onNavigate={onClose} /><Badge>{CATEGORY_LABEL[f.category]}</Badge>{f.is_sample && <SampleBadge />}</div>{isImage(f.mime, f.name) && <EvidenceImage file={f} aiEnabled={aiEnabled} />}<div className="mt-2 flex gap-4 text-xs font-medium text-accent"><a href={fileUrl(f.storage_path)} target="_blank" rel="noopener noreferrer" className="hover:underline">Open file</a><a href={fileUrl(f.storage_path, f.name)} className="hover:underline">Download</a></div>{e.note && <p className="mt-1 text-xs text-muted-foreground">↳ {e.note}</p>}</li>; })}</ul></div>}
             {sims.length > 0 && <div><p className="mb-1.5 text-xs font-medium text-muted-foreground">Simulation evidence notes</p><ul className="space-y-1.5">{sims.map((e) => <li key={e.id} className="flex gap-2 rounded-md bg-muted/60 p-2.5 text-xs"><FlaskConical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />{e.note}</li>)}</ul></div>}
           </div>)}
+        <div className="mt-4 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+          <p className="text-xs font-semibold">Upload supporting file</p>
+          <p className="text-xs text-muted-foreground">Add a CAD file, FEA or CFD result, image, or document (up to 50 MB). Images can be previewed; other files can be opened or downloaded.</p>
+          <input key={fileInputKey} type="file" aria-label="Supporting evidence file" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0] ?? null; setEvidenceFile(file); if (file) setFileCategory(guessCategory(file)); setUploadError(""); }} className="block w-full text-xs file:mr-3 file:rounded file:border file:border-border-strong file:bg-surface file:px-2 file:py-1 file:text-xs" />
+          {evidenceFile && <Select aria-label="Supporting file category" value={fileCategory} onChange={(e) => setFileCategory(e.target.value as FileCategory)}>{Object.entries(CATEGORY_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select>}
+          {uploadError && <p role="alert" className="text-xs text-danger">{uploadError}</p>}
+          <Button type="button" size="sm" variant="outline" loading={uploading} disabled={!evidenceFile} onClick={uploadEvidence}><FileUp className="h-3.5 w-3.5" />Upload and link</Button>
+        </div>
       </Section>
       <Section title="Peer reviews">
         {reviews.length === 0 ? <span className="text-muted-foreground">No reviews requested for this decision.</span> : <ul className="space-y-1.5">{reviews.map((r) => <li key={r.id}><RefChip projectId={pid} type="review" id={r.id} label={r.title} onNavigate={onClose} /></li>)}</ul>}
@@ -131,6 +196,31 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
       <ConfirmDialog open={del} onOpenChange={setDel} title="Delete this decision?" description="Evidence links are removed with it. Research, revisions and files are kept." onConfirm={async () => { const r = await act(deleteDecision(d.id), "Decision deleted"); if (r.ok) { onClose(); router.refresh(); } }} />
     </DrawerContent>
   );
+}
+
+function EvidenceImage({ file, aiEnabled }: { file: FileRow; aiEnabled: boolean }) {
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const supported = /\.(png|jpe?g|webp|gif)$/i.test(file.name) || ["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.mime ?? "");
+
+  async function describe() {
+    setBusy(true); setError(""); setDescription("");
+    try {
+      const res = await fetch("/api/ai/describe-image", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fileId: file.id }) });
+      const result = await res.json();
+      if (!res.ok) setError(result.error ?? "Could not describe this image.");
+      else setDescription(result.description);
+    } catch { setError("Could not reach the AI service. Please try again."); }
+    finally { setBusy(false); }
+  }
+
+  return <div className="mt-2 space-y-2">
+    <a href={fileUrl(file.storage_path)} target="_blank" rel="noopener noreferrer" className="block overflow-hidden rounded-md border border-border bg-muted"><FileThumb file={file} className="max-h-60 object-contain" /></a>
+    {supported && <><p className="text-[11px] text-muted-foreground">AI description sends this image to OpenAI. It may be inaccurate and is not engineering validation.</p><Button type="button" variant="outline" size="sm" onClick={describe} loading={busy} disabled={!aiEnabled}><Sparkles className="h-3.5 w-3.5" />Describe image with AI</Button>{!aiEnabled && <span className="ml-2 text-xs text-muted-foreground">AI is not configured.</span>}</>}
+    {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+    {description && <div className="rounded-md bg-accent-soft/50 p-3 text-xs leading-relaxed"><p className="mb-1 font-semibold">AI description · review before use</p><p className="whitespace-pre-wrap">{description}</p><p className="mt-2 text-muted-foreground">This description is not saved.</p></div>}
+  </div>;
 }
 
 interface AssistResult {
