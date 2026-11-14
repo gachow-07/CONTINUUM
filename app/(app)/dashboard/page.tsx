@@ -7,6 +7,7 @@ import { Greeting } from "@/components/shell/greeting";
 import { CreateProjectButton, LoadSampleButton } from "@/components/projects/project-dialogs";
 import { ProjectCard } from "@/components/projects/project-card";
 import { loadAll } from "@/lib/bundle";
+import { loadModel } from "@/lib/cad/load";
 import { requireSession } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ export const metadata = { title: "Dashboard" };
 export default async function Dashboard() {
   const { supabase, profile, user } = await requireSession();
   const s = await loadAll(supabase);
+  const displayedProjects = s.projects.slice(0, 6);
+  const models = new Map(await Promise.all(displayedProjects.map(async (project) => [project.id, await loadModel(supabase, project.id)] as const)));
   const first = (profile.full_name || user.email || "there").split(/[\s@]/)[0];
   const pending = s.reviews.filter((r) => ["pending", "in_review", "changes_requested"].includes(r.status)).length;
   const names = new Map(s.projects.map((p) => [p.id, p.name]));
@@ -53,7 +56,7 @@ export default async function Dashboard() {
           <EmptyState icon={<FolderKanban className="h-5 w-5" />} title="Create your first project" description="Start a project workspace, or explore a prepopulated example to see how CONTINUUM captures what was built and why."
             action={<div className="flex flex-wrap justify-center gap-2"><CreateProjectButton /><LoadSampleButton /></div>} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{s.projects.slice(0, 6).map((p) => <ProjectCard key={p.id} project={p} scope={s} />)}</div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{displayedProjects.map((p) => <ProjectCard key={p.id} project={p} scope={s} model={models.get(p.id)} />)}</div>
         )}
       </section>
 
