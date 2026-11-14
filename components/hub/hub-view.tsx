@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Layers } from "lucide-react";
 import { AddComponentButton } from "@/components/hub/add-component";
 import { AssemblyViewer, type HubComponent } from "@/components/hub/assembly-viewer";
+import { HubResearchPanel } from "@/components/hub/research-panel";
 import { ComponentIcon } from "@/components/hub/icons";
 import { LivingSummary, NeedsAttention, ReadinessPanel, reviewTone } from "@/components/hub/panels";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,7 @@ export function HubView({ b, parts, placeholder, tab }: { b: ProjectBundle; part
       {tab === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
+            <HubResearchPanel bundle={b} />
             <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />
             <LivingSummary b={b} comps={comps} />
           </div>
