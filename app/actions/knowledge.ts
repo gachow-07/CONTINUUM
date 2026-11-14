@@ -91,22 +91,25 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
   } catch (e) { return fail(e); }
 }
 
-export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; url?: string }): Promise<ActionResult> {
+export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; url?: string; content_text?: string }): Promise<ActionResult> {
   try {
     if (patch.title !== undefined && !patch.title.trim()) return fail("Title is required");
     const c = await ctx();
-    if (patch.url !== undefined) {
-      const url = patch.url.trim();
-      let parsed: URL;
-      try { parsed = new URL(url); } catch { return fail("Enter a valid URL starting with http:// or https://"); }
-      if (!["http:", "https:"].includes(parsed.protocol)) return fail("Enter a URL starting with http:// or https://");
+    if (patch.url !== undefined || patch.content_text !== undefined) {
+      if (patch.content_text !== undefined && patch.content_text.length > 200_000) return fail("Content is too long");
+      if (patch.url !== undefined) {
+        const url = patch.url.trim();
+        let parsed: URL;
+        try { parsed = new URL(url); } catch { return fail("Enter a valid URL starting with http:// or https://"); }
+        if (!["http:", "https:"].includes(parsed.protocol)) return fail("Enter a URL starting with http:// or https://");
+        patch.url = url;
+      }
       const { data: source, error: sourceError } = await c.supabase.from("research_sources").select("project_id,is_sample,url").eq("id", id).maybeSingle();
       if (sourceError) return fail(sourceError.message);
-      if (!source?.is_sample || !source.url) return fail("Only existing sample research links can be edited here");
+      if (!source?.is_sample || (patch.url !== undefined && !source.url)) return fail("Only sample research can be edited here");
       const { data: project, error: projectError } = await c.supabase.from("projects").select("is_sample").eq("id", source.project_id).maybeSingle();
       if (projectError) return fail(projectError.message);
       if (!project?.is_sample) return fail("This link is not in a sample project");
-      patch.url = url;
     }
     const { data, error } = await c.supabase.from("research_sources").update(patch).eq("id", id).select("id").maybeSingle();
     if (error) return fail(error.message);
