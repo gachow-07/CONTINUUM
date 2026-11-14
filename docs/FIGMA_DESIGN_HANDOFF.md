@@ -18,6 +18,8 @@ This is a working design reference for CONTINUUM / Project Memory. The Figma scr
 
 Application home lists projects and is separate from a specific project's hub. Project navigation identifies the project (for example, RC Car Design) and provides Research, Decisions, Reviews, Documentation and Handoff. A component workspace brings the 3D context, decisions, research, revisions and review status together. Handoff is a first-class destination for orientation, outstanding issues, next steps and documentation readiness.
 
+Future screens and flows should follow the [engineering knowledge and handoff product direction](ENGINEERING_HANDOFF_PRODUCT_DIRECTION.md), including the design review checklist.
+
 ## Integration guidance
 
 - Treat the designs as direction, not a complete specification. Confirm responsive behavior, empty/loading/error states, permissions and interaction details with the team.
