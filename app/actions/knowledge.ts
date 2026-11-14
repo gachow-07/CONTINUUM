@@ -75,6 +75,11 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
     if ((v.type === "url" || v.type === "article" || v.type === "paper") && !v.url && !v.file_path) return fail("Add a URL or upload a file for this source type");
     if (v.type === "note" && !v.content_text?.trim()) return fail("Write the note text");
     const c = await ctx();
+    if (v.subsystem_id) {
+      const { data: component, error } = await c.supabase.from("subsystems").select("id").eq("id", v.subsystem_id).eq("project_id", v.project_id).maybeSingle();
+      if (error) return fail("Could not verify the component. Please try again.");
+      if (!component) return fail("The component must belong to this project.");
+    }
     let content = v.content_text ?? null;
     let extracted = false;
     if (v.file_path && /\.pdf$/i.test(v.file_path)) {
@@ -91,11 +96,20 @@ export async function createResearch(input: z.input<typeof researchSchema>): Pro
   } catch (e) { return fail(e); }
 }
 
-export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string }): Promise<ActionResult> {
+export async function updateResearch(id: string, patch: { title?: string; subsystem_id?: string | null; tags?: string[]; why_important?: string; description?: string; content_text?: string }): Promise<ActionResult> {
   try {
     if (patch.title !== undefined && !patch.title.trim()) return fail("Title is required");
+    if (patch.content_text !== undefined && !z.string().max(200_000).safeParse(patch.content_text).success) return fail("Excerpt or notes are too long");
     const c = await ctx();
-    const { error } = await c.supabase.from("research_sources").update(patch).eq("id", id);
+    if (patch.subsystem_id) {
+      if (!uuid.safeParse(patch.subsystem_id).success) return fail("Invalid component");
+      const { data: source, error: sourceError } = await c.supabase.from("research_sources").select("project_id").eq("id", id).maybeSingle();
+      if (sourceError || !source) return fail("Could not find the research source.");
+      const { data: component, error } = await c.supabase.from("subsystems").select("id").eq("id", patch.subsystem_id).eq("project_id", source.project_id).maybeSingle();
+      if (error) return fail("Could not verify the component. Please try again.");
+      if (!component) return fail("The component must belong to this project.");
+    }
+    const { error } = await c.supabase.from("research_sources").update({ ...patch, ...(patch.content_text !== undefined ? { ai_summary: null } : {}) }).eq("id", id);
     if (error) return fail(error.message);
     refresh();
     return { ok: true };
@@ -291,7 +305,14 @@ export async function deleteDecision(id: string): Promise<ActionResult> {
 /** Quick-link a research source to a decision from the Research Library. */
 export async function linkResearchToDecision(projectId: string, researchId: string, decisionId: string, note: string): Promise<ActionResult> {
   try {
+    if (![projectId, researchId, decisionId].every((id) => uuid.safeParse(id).success)) return fail("Invalid project, research, or decision");
     const c = await ctx();
+    const [research, decision] = await Promise.all([
+      c.supabase.from("research_sources").select("id").eq("id", researchId).eq("project_id", projectId).maybeSingle(),
+      c.supabase.from("design_decisions").select("id").eq("id", decisionId).eq("project_id", projectId).maybeSingle(),
+    ]);
+    if (research.error || decision.error) return fail("Could not verify the research and decision. Please try again.");
+    if (!research.data || !decision.data) return fail("Research and decision must belong to this project.");
     const { data: ex } = await c.supabase.from("decision_evidence").select("id").eq("decision_id", decisionId).eq("research_id", researchId).limit(1);
     if (ex?.length) return fail("This source is already linked to that decision");
     const { error } = await c.supabase.from("decision_evidence").insert({ project_id: projectId, decision_id: decisionId, kind: "research", research_id: researchId, note: note.trim() });
