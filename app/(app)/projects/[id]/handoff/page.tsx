@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AlertTriangle, ArrowRight, FileDown, Lightbulb } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
-import { Badge } from "@/components/ui/badge";
+import { Badge, SampleBadge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
 import { NotesPanel } from "@/components/views/notes-panel";
 import { DECISION_STATUS, REVISION_KIND } from "@/components/views/meta";
@@ -33,6 +33,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
   const keyRevs = [...b.revisions].sort((a, c) => a.occurred_on.localeCompare(c.occurred_on));
   const gaps = undocumented.length + noEvidence.length + openIssues.length;
   const backgrounds = b.notes.filter((n) => n.kind === "background");
+  const linkedResearch = b.research.filter((source) => b.evidence.some((e) => e.research_id === source.id && b.decisions.some((d) => d.id === e.decision_id)));
 
   return (
     <div className="space-y-8">
@@ -79,6 +80,19 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
                     <p className="mt-1 text-[13px] text-muted-foreground">{d.reasoning ? d.reasoning.slice(0, 220) + (d.reasoning.length > 220 ? "…" : "") : <span className="text-warning">No reasoning was recorded for this decision.</span>}</p>
                     <p className="mt-1.5 text-[11px] text-muted-foreground">{sub(d.subsystem_id) ?? "No subsystem"} · {alts} alternative{alts === 1 ? "" : "s"} rejected · {evCount(d.id)} evidence link{evCount(d.id) === 1 ? "" : "s"}</p>
                   </Link></li>);
+              })}</ul>)}
+          </Card>
+
+          <Card>
+            <CardHeader title="Research behind decisions" description="Saved sources connected to design decisions" action={<Link href={`/projects/${id}/research`} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline">All research <ArrowRight className="h-3 w-3" /></Link>} />
+            {linkedResearch.length === 0 ? <p className="p-5 text-[13px] text-muted-foreground">No research is linked to a decision yet. Connect a source to a decision in Research to show it here.</p> : (
+              <ul className="divide-y divide-border">{linkedResearch.map((source) => {
+                const decisions = b.decisions.filter((d) => b.evidence.some((e) => e.research_id === source.id && e.decision_id === d.id));
+                return <li key={source.id} className="space-y-2 px-5 py-4">
+                  <div className="flex flex-wrap items-center gap-2"><Link href={refHref(id, "research", source.id)} className="text-[13px] font-semibold text-accent hover:underline">{source.title}</Link>{source.is_sample && <SampleBadge />}</div>
+                  <p className="text-[13px] text-muted-foreground">{source.why_important || "The team has not recorded why this source matters."}</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><span>Linked decisions:</span>{decisions.map((decision) => <Link key={decision.id} href={refHref(id, "decision", decision.id)} className="rounded-md border border-border bg-muted px-2 py-1 text-foreground hover:border-accent hover:text-accent">{decision.title}</Link>)}</div>
+                </li>;
               })}</ul>)}
           </Card>
 
