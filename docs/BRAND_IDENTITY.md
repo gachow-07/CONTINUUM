@@ -1,103 +1,133 @@
-# Project Memory — Brand Identity
+# CONTINUUM / Project Memory — brand identity
 
-**Working draft · 13 November 2026**  
-Project Memory is a working name. The repository is named CONTINUUM; final product and company naming are open decisions.
+**Working draft for team discussion · 14 November 2026**
+Names and visual choices are provisional. This document records a direction to test, not an approved brand system.
 
-## Purpose
-Help engineering teams preserve the reasoning behind their work so the next person can understand decisions and continue confidently.
+## The idea
 
-## Audience
-Initial hypothesis: student engineering teams and their incoming members. Other engineering teams with long-running, collaborative projects may also benefit; validate these audiences through interviews.
+Engineering work is easier to carry forward when people can find not only what changed, but why. CONTINUUM / Project Memory connects components and 3D views with the research, decisions, revisions, reviews, and handoff information behind them.
 
-## The problem
-Project knowledge gets scattered across files, conversations, and the memories of individual engineers. When team members leave, the next team can struggle to understand what changed, why a choice was made, and what still needs attention.
+**Working promise:** Understand why decisions were made, so the next engineer can continue the work.
 
-## Positioning — draft
-For engineering teams that need to carry knowledge forward, Project Memory is a collaborative project workspace that connects design decisions, research, reviews, and revisions to the components they concern. It helps a new teammate find both the work and the reasoning behind it.
+**Positioning:** For student and professional engineering teams working on shared physical projects, CONTINUUM / Project Memory is an engineering workspace that connects project knowledge to the components it concerns. It helps teammates understand decisions in context and pick up the work with a clearer view of what is known, what changed, and what remains open.
 
-## Brand promise — draft
-Make the reasoning behind the work easier to find, understand, and carry forward.
+**Short description:** An engineering workspace for understanding the reasoning behind the work.
 
-## Personality — hypotheses to test
-- Clear: make complex information easier to navigate.
-- Trustworthy: distinguish documented facts, interpretations, and gaps.
-- Capable: respect the technical work and the people doing it.
-- Forward-looking: help the next teammate take the next step.
-- Approachable: welcome a new team member without talking down to experts.
+**Presentation headline to test:** Understand the decision. Continue the work.
 
-## Voice and tone — initial direction
-Use direct, precise, human language. Lead with useful information, explain unfamiliar terms, and acknowledge uncertainty. Avoid presenting documentation completeness as engineering approval or sample data as real results.
+**Supporting copy:** Explore an assembly, follow the decisions behind its components, and see what the next engineer needs to know.
 
-Example: “No reasoning has been recorded for this decision yet.”
+These are proposed words, not claims of verified outcomes. The product's value depends on teams recording and maintaining the context.
 
-## Visual identity — to explore
-Do not finalize a palette, typeface, logo, or imagery until we review brand references together. Explore how the identity can convey clarity, continuity, engineering precision, and a welcoming sense of progress. Any chosen colors and typography should support readable, accessible product interfaces.
+## Audience and use
 
-## Reference collection
-For each brand, add a link or image and note what appeals to you: color, type, layout, logo, imagery, interaction, or overall feeling. Also note anything you would not want to copy.
+The intended audience includes both **student engineering teams** and **professional hardware engineering teams** from the start. This is a strategic choice to test, not evidence that the two groups have identical needs.
 
-| Reference | What works | What to avoid or adapt | Possible application |
+- **Incoming engineer or student:** needs orientation, the rationale for current choices, and open questions.
+- **Current contributor or component owner:** needs a practical way to connect decisions and evidence to their work.
+- **Team lead, reviewer, or handoff owner:** needs visibility into documented context, unresolved reviews, and what the next person should examine.
+
+A useful shared moment: an engineer selects a component, sees the design choice, follows its sources and revision history, and identifies what still needs attention. Interview both audiences about how they record decisions, where handoffs fail, what they consider trustworthy, and what would make recording context worthwhile. Check whether permissions, formal review, and integration needs diverge before assuming a single workflow serves both equally.
+
+## Brand character
+
+| Quality | In practice | Avoid |
+|---|---|---|
+| Clear | Give the answer a place, name the source, and expose the next step. | Dense labels, vague status, unexplained shorthand. |
+| Capable | Respect engineering detail and show relationships precisely. | Decorative technical complexity or inflated claims. |
+| Trustworthy | Show provenance, dates, uncertainty, gaps, and separate states. | Implying an unrecorded reason or treating completeness as approval. |
+| Approachable | Orient new teammates in plain language without simplifying away the work. | Talking down to experienced engineers. |
+| Forward-looking | Connect the history to an actionable next step. | Framing the product as an archive alone. |
+
+The desired impression is a thoughtful engineering teammate: composed, specific, and helpful under uncertainty.
+
+## Voice
+
+Write directly and use familiar engineering language. Lead with the useful fact, then give context or an action. Use active verbs, short labels, and neutral language when information is missing. Make authorship and evidence visible when available. Be confident about what the product shows and candid about what it does not know.
+
+| Situation | Try | Avoid |
+|---|---|---|
+| Missing context | “No reasoning has been recorded for this decision yet.” | “Decision invalid.” |
+| Next step | “Add why the steering revision changed.” | “Fix your incomplete project.” |
+| Handoff | “Three open questions need attention.” | “Your project is ready to ship.” |
+| Documentation | “Documentation complete. Engineering approval is tracked separately.” | “Approved” or “Engineering ready” for a documentation checklist. |
+| Generated summary | “Review this summary against the linked project records.” | “All project details verified.” |
+
+Use **decision**, **reasoning**, **source**, **revision**, **review**, and **handoff** consistently. Define a term in context when its meaning is specific to the product. Prefer “documented” or “ready for handoff” with a clear definition over an unqualified “ready.” A documentation checklist can report recorded information; it cannot establish engineering approval.
+
+## Visual direction: working principles
+
+The current concept points toward a focused engineering workspace: charcoal surfaces, restrained borders, blue highlights, a modern sans serif, and a prominent assembly. Use these as starting conditions for exploration, not final specifications.
+
+1. **Make the work the visual anchor.** Let a component or assembly lead the composition when it helps explain a decision. Show the path from part to evidence.
+2. **Create calm hierarchy.** Use space, readable type, and restrained surface changes to organize complex material. Reserve emphasis for the current task, selection, and important state.
+3. **Make trust visible.** Present sources, timestamps, revision identifiers, open questions, and review state where they help interpretation. Do not rely on color alone.
+4. **Balance precision with welcome.** Use technical imagery and structured layouts without turning every surface into a schematic or a wall of data.
+5. **Design for actual reading.** Test text and control contrast, focus states, small sizes, keyboard navigation, and legibility of the 3D markers. Final values need accessibility testing in context.
+
+### Three routes to explore
+
+These are moodboard directions, not finalized palettes, logos, or type selections. Each can support a dark app and mostly dark presentation.
+
+| Route | Character | Visual cues | Question to test |
 |---|---|---|---|
-| To be added | | | |
+| **01 / Focused workspace** | Quiet, capable, contemporary | Layered charcoal surfaces, fine borders, selective blue, generous headline space; the assembly provides visual interest. | Does it feel distinctive enough while staying clear in a dense workspace? |
+| **02 / Connected evidence** | Analytical, transparent, traceable | Component details connected to source snippets, revision trails, and sparse linework; restrained accent used to trace a relationship. | Can the relationships be understood without creating visual clutter? |
+| **03 / Continuity in motion** | Human, purposeful, progressive | A sequence from component to decision to next action; deliberate cropping, editorial scale, subtle transitions in digital presentations. | Does it feel active and welcoming without suggesting the product automatically guarantees continuity? |
 
-## Deliverables to develop
-1. Brand positioning, personality, and voice.
-2. Moodboard and two or three distinct visual directions.
-3. Selected palette, typography, logo direction, imagery, and accessibility guidance.
-4. UI foundations and components applied to representative product screens.
-5. A concise handoff with design tokens, assets, and usage examples.
+Explore routes with the same sample content and compare readability, distinctiveness, and fit for both audiences. They can inform one another; the team does not need to choose one wholesale.
 
-## Open questions
-- Is CONTINUUM the company name, product name, or repository name? Is Project Memory a temporary name?
-- Who is the first audience, and what should they feel when using the product?
-- Which reference brands and products feel right, and which specific qualities appeal to you?
-- Where will the brand appear first: the application, a website, a pitch deck, or all three?
-- What are the team's timeline, budget, and accessibility requirements?
+### Type, color, and mark
 
-## Design direction and team handoff
+- **Typography:** The Deloitte Engineering reference is about the lighter large heading and stronger hierarchy; its exact typeface is unknown. Inter is a mockup placeholder. Compare a small set of modern sans serifs at headline, body, dense table, and small-label sizes; evaluate weights, numerals, availability, and licensing before choosing.
+- **Color:** Charcoal and blue are the current direction, not a locked palette. Explore alternative hues and contrast levels through real interface states and slides. Define semantic roles only after testing; never make color the sole signal for status.
+- **Logo and naming:** The team prefers the original third concept: three repeated, open, angled modular forms suggesting continuity and work carried forward. Preserve the shape of that original concept when developing or using the symbol; subsequent redrawn variations did not match the preferred original. The selected direction is provisional, not a finalized logo. Transparent raster exports have been prepared for presentations and app exploration; verify small-size legibility and develop faithful vector artwork before finalizing. The diamond in the Figma concepts is not the chosen logo. Names and wordmarks remain open; test pronunciation, meaning, distinctiveness, and practical availability before selection. No trademark or domain clearance has been performed.
+- **Imagery:** Prefer real project assemblies, component detail, and evidence relationships where permission and fidelity allow. Use illustrative sample data clearly labeled as such. The Figma 3D assembly is a placeholder, not a finished product asset.
 
-Working direction · for team discussion. Product naming, logo, final typeface, and color palette remain open.
+## Application expression
 
-## Product concept
+- **Project hub:** Make the assembly a meaningful entry point to project knowledge. Pair selections or markers with component names and accessible list navigation; a 3D view should not be the only way to find information.
+- **Component workspace:** Put “why this design?” near the selected component, with links to decisions, sources, revisions, and open reviews. Differentiate recorded fact from interpretation and missing information.
+- **Status and handoff:** Label documentation readiness explicitly and show engineering review or approval separately. Present open questions and next steps with their owners or sources when available.
+- **Interface hierarchy:** Keep navigation predictable; distinguish primary actions, selections, and warnings in text and shape as well as color. Maintain readable density and visible focus states.
+- **Empty and generated states:** State what is missing and how to add it. When summaries are generated, identify them as such and link back to underlying records for review.
 
-A project workspace that helps engineering teams connect physical components to the decisions, research, revisions, and reviews behind them, so knowledge carries forward.
+These are proposed experience principles; the current Figma screens are static concepts, not evidence of implemented behavior.
 
-## Visual direction
+## Presentation expression
 
-- Dark charcoal surfaces and subtle borders create a focused engineering workspace.
+**Preference: mostly dark**, with the same focused atmosphere as the product. Use light text and restrained accents, but leave exact colors and typography open. Allow occasional lighter diagrams or panels where they make a complex idea easier to read.
 
-- Bright blue accents highlight navigation, progress, selections, and primary actions.
+A concise narrative to prototype:
 
-- A prominent 3D assembly connects components to project knowledge through markers.
+1. **The problem:** The design survives; the reasons can be scattered across people, files, and conversations.
+2. **The promise:** Understand why decisions were made. Continue the work.
+3. **The product:** Show a labeled sample assembly leading to a component and its decision, source, and revision.
+4. **The handoff:** Show what is known, what is missing, and the next action. Distinguish documentation from approval.
+5. **The audience:** Show both student and professional team contexts as intended audiences, without presenting unvalidated adoption as fact.
+6. **The ask or next step:** Invite feedback on the workflow, identity, and open decisions.
 
-- Cards, tabs, and navigation organize dense information; readiness, reviews, and issues make gaps visible.
+Use one clear message per slide, strong reading hierarchy, and product imagery large enough to see. Keep small UI screenshots from becoming the only evidence of the story. Label mockups and sample content; avoid invented metrics or claims.
 
-- Documentation readiness is not engineering approval.
+## What exists and what we learned
 
-## Typography
+- The [working brand brief](https://github.com/gachow-07/CONTINUUM/blob/frontend/app-home-project-hub/docs/BRAND_IDENTITY.md) already establishes the purpose, provisional naming, initial student-team hypothesis, careful voice, and separation of documentation readiness from approval.
+- The [Figma concepts](https://www.figma.com/design/Ti5JKelG61EeFJHxsX17jr) include a project hub, component workspace, research, decisions, reviews, documentation, application home, and handoff. The hub's assembly placeholder connects markers to project knowledge; the component view asks “Why this design?”; the handoff surfaces next steps and explicitly distinguishes documentation readiness from engineering approval.
+- For this draft, the intended audience was broadened to student and professional teams equally; the central promise was prioritized around understanding why decisions were made; and the presentation preference was set to mostly dark.
+- The Deloitte screenshot has not yet been reviewed directly, so its typography is described as reported.
 
-Reference: the Deloitte Engineering screenshot. The desired feel is a clean, modern sans serif, with lighter large headings and stronger weights for emphasis. The exact reference typeface has not been identified. Inter is provisional in the Figma mockups, not a final choice. Test readability and accessibility at small sizes.
+## Open decisions and reference log
 
-## References
+**Still open:** product and company naming; final logo artwork, typeface, palette, imagery, accessibility specifications, and whether one visual route or a combination best expresses the brand. Validate audience needs, core workflow, and language with both groups before treating these hypotheses as settled.
 
-Project Memory hub and component workspace image: dark technical UI, blue highlights, a 3D-centered hub, component knowledge, and visible documentation status. The realistic vehicle is a visual reference, not a finished asset in the current app.
+| Reference | What resonates | What to avoid or adapt | Application |
+|---|---|---|---|
+| Deloitte Engineering screenshot (user-described; image not yet reviewed) | Lightweight heading and stronger text hierarchy | Exact font unknown; green graphic and palette not selected | Type exploration |
+| Project Memory Figma concepts | Assembly-to-knowledge structure; explicit handoff and status language | Static mockups and placeholder assembly | Product and presentation |
+| Add future reference | | | |
 
-Deloitte Engineering: typography is the selected reference. Its green graphic and palette have not been chosen as brand elements.
+**Next discussion:** Collect references and note the specific traits that work. Compare the three routes with a shared component-to-decision example, then test type and color in real app and presentation contexts before making final selections.
 
-## Figma concept screens
+## Remaining handoff work
 
-Editable concepts: https://www.figma.com/design/Ti5JKelG61EeFJHxsX17jr
-
-The application home, project hub, component workspace, research, decisions, reviews, documentation, and handoff screens use illustrative RC car content. The hub’s 3D assembly is a placeholder. Screens are static mockups, not yet a clickable prototype or a working app.
-
-## Decisions for the team
-
-- Confirm whether CONTINUUM or Project Memory is the product name.
-
-- Validate the first audience and most important user flow.
-
-- Decide whether the dark direction should extend to the website and presentations.
-
-- Choose and test a final typeface, accessible palette, logo, and imagery.
-
-- Review the Figma screens, identify missing workflows, and prioritize implementation.
+Develop a moodboard from additional references, compare the visual directions, test a final typeface and accessible palette, and prepare faithful vector logo artwork and reusable design assets. Define and validate UI foundations and tokens in representative screens. Review the most important workflow and responsive, empty, loading, and error states with the team. Confirm timeline, budget, accessibility requirements, and whether the dark direction extends to a website.
