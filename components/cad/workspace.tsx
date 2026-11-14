@@ -49,6 +49,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
   const [histLen, setHistLen] = useState({ undo: 0, redo: 0 });
   const [status, setStatus] = useState<Status>(project && initialParts ? "saved" : "local");
   const [isSample, setIsSample] = useState(!initialParts);
+  const [showSampleDetails, setShowSampleDetails] = useState(true);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");
@@ -249,7 +250,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
               <Sep />
               {([["front", "Front (1)"], ["side", "Side (2)"], ["top", "Top (3)"], ["iso", "Isometric (4)"]] as const).map(([v, tip]) => (
                 <IconBtn key={v} tip={`${tip}`} onClick={() => setView(v)} className="px-2 text-[11.5px] font-medium">{v === "iso" ? "Iso" : v[0].toUpperCase() + v.slice(1)}</IconBtn>))}
-              <IconBtn tip="Fit to view (F)" onClick={() => setView("fit")}><Scan /></IconBtn>
+              <IconBtn tip="Fit to view (F)" onClick={() => setView("fit")} className="px-2 text-[11.5px] font-medium"><Scan />Fit</IconBtn>
               <IconBtn tip="Reset camera" onClick={() => setView("iso")}><RotateCcw /></IconBtn>
               <Sep />
               <IconBtn tip="Ground grid" active={showGrid} onClick={() => setShowGrid((g) => !g)}><Grid3x3 /></IconBtn>
@@ -260,7 +261,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
           {isSample && (
             <div className="absolute left-3 top-14 z-10 flex max-w-[260px] items-start gap-2 rounded-lg border border-[var(--c-line2)] bg-[var(--c-panel)]/90 px-3 py-2 text-[11.5px] leading-snug backdrop-blur">
               <Maximize className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--c-accent)]" />
-              <span><b className="font-semibold">Sample assembly.</b> <span className="text-[var(--c-muted)]">Illustrative RC buggy, not a real design. {project ? "Edit it, then Save to project to keep it." : "Sign in to save your own."}</span></span>
+              <span><b className="font-semibold">Sample assembly.</b>{showSampleDetails && <> <span className="text-[var(--c-muted)]">Illustrative RC buggy, not a real design. {project ? "Edit it, then Save to project to keep it." : "Sign in to save your own."}</span></>} <button type="button" onClick={() => setShowSampleDetails((shown) => !shown)} aria-expanded={showSampleDetails} className="font-medium text-[var(--c-accent)] hover:underline">{showSampleDetails ? "Show less" : "Details"}</button></span>
             </div>)}
 
           {ready && !anyVisible && (
