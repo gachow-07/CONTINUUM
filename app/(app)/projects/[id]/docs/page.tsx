@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DocsView } from "@/components/views/docs-view";
 import { loadBundle } from "@/lib/bundle";
 import { openaiConfigured } from "@/lib/env";
+import { DocTabs } from "@/components/hub/doc-tabs";
 import { requireSession } from "@/lib/session";
 import { scopeFromBundle } from "@/lib/scope";
 
@@ -11,5 +12,5 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { supabase } = await requireSession();
   const b = await loadBundle(supabase, id);
   if (!b) notFound();
-  return <DocsView scope={scopeFromBundle(b)} projectId={id} aiEnabled={openaiConfigured()} />;
+  return <><DocTabs projectId={id} /><DocsView scope={scopeFromBundle(b)} projectId={id} aiEnabled={openaiConfigured()} /></>;
 }

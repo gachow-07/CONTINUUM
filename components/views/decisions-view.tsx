@@ -55,7 +55,7 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
                   <button onClick={() => setOpen(d.id)} className="flex w-full items-start gap-3.5 px-5 py-4 text-left transition-colors hover:bg-muted/60">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2"><p className="text-[13px] font-semibold">{d.title}</p>{d.is_sample && <SampleBadge />}</div>
-                      <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground"><span className="font-medium text-[#344054]">Selected:</span> {d.selected_solution || "—"}</p>
+                      <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground"><span className="font-medium text-foreground">Selected:</span> {d.selected_solution || "—"}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge><SubsystemTag id={d.subsystem_id} subsystems={scope.subsystems} />
                         <span>{d.author_name} · {formatDate(d.decided_on)}</span>
@@ -217,7 +217,7 @@ function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, on
                 {ai.summary && <p><span className="font-medium">Summary: </span>{ai.summary}</p>}
                 <Button size="sm" variant="outline" onClick={applyOrganized}>Apply organized text to the form</Button>
                 {ai.missing.length > 0 && <div><p className="mb-1 font-medium text-warning">Missing information</p><ul className="space-y-1">{ai.missing.map((m, i) => <li key={i} className="flex gap-2 text-xs"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /><span><span className="font-medium capitalize">{m.field.replace(/_/g, " ")}:</span> {m.question}</span></li>)}</ul></div>}
-                {ai.questions.length > 0 && <div><p className="mb-1 font-medium">Questions a future engineer will ask</p><ul className="list-disc space-y-0.5 pl-5 text-xs text-[#344054]">{ai.questions.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+                {ai.questions.length > 0 && <div><p className="mb-1 font-medium">Questions a future engineer will ask</p><ul className="list-disc space-y-0.5 pl-5 text-xs text-foreground">{ai.questions.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
                 {ai.suggested_evidence.length > 0 && <div><p className="mb-1 font-medium">Possibly related records <span className="font-normal text-muted-foreground">(you decide whether they support it)</span></p>
                   <ul className="space-y-1.5">{ai.suggested_evidence.map((s) => { const key = `${s.kind}:${s.id}`; const on = key in ev; return <li key={key} className="flex items-start justify-between gap-2 rounded-md bg-surface p-2 text-xs"><span><span className="font-medium">{s.title}</span> <span className="text-muted-foreground">— {s.why}</span></span><Button size="sm" variant={on ? "outline" : "accent"} onClick={() => on ? toggle(key) : setEv((p) => ({ ...p, [key]: s.why }))}>{on ? "Linked" : "Link"}</Button></li>; })}</ul></div>}
               </div>)}
@@ -244,7 +244,7 @@ function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, on
           <Field label="Reasoning" hint="Why this solution over the alternatives?"><Textarea value={f.reasoning} onChange={(e) => set("reasoning", e.target.value)} className="min-h-[100px]" /></Field>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-[#344054]">Supporting evidence</p>
+            <p className="mb-2 text-xs font-medium text-foreground">Supporting evidence</p>
             <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
               <div><p className="mb-1.5 text-xs font-semibold text-muted-foreground">Research</p>{research.length === 0 ? <p className="text-xs text-muted-foreground">No research in this project yet.</p> : <ul className="space-y-1.5">{research.map((r) => check(`research:${r.id}`, r.title))}</ul>}</div>
               <div><p className="mb-1.5 text-xs font-semibold text-muted-foreground">Relevant CAD / design revisions</p>{revisions.length === 0 ? <p className="text-xs text-muted-foreground">No revisions yet.</p> : <ul className="space-y-1.5">{revisions.map((r) => check(`revision:${r.id}`, `${r.rev_label} — ${r.title}`))}</ul>}</div>

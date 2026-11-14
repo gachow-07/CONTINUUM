@@ -1,14 +1,7 @@
-import { notFound } from "next/navigation";
-import { SubsystemsView } from "@/components/views/subsystems-view";
-import { loadBundle } from "@/lib/bundle";
-import { requireSession } from "@/lib/session";
-import { scopeFromBundle } from "@/lib/scope";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Subsystems" };
+// Subsystems are now "Components" on the project hub.
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase } = await requireSession();
-  const b = await loadBundle(supabase, id);
-  if (!b) notFound();
-  return <SubsystemsView scope={scopeFromBundle(b)} projectId={id} />;
+  redirect(`/projects/${id}?tab=components`);
 }

@@ -24,7 +24,7 @@ export function Spinner({ className }: { className?: string }) {
 
 export function SetupNotice({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3 rounded-lg border border-[#f3e2b3] bg-warning-soft p-4 text-[13px] text-[#6b4a10]">
+    <div className="flex gap-3 rounded-lg border border-warning/30 bg-warning-soft p-4 text-[13px] text-warning">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
       <div><p className="font-semibold">{title}</p><div className="mt-1 space-y-1">{children}</div></div>
     </div>

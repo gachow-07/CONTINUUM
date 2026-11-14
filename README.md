@@ -17,7 +17,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 
 1. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
-   - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) and then [`0002_model.sql`](supabase/migrations/0002_model.sql). The first creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies; the second adds the 3D model table and an atomic `replace_model` save function.
+   - In the SQL editor, run [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql) then [`0002_model.sql`](supabase/migrations/0002_model.sql) and [`0003_markers.sql`](supabase/migrations/0003_markers.sql). The first creates the tables, RLS policies, triggers, and the private `project-files` storage bucket with membership-based policies; the second adds the 3D model table and an atomic `replace_model` save function; the third adds the manually placed component markers.
    - For quick demos, disable *Authentication → Providers → Email → Confirm email* (otherwise new users must click an email link first).
 2. **Environment** — copy `.env.example` to `.env.local`:
    ```bash
@@ -35,9 +35,21 @@ If Supabase isn't configured the app redirects to a `/setup` page that says exac
 
 **Deploying to Vercel:** import the repo, set the same three environment variables, deploy. No other configuration is needed.
 
-## 3D workspace
+## Project hub (the main screen)
 
-Opening a project lands in a CAD-style workspace (`/projects/[id]/workspace`) with the model as the centrepiece: a large viewport (about 65-70% of the width, more when panels are collapsed), a collapsible parts hierarchy on the left, an inspector on the right (Properties / Knowledge / Ask AI) and a status bar. The knowledge features (research, decisions, revisions, reviews, files, the AI assistant, documentation, handoff) are reachable from the inspector and the *Project* menu without losing the model. `/demo` is a public, data-free version of the same screen.
+Opening a project lands on its hub: persistent left navigation (Home, Research, Decisions, Reviews, Documentation), search (`Ctrl/⌘+K`, real queries over saved records), and three tabs.
+
+- **Overview:** the current assembly in a 3D viewer (orbit, pan, fit, isolate, markers on/off, plus a list that mirrors the markers for keyboard and screen-reader use), a *living design summary* built only from saved decisions, *documentation readiness* per component, and *needs attention* derived from incomplete documentation, open review comments and open issues.
+- **Components:** each component with its readiness, review state and record counts. Opening one shows its workspace (Summary, Research, Decisions, Revisions, Reviews), the readiness checklist, open issues and next step, and an *Ask this component* entry point to the AI assistant (disabled with a setup message when no OpenAI key is configured; no canned answers).
+- **Design History:** chronological revisions with what changed, why, author, date, files and linked decisions.
+
+**Documentation readiness** is a six-item checklist computed in `lib/readiness.ts` from saved records only: design described (≥20 characters), choices explained (a decision records reasoning), alternatives recorded, sources attached (research tagged to the component or linked as decision evidence), latest revision explained (what *and* why), review completed (approved or resolved, no open comments). Uploading a file never satisfies a criterion. Readiness measures whether reasoning is written down; it is **not** engineering approval, which is tracked separately in Reviews.
+
+**Component markers** are positions a person chose (select a part in the 3D editor, then *Place component marker*); they are stored per component in model space, follow the model as the camera moves, hide when the model is in front of them, and open a card with progress, the latest documented decision, review status and *Open component*. Nothing is detected automatically and there is no arbitrary CAD import. The sample project uses a placeholder assembly built from simple shapes; to use a real model you would replace the primitives with a prepared GLB loader and keep the same marker data.
+
+## 3D workspace (editor)
+
+The *3D editor* (`/projects/[id]/workspace`, linked from the hub) is a CAD-style workspace with the model as the centrepiece: a large viewport (about 65-70% of the width, more when panels are collapsed), a collapsible parts hierarchy on the left, an inspector on the right (Properties / Knowledge / Ask AI) and a status bar. The knowledge features (research, decisions, revisions, reviews, files, the AI assistant, documentation, handoff) are reachable from the inspector and the *Project* menu without losing the model. `/demo` is a public, data-free version of the same screen.
 
 - **Rendering:** three.js through React Three Fiber. PBR materials, image-based + directional lighting, shadows, orbit / pan / zoom, view cube, Front / Side / Top / Iso views, fit and reset, solid / solid-with-edges / wireframe, click selection that stays in sync with the hierarchy and inspector.
 - **What the model is (and isn't):** an assembly of parametric **primitives** (box, cylinder, sphere) in groups, with transform, material and visibility. three.js is a *rendering* library, not a CAD kernel, so there are **no** booleans, fillets, sketches, STEP/IGES import or exact solid properties. The operations offered are the ones primitives support: edit dimensions, position, rotation, material and visibility, move/rotate gizmos, add, duplicate, delete, undo/redo, and JSON import/export. Volumes are analytic per primitive and summed (overlaps are double-counted). Precise solid modelling would need a B-rep engine such as OpenCascade.
@@ -92,4 +104,5 @@ Every record carries a `project_id`; policies key off `project_members` (`owner`
 - PDF export is a clean text document (headings, bullets, status labels, sources) — not a styled layout.
 - Retrieval is lexical (BM25); very paraphrased questions may need rewording.
 - Presentation output is a slide *outline* in text form, not a `.pptx`.
+- There is no local-storage demo mode: data lives in Supabase. `/demo` is a public copy of the 3D editor with the placeholder assembly; it is editable but nothing is saved.
 - The 3D model is primitive-based (see above). There is no import of CAD files such as STEP or STL and no simulation.

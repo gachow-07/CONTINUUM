@@ -25,7 +25,7 @@ function AssistantMessage({ m, onNavigate }: { m: ChatMessage; onNavigate?: () =
   return (
     <div className="space-y-2.5">
       {segs.map((s, i) => s.kind === "gap" ? (
-        <div key={i} className="flex gap-2.5 rounded-lg border border-[#f3e2b3] bg-warning-soft p-3 text-[13px] text-warning">
+        <div key={i} className="flex gap-2.5 rounded-lg border border-warning/30 bg-warning-soft p-3 text-[13px] text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><div><p className="mb-0.5 text-[11px] font-semibold uppercase tracking-wide">Not documented</p>{s.text}{s.citations.map((c) => <CiteNum key={c} n={num(c)} cite={cites.find((x) => x.id === c)} onNavigate={onNavigate} />)}</div>
         </div>
       ) : (
@@ -54,8 +54,8 @@ function CiteNum({ n, cite, onNavigate }: { n: number; cite?: Citation; onNaviga
   return <Link href={cite.href} onClick={onNavigate} title={cite.title} className="ml-0.5 inline-flex h-4 min-w-4 -translate-y-px items-center justify-center rounded bg-accent-soft px-1 align-baseline text-[10px] font-semibold text-accent no-underline hover:bg-accent hover:text-white">{n}</Link>;
 }
 
-export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, initialConversationId, suggestions = DEFAULT_SUGGESTIONS, compact, height }: {
-  projectId: string; projectName: string; aiEnabled: boolean; initialMessages: ChatMessage[]; initialConversationId: string | null; suggestions?: string[]; compact?: boolean; height?: string;
+export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, initialConversationId, suggestions = DEFAULT_SUGGESTIONS, compact, height, initialQuestion }: {
+  projectId: string; projectName: string; aiEnabled: boolean; initialMessages: ChatMessage[]; initialConversationId: string | null; suggestions?: string[]; compact?: boolean; height?: string; initialQuestion?: string;
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [conv, setConv] = useState<string | null>(initialConversationId);
@@ -64,7 +64,12 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
   const [error, setError] = useState<{ text: string; setup?: boolean } | null>(null);
   const [followups, setFollowups] = useState<string[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
+  const asked = useRef(false);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy]);
+
+  // A question handed over from another screen (for example "Ask this component…") is sent once.
+  useEffect(() => { if (initialQuestion && aiEnabled && !asked.current && messages.length === 0) { asked.current = true; void send(initialQuestion); } // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function send(text: string) {
     const q = text.trim();

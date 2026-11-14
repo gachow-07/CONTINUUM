@@ -7,7 +7,7 @@ import { Box, ChevronDown, Copy, Cuboid, Download, EyeOff, Folder, Grid3x3, Hexa
 import { ChatPanel } from "@/components/ai/chat-panel";
 import { cn } from "@/lib/utils";
 import { act } from "@/lib/client";
-import { saveModel } from "@/app/actions/model";
+import { saveModel, setComponentMarker } from "@/app/actions/model";
 import { ancestorIds, deletePart, dimsLabel, duplicatePart, fmt, KIND_LABEL, makePrimitive, validateParts } from "@/lib/cad/ops";
 import { boxSize, worldBox } from "@/lib/cad/bounds";
 import { createSampleAssembly } from "@/lib/cad/sample";
@@ -34,7 +34,8 @@ export interface WorkspaceProps {
 type Status = "saved" | "unsaved" | "saving" | "error" | "local";
 
 export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }: WorkspaceProps) {
-  const subsystems = knowledge?.subsystems ?? [];
+  const subsystems = useMemo(() => (knowledge?.subsystems ?? []).map((s) => ({ id: s.id, name: s.name })), [knowledge]);
+  const [markers, setMarkers] = useState<Record<string, Vec3 | null>>(() => Object.fromEntries((knowledge?.subsystems ?? []).map((s) => [s.id, s.marker])));
   const [parts, setPartsState] = useState<Part[]>(() => {
     const base = initialParts ?? createSampleAssembly();
     return base.map((p) => (p.subsystemName && !p.subsystemId ? { ...p, subsystemId: subsystems.find((s) => s.name.toLowerCase() === p.subsystemName!.toLowerCase())?.id ?? null } : p));
@@ -112,6 +113,10 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
     const gone = partsRef.current.find((p) => p.id === selectedId);
     commit(deletePart(partsRef.current, selectedId)); setSelectedId(null);
     toast(`Deleted ${gone?.name ?? "part"}`, { action: { label: "Undo", onClick: undo } });
+  };
+  const placeMarker = async (subsystemId: string, position: Vec3 | null) => {
+    const r = await act(setComponentMarker(subsystemId, position), position ? "Marker placed. It now shows on the project hub." : "Marker removed");
+    if (r.ok) setMarkers((m) => ({ ...m, [subsystemId]: position }));
   };
   const setView = (preset: ViewPreset | "fit", immediate = false) => setViewReq((r) => ({ preset, nonce: r.nonce + 1, immediate }));
 
@@ -280,7 +285,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
                   className={cn("flex-1 border-b-2 px-2 text-[11.5px] font-medium transition-colors", tab === id ? "border-[var(--c-accent)] text-[var(--c-text)]" : "border-transparent text-[var(--c-muted)] hover:text-[var(--c-text)]")}>{label}</button>))}
             </div>
             <div className="scroll-thin min-h-0 flex-1 overflow-y-auto">
-              {tab === "properties" && <Properties parts={parts} selectedId={selectedId} unit={unit} update={update} onToggleVisible={toggleVisible} subsystems={subsystems}
+              {tab === "properties" && <Properties parts={parts} selectedId={selectedId} unit={unit} update={update} onToggleVisible={toggleVisible} subsystems={subsystems} markers={project ? markers : undefined} onPlaceMarker={project ? placeMarker : undefined}
                 project={{ name: project?.name ?? "RC Car Design (demo)", description: project?.description, mode, setMode, setUnit, showGrid, setShowGrid, showShadows, setShowShadows, isSample }} />}
               {tab === "project" && (knowledge ? <ProjectPanel k={knowledge} subsystemId={selected?.subsystemId ?? null} /> : <Empty>Open a saved project to see its research, decisions, revisions and reviews here.</Empty>)}
               {tab === "ai" && (project && chat ? (

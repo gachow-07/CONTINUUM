@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { FilesView } from "@/components/views/files-view";
 import { loadBundle } from "@/lib/bundle";
+import { DocTabs } from "@/components/hub/doc-tabs";
 import { requireSession } from "@/lib/session";
 import { scopeFromBundle } from "@/lib/scope";
 
@@ -10,5 +11,5 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { supabase } = await requireSession();
   const b = await loadBundle(supabase, id);
   if (!b) notFound();
-  return <FilesView scope={scopeFromBundle(b)} projectId={id} />;
+  return <><DocTabs projectId={id} /><FilesView scope={scopeFromBundle(b)} projectId={id} /></>;
 }

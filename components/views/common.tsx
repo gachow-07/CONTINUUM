@@ -53,7 +53,7 @@ export function TagList({ tags, onClick, active }: { tags: string[]; onClick?: (
     <>
       {tags.map((t) => (
         <button key={t} type="button" onClick={onClick ? (e) => { e.stopPropagation(); onClick(t); } : undefined}
-          className={cn("rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors", active === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-[#475467]", onClick && "hover:border-border-strong")}>
+          className={cn("rounded-md border px-1.5 py-0.5 text-[11px] font-medium transition-colors", active === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-muted-foreground", onClick && "hover:border-border-strong")}>
           #{t}
         </button>
       ))}
@@ -64,7 +64,7 @@ export function TagList({ tags, onClick, active }: { tags: string[]; onClick?: (
 /** Link chip pointing at a piece of evidence elsewhere in the project. */
 export function RefChip({ projectId, type, id, label, onNavigate }: { projectId: string; type: string; id: string; label: string; onNavigate?: () => void }) {
   return (
-    <Link href={refHref(projectId, type, id)} onClick={onNavigate} className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-[#344054] transition-colors hover:border-accent hover:text-accent">
+    <Link href={refHref(projectId, type, id)} onClick={onNavigate} className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent">
       <span className="rounded bg-muted px-1 text-[10px] uppercase tracking-wide text-muted-foreground">{type}</span><span className="truncate">{label}</span>
     </Link>
   );
@@ -112,11 +112,11 @@ export function Section({ title, children, action }: { title: string; children: 
   return (
     <section className="mb-5">
       <div className="mb-1.5 flex items-center justify-between"><h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>{action}</div>
-      <div className="text-[13px] leading-relaxed text-[#1d2433]">{children}</div>
+      <div className="text-[13px] leading-relaxed text-foreground">{children}</div>
     </section>
   );
 }
 
 export function NotDocumented({ children = "Not documented" }: { children?: React.ReactNode }) {
-  return <span className="inline-flex items-center rounded border border-dashed border-[#e0b457] bg-warning-soft px-1.5 py-0.5 text-xs text-warning">{children}</span>;
+  return <span className="inline-flex items-center rounded border border-dashed border-warning/40 bg-warning-soft px-1.5 py-0.5 text-xs text-warning">{children}</span>;
 }

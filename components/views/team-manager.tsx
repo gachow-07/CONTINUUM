@@ -26,7 +26,7 @@ export function TeamManager({ project, members, isOwner, currentUserId }: { proj
       <ul className="divide-y divide-border">
         {members.map((m) => (
           <li key={m.id} className="flex items-center gap-3 px-5 py-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-[#475467]">{initials(m.display_name)}</div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">{initials(m.display_name)}</div>
             <div className="min-w-0 flex-1"><p className="truncate text-[13px] font-medium">{m.display_name}{m.user_id === currentUserId && <span className="ml-1.5 text-xs text-muted-foreground">(you)</span>}</p>
               <p className="truncate text-xs text-muted-foreground">{m.email ?? "No account linked"}{!m.user_id && " · name only"}</p></div>
             {m.role === "owner" || !isOwner ? <Badge tone={m.role === "owner" ? "accent" : "neutral"} className="capitalize">{m.role}</Badge> : (

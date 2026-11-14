@@ -36,3 +36,19 @@ export async function saveModel(projectId: string, parts: unknown): Promise<Acti
     return fail(e);
   }
 }
+
+/** Places (or clears) the manual 3D marker for a component. The position is where the team chose to put it, in model space (mm). */
+export async function setComponentMarker(subsystemId: string, position: [number, number, number] | null): Promise<ActionResult> {
+  try {
+    if (!z.string().uuid().safeParse(subsystemId).success) return fail("Invalid component");
+    if (position && !vec3.safeParse(position).success) return fail("Invalid marker position");
+    const c = await ctx();
+    const { data, error } = await c.supabase.from("subsystems").update({ marker_position: position }).eq("id", subsystemId).select("id,project_id,name").single();
+    if (error) return fail(error.message);
+    await logActivity(c, data.project_id, "subsystem", position ? `Placed the 3D marker for ${data.name}` : `Removed the 3D marker for ${data.name}`, "subsystem", subsystemId);
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}

@@ -92,3 +92,11 @@ export function validateParts(raw: unknown): Part[] | null {
   const ids = new Set(raw.map((p) => p?.id));
   return raw.every((p) => p && typeof p.id === "string" && typeof p.name === "string" && ["group", "box", "cylinder", "sphere"].includes(p.kind) && (p.parentId === null || ids.has(p.parentId))) ? (raw as Part[]) : null;
 }
+
+/** The subsystem a part belongs to: its own, or the nearest ancestor's. */
+export function subsystemOf(parts: Part[], id: string): string | null {
+  const byId = new Map(parts.map((p) => [p.id, p]));
+  let cur = byId.get(id);
+  while (cur) { if (cur.subsystemId) return cur.subsystemId; cur = cur.parentId ? byId.get(cur.parentId) : undefined; }
+  return null;
+}

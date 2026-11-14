@@ -29,7 +29,7 @@ export function Field({ label, hint, error, children, className, required }: {
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label className="block text-xs font-medium text-[#344054]">
+      <label className="block text-xs font-medium text-foreground">
         {label}
         {required && <span className="ml-0.5 text-danger">*</span>}
       </label>

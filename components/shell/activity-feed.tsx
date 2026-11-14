@@ -18,9 +18,9 @@ export function ActivityFeed({ items, projectNames }: { items: Activity[]; proje
         return (
           <li key={a.id}>
             <Link href={href} className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-muted/60">
-              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-[#475467]"><Icon className="h-3.5 w-3.5" /></div>
+              <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"><Icon className="h-3.5 w-3.5" /></div>
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] leading-snug"><span className="font-medium">{a.actor_name}</span> <span className="text-[#344054]">{a.summary.charAt(0).toLowerCase() + a.summary.slice(1)}</span></p>
+                <p className="text-[13px] leading-snug"><span className="font-medium">{a.actor_name}</span> <span className="text-foreground">{a.summary.charAt(0).toLowerCase() + a.summary.slice(1)}</span></p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{projectNames?.get(a.project_id) && <>{projectNames.get(a.project_id)} · </>}{timeAgo(a.created_at)}</p>
               </div>
             </Link>

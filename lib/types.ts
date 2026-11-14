@@ -7,7 +7,7 @@ export interface Project {
   status: ProjectStatus; cover_path: string | null; archived: boolean; is_sample: boolean; created_at: string; updated_at: string;
 }
 export interface Member { id: string; project_id: string; user_id: string | null; display_name: string; email: string | null; role: MemberRole; is_sample: boolean }
-export interface Subsystem { id: string; project_id: string; name: string; description: string; position: number; is_sample: boolean; created_at: string; updated_at: string }
+export interface Subsystem { id: string; project_id: string; name: string; description: string; position: number; marker_position: [number, number, number] | null; is_sample: boolean; created_at: string; updated_at: string }
 
 export type ResearchType = "url" | "pdf" | "paper" | "article" | "image" | "note";
 export interface Research {

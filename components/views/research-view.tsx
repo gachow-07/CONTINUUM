@@ -71,7 +71,7 @@ export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { sco
               return (
                 <li key={r.id}>
                   <button onClick={() => setOpen(r.id)} className="flex w-full items-start gap-3.5 px-5 py-3.5 text-left transition-colors hover:bg-muted/60">
-                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-[#475467]"><Icon className="h-4 w-4" /></div>
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"><Icon className="h-4 w-4" /></div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1"><p className="text-[13px] font-semibold">{r.title}</p>{r.is_sample && <SampleBadge />}</div>
                       <p className="mt-0.5 line-clamp-1 text-[13px] text-muted-foreground">{r.description || r.why_important || "No description"}</p>

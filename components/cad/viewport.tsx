@@ -1,12 +1,12 @@
 "use client";
 import { Component, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Edges, Environment, GizmoHelper, GizmoViewcube, Grid, Lightformer, OrbitControls, TransformControls } from "@react-three/drei";
+import { ContactShadows, Edges, Environment, GizmoHelper, GizmoViewcube, Grid, Html, Lightformer, OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { descendantIds } from "@/lib/cad/ops";
 import type { DisplayMode, Part, Tool, Vec3, ViewPreset } from "@/lib/cad/types";
 
-export const ACCENT = "#3db4ff";
+export const ACCENT = "#3d8bff";
 export type ViewRequest = { preset: ViewPreset | "fit"; nonce: number; immediate?: boolean };
 
 // Camera directions in world space. Model nose is +Z (matches the view cube's "Front"), right is +X.
@@ -16,10 +16,15 @@ const DIRS: Record<ViewPreset, THREE.Vector3> = {
 const rad = (d: number) => (d * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
 
+export interface ViewerMarker { id: string; name: string; position: Vec3; summary: string; active: boolean }
+
 interface Props {
   parts: Part[]; selectedId: string | null; onSelect: (id: string | null) => void; mode: DisplayMode; tool: Tool;
   showGrid: boolean; showShadows: boolean; viewRequest: ViewRequest;
   onTransform: (id: string, position: Vec3, rotation: Vec3) => void; onReady: () => void;
+  // Optional, used by the project hub (read-only viewer with component markers):
+  pickable?: boolean; highlightIds?: Set<string>; leftMouse?: "rotate" | "pan"; showGizmo?: boolean;
+  markers?: ViewerMarker[]; showMarkers?: boolean; onMarker?: (id: string) => void;
 }
 
 export default function Viewport(props: Props) {
@@ -33,10 +38,10 @@ export default function Viewport(props: Props) {
   );
 }
 
-function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows, viewRequest, onTransform }: Props) {
+function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows, viewRequest, onTransform, pickable = true, highlightIds, leftMouse = "rotate", showGizmo = true, markers, showMarkers = true, onMarker }: Props) {
   const modelRef = useRef<THREE.Group>(null);
   const [hover, setHover] = useState<string | null>(null);
-  const selectedSet = useMemo(() => (selectedId ? descendantIds(parts, selectedId) : new Set<string>()), [parts, selectedId]);
+  const selectedSet = useMemo(() => highlightIds ?? (selectedId ? descendantIds(parts, selectedId) : new Set<string>()), [parts, selectedId, highlightIds]);
   const byParent = useMemo(() => {
     const m = new Map<string | null, Part[]>();
     parts.forEach((p) => m.set(p.parentId, [...(m.get(p.parentId) ?? []), p]));
@@ -51,9 +56,11 @@ function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows,
     const inner = (<>
         {p.kind !== "group" && (
           <mesh key={`${p.kind}-${JSON.stringify(p.params)}`} castShadow={showShadows && p.material.opacity >= 1} receiveShadow={showShadows}
-            onClick={(e: ThreeEvent<MouseEvent>) => { if (e.delta > 4) return; e.stopPropagation(); onSelect(p.id); }}
-            onPointerOver={(e) => { e.stopPropagation(); setHover(p.id); (e.nativeEvent.target as HTMLElement).style.cursor = "pointer"; }}
-            onPointerOut={() => { setHover((h) => (h === p.id ? null : h)); document.querySelector("canvas")?.style.removeProperty("cursor"); }}>
+            {...(pickable ? {
+              onClick: (e: ThreeEvent<MouseEvent>) => { if (e.delta > 4) return; e.stopPropagation(); onSelect(p.id); },
+              onPointerOver: (e: ThreeEvent<PointerEvent>) => { e.stopPropagation(); setHover(p.id); (e.nativeEvent.target as HTMLElement).style.cursor = "pointer"; },
+              onPointerOut: () => { setHover((h) => (h === p.id ? null : h)); document.querySelector("canvas")?.style.removeProperty("cursor"); },
+            } : {})}>
             {p.kind === "box" && <boxGeometry args={[p.params.w, p.params.h, p.params.d]} />}
             {p.kind === "cylinder" && <cylinderGeometry args={[p.params.r, p.params.r, p.params.h, 56]} />}
             {p.kind === "sphere" && <sphereGeometry args={[p.params.r, 56, 36]} />}
@@ -99,11 +106,26 @@ function Scene({ parts, selectedId, onSelect, mode, tool, showGrid, showShadows,
       {showShadows && <ContactShadows position={[0, 0.1, 0]} opacity={0.55} scale={900} blur={2.4} far={140} resolution={1024} color="#000000" />}
       {showGrid && <Grid position={[0, -0.2, 0]} args={[10, 10]} cellSize={10} cellThickness={0.6} cellColor="#1e2a38" sectionSize={50} sectionThickness={1} sectionColor="#2d3d52" fadeDistance={1500} fadeStrength={1.6} infiniteGrid />}
 
-      <OrbitControls makeDefault enableDamping dampingFactor={0.12} minDistance={25} maxDistance={4000} zoomToCursor />
+      <OrbitControls makeDefault enableDamping dampingFactor={0.12} minDistance={25} maxDistance={4000} zoomToCursor
+        mouseButtons={{ LEFT: leftMouse === "pan" ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: leftMouse === "pan" ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN }} />
+      {showMarkers && markers?.map((m) => (
+        // Markers live at fixed model-space positions, so they follow the model as the camera moves. `occlude` hides them behind geometry.
+        <Html key={m.id} position={m.position} center zIndexRange={[30, 0]} occlude={[modelRef as React.RefObject<THREE.Object3D>]} style={{ transition: "opacity .2s", pointerEvents: "none" }}>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onMarker?.(m.id); }} onPointerDown={(e) => e.stopPropagation()} aria-pressed={m.active} aria-label={`${m.name}: ${m.summary}. Select component`}
+            className="group relative flex h-7 w-7 items-center justify-center rounded-full outline-none" style={{ pointerEvents: "auto" }}>
+            <span className={`absolute inset-0 rounded-full border-2 transition-all ${m.active ? "scale-110 border-[#3d8bff] bg-[#3d8bff]/25" : "border-[#3d8bff]/70 bg-[#0b0f16]/55 group-hover:border-[#3d8bff] group-focus-visible:border-[#3d8bff]"}`} />
+            <span className={`relative h-2.5 w-2.5 rounded-full ${m.active ? "bg-white" : "bg-[#3d8bff]"}`} />
+            <span className="absolute inset-[-3px] rounded-full ring-2 ring-white/0 group-focus-visible:ring-white/90" />
+            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2b3649] bg-[#090c12]/95 px-2 py-1 text-[11px] font-medium text-[#e4e9f2] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{m.name}</span>
+          </button>
+        </Html>
+      ))}
       <CameraRig request={viewRequest} modelRef={modelRef} />
-      <GizmoHelper alignment="bottom-right" margin={[76, 76]}>
-        <GizmoViewcube color="#161c25" textColor="#cfd8e6" strokeColor="#3a4658" hoverColor={ACCENT} opacity={1} />
-      </GizmoHelper>
+      {showGizmo && (
+        <GizmoHelper alignment="bottom-right" margin={[76, 76]}>
+          <GizmoViewcube color="#161c25" textColor="#cfd8e6" strokeColor="#3a4658" hoverColor={ACCENT} opacity={1} />
+        </GizmoHelper>
+      )}
     </>
   );
 }

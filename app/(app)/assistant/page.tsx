@@ -24,7 +24,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
     <div className="animate-fade-in">
       <PageHeader title="AI Assistant" description="Ask questions about a project. Answers are grounded in its research, decisions, revisions and reviews." />
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Project context">
-        {projects.map((p) => <Link key={p.id} role="tab" aria-selected={p.id === current.id} href={`/assistant?project=${p.id}`} className={`rounded-md border px-3 py-1.5 text-[13px] font-medium ${p.id === current.id ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-[#344054] hover:bg-muted"}`}>{p.name}</Link>)}
+        {projects.map((p) => <Link key={p.id} role="tab" aria-selected={p.id === current.id} href={`/assistant?project=${p.id}`} className={`rounded-md border px-3 py-1.5 text-[13px] font-medium ${p.id === current.id ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-foreground hover:bg-muted"}`}>{p.name}</Link>)}
       </div>
       <ChatPanel key={current.id} projectId={current.id} projectName={current.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} />
     </div>

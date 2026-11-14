@@ -36,7 +36,7 @@ export function createSampleAssembly(): Part[] {
   add("Rear shock tower", "box", chassis, { w: 110, h: 40, d: 8 }, [0, 52, -120], M.carbon);
 
   const susp = group("Suspension", null, [0, 0, 0], "Suspension");
-  const wheels = group("Wheels", null, [0, 0, 0]);
+  const wheels = group("Wheels", null, [0, 0, 0], "Suspension");
   for (const sf of [1, -1]) for (const sl of [-1, 1]) {
     const corner = `${sf > 0 ? "Front" : "Rear"} ${sl < 0 ? "left" : "right"}`;
     const z = sf * 135;
@@ -70,3 +70,8 @@ export function createSampleAssembly(): Part[] {
   add("Shell", "box", body, { w: 140, h: 40, d: 270 }, [0, 86, 0], M.shell);
   return parts;
 }
+
+/** Manually chosen marker positions (mm, model space) for the sample assembly. They are placements, not detections. */
+export const SAMPLE_MARKERS: Record<string, [number, number, number]> = {
+  Suspension: [70, 124, 128], Steering: [0, 72, 138], Chassis: [0, 66, -10], Drivetrain: [30, 80, -60],
+};

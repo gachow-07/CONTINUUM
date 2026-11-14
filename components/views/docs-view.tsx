@@ -80,7 +80,7 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
             </div>
             <p className="-mt-2 text-xs text-muted-foreground">Sections: {DOC_TYPES[docType].sections.map((s) => s.title).join(" · ")}</p>
             <Field label="Subsystems" hint="Leave all unselected to include the whole project.">
-              <div className="flex flex-wrap gap-1.5">{subs.length === 0 ? <span className="text-xs text-muted-foreground">No subsystems.</span> : subs.map((s) => <button key={s.id} type="button" aria-pressed={subIds.includes(s.id)} onClick={() => setSubIds((p) => p.includes(s.id) ? p.filter((x) => x !== s.id) : [...p, s.id])} className={`rounded-md border px-2.5 py-1 text-xs font-medium ${subIds.includes(s.id) ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-[#344054] hover:bg-muted"}`}>{s.name}</button>)}</div>
+              <div className="flex flex-wrap gap-1.5">{subs.length === 0 ? <span className="text-xs text-muted-foreground">No subsystems.</span> : subs.map((s) => <button key={s.id} type="button" aria-pressed={subIds.includes(s.id)} onClick={() => setSubIds((p) => p.includes(s.id) ? p.filter((x) => x !== s.id) : [...p, s.id])} className={`rounded-md border px-2.5 py-1 text-xs font-medium ${subIds.includes(s.id) ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-foreground hover:bg-muted"}`}>{s.name}</button>)}</div>
             </Field>
             <div className="grid gap-4 sm:grid-cols-2"><Field label="From date"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field><Field label="To date"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field></div>
             <button type="button" className="text-xs font-medium text-accent hover:underline" onClick={() => setShowAdvanced((s) => !s)}>{showAdvanced ? "Hide" : "Choose"} specific decisions, research, revisions &amp; review comments</button>
@@ -203,7 +203,7 @@ function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draf
               {editing === s.key ? <Textarea value={s.content} onChange={(e) => update(s.key, { content: e.target.value })} className="min-h-[160px] font-mono text-xs" /> : <RenderContent text={s.content} />}
               {s.sources.length > 0 && (
                 <div className="mt-3 flex flex-wrap items-center gap-1.5"><span className="text-[11px] text-muted-foreground">Sources:</span>
-                  {s.sources.map((id) => { const [type, rid] = id.split(":"); return titles.has(id) ? <Link key={id} href={type === "timeline" ? `/projects/${draft.projectId}/history` : refHref(draft.projectId, type, rid)} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-[#475467] hover:border-accent hover:text-accent">{titles.get(id)}</Link> : null; })}
+                  {s.sources.map((id) => { const [type, rid] = id.split(":"); return titles.has(id) ? <Link key={id} href={type === "timeline" ? `/projects/${draft.projectId}/history` : refHref(draft.projectId, type, rid)} className="rounded border border-border bg-surface px-1.5 py-0.5 text-[11px] text-muted-foreground hover:border-accent hover:text-accent">{titles.get(id)}</Link> : null; })}
                 </div>)}
             </section>
           );
@@ -227,6 +227,6 @@ function RenderContent({ text }: { text: string }) {
   );
 }
 function Line({ t }: { t: string }) {
-  if (/^not documented:/i.test(t.trim())) return <span className="rounded border border-dashed border-[#e0b457] bg-warning-soft px-1.5 py-0.5 text-[13px] text-warning">{t}</span>;
+  if (/^not documented:/i.test(t.trim())) return <span className="rounded border border-dashed border-warning/40 bg-warning-soft px-1.5 py-0.5 text-[13px] text-warning">{t}</span>;
   return <>{t}</>;
 }

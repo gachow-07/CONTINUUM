@@ -9,7 +9,7 @@ export function refHref(projectId: string, type: string, id: string): string {
     case "comment": return `/projects/${projectId}/reviews`;
     case "note": return `/projects/${projectId}/handoff#notes`;
     case "document": return `/projects/${projectId}/docs?open=${id}`;
-    case "subsystem": return `/projects/${projectId}/subsystems?open=${id}`;
+    case "subsystem": return `/projects/${projectId}/components/${id}`;
     default: return `/projects/${projectId}`;
   }
 }

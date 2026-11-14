@@ -50,7 +50,7 @@ export function ProjectFormDialog({ open, onOpenChange, project }: { open: boole
     r.warnings.forEach((w) => setError((p) => (p ? p + " " : "") + `Couldn't add ${w}`));
     setBusy(false);
     onOpenChange(false);
-    router.push(`/projects/${r.id}/workspace`);
+    router.push(`/projects/${r.id}`);
   }
 
   return (
@@ -112,7 +112,7 @@ export function LoadSampleButton({ variant = "outline" }: { variant?: "outline" 
       setBusy(true);
       const r = await act(createSampleProject(), "Sample project loaded — it's labelled as demonstration data.");
       setBusy(false);
-      if (r.ok) router.push(`/projects/${r.id}/workspace`);
+      if (r.ok) router.push(`/projects/${r.id}`);
     }}><FlaskConical className="h-4 w-4" />Load sample project (RC Car Design)</Button>
   );
 }

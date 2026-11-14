@@ -28,7 +28,7 @@ export function ProjectCard({ project, scope }: { project: Project; scope: Scope
   const st = projectStats(project, scope);
   const status = STATUS_META[project.status];
   return (
-    <Link href={`/projects/${project.id}/workspace`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[var(--shadow-pop)]">
+    <Link href={`/projects/${project.id}`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[var(--shadow-pop)]">
       <div className="relative h-32 overflow-hidden"><ProjectCover path={project.cover_path} name={project.name} className="transition-transform duration-500 group-hover:scale-[1.03]" />
         <div className="absolute left-3 top-3 flex gap-1.5">{project.is_sample && <SampleBadge />}{project.archived && <Badge>Archived</Badge>}</div>
       </div>
@@ -38,7 +38,7 @@ export function ProjectCard({ project, scope }: { project: Project; scope: Scope
           <Badge tone={status.tone} dot>{status.label}</Badge>
         </div>
         <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{project.description || "No description yet."}</p>
-        <div className="mt-4 flex items-center gap-4 text-xs text-[#475467]">
+        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1" title="Research sources"><BookOpen className="h-3.5 w-3.5" />{st.research}</span>
           <span className="inline-flex items-center gap-1" title="Design decisions"><Scale className="h-3.5 w-3.5" />{st.decisions}</span>
           <span className="inline-flex items-center gap-1" title="Files"><FileText className="h-3.5 w-3.5" />{st.files}</span>

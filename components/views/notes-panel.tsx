@@ -35,7 +35,7 @@ export function NotesPanel({ notes, kind, projectId, subsystems, trackStatus }: 
               {trackStatus && <button aria-label={n.status === "open" ? "Mark resolved" : "Reopen"} className="mt-0.5 shrink-0 text-muted-foreground hover:text-success" onClick={async () => { const r = await act(setNoteStatus(n.id, n.status === "open" ? "resolved" : "open"), n.status === "open" ? "Marked done" : "Reopened"); if (r.ok) router.refresh(); }}>{n.status === "resolved" ? <CheckCircle2 className="h-4.5 w-4.5 text-success" /> : <Circle className="h-4.5 w-4.5" />}</button>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2"><p className={`text-[13px] font-semibold ${n.status === "resolved" ? "text-muted-foreground line-through" : ""}`}>{n.title}</p><SubsystemTag id={n.subsystem_id} subsystems={subsystems} />{n.is_sample && <SampleBadge />}</div>
-                {n.body && <p className="mt-1 text-[13px] text-[#475467]">{n.body}</p>}
+                {n.body && <p className="mt-1 text-[13px] text-muted-foreground">{n.body}</p>}
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{n.author_name}</p>
               </div>
               <button aria-label="Delete" className="self-start rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100" onClick={() => setDel(n)}><Trash2 className="h-3.5 w-3.5" /></button>

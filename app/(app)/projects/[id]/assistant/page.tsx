@@ -3,19 +3,23 @@ import { ChatPanel } from "@/components/ai/chat-panel";
 import { loadBundle } from "@/lib/bundle";
 import { loadLatestConversation } from "@/lib/conversation";
 import { openaiConfigured } from "@/lib/env";
+import { DocTabs } from "@/components/hub/doc-tabs";
 import { requireSession } from "@/lib/session";
 
 export const metadata = { title: "AI Assistant" };
 
-export default async function ProjectAssistant({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectAssistant({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ q?: string }> }) {
   const { id } = await params;
+  const { q } = await searchParams;
   const { supabase, user } = await requireSession();
   const b = await loadBundle(supabase, id);
   if (!b) notFound();
   const conv = await loadLatestConversation(supabase, id, user.id);
   return (
+    <div>
+    <DocTabs projectId={id} />
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <ChatPanel projectId={id} projectName={b.project.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} />
+      <ChatPanel projectId={id} projectName={b.project.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} initialQuestion={q?.slice(0, 500)} />
       <aside className="space-y-3 text-[13px]">
         <div className="rounded-lg border border-border bg-surface p-4 shadow-card">
           <h3 className="text-sm font-semibold">What the assistant can read</h3>
@@ -28,6 +32,7 @@ export default async function ProjectAssistant({ params }: { params: Promise<{ i
           The assistant only uses documented project information. It can&apos;t interpret CAD geometry, images or simulation output, and it will say when something isn&apos;t recorded.
         </div>
       </aside>
+    </div>
     </div>
   );
 }

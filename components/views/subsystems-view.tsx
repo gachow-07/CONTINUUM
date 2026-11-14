@@ -69,7 +69,7 @@ export function SubsystemsView({ scope, projectId }: { scope: Scope; projectId: 
                 <div className="flex h-9 w-9 items-center justify-center rounded-md bg-accent-soft text-accent"><Layers className="h-4.5 w-4.5" /></div>
                 <h3 className="mt-3 text-[15px] font-semibold">{s.name}</h3>
                 <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-[13px] text-muted-foreground">{s.description || "No description."}</p>
-                <div className="mt-4 flex items-center gap-4 text-xs text-[#475467]">
+                <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1" title="Research"><BookOpen className="h-3.5 w-3.5" />{n.r}</span><span className="inline-flex items-center gap-1" title="Decisions"><Scale className="h-3.5 w-3.5" />{n.d}</span>
                   <span className="inline-flex items-center gap-1" title="Files"><FileText className="h-3.5 w-3.5" />{n.f}</span><span className="ml-auto text-muted-foreground">{n.v} revision{n.v === 1 ? "" : "s"}</span>
                 </div>

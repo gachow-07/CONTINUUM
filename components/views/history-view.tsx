@@ -61,7 +61,7 @@ export function HistoryView({ scope, projectId, subsystemId }: { scope: Scope; p
                     <span className="ml-auto text-xs text-muted-foreground">{formatDate(r.occurred_on)} · {r.author_name}</span>
                   </div>
                   <p className="mt-2 text-[14px] font-semibold">{r.title}</p>
-                  <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground"><span className="font-medium text-[#344054]">Why: </span>{r.reason || "Not documented"}</p>
+                  <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground"><span className="font-medium text-foreground">Why: </span>{r.reason || "Not documented"}</p>
                   {(thumbs.length > 0 || files.length > 0) && (
                     <div className="mt-3 flex items-center gap-2">{thumbs.map((f) => <div key={f.id} className="h-12 w-[72px] overflow-hidden rounded-md border border-border"><FileThumb file={f} /></div>)}
                       <span className="text-xs text-muted-foreground">{files.length} file{files.length === 1 ? "" : "s"}</span></div>)}
@@ -200,7 +200,7 @@ export function RevisionDialog({ scope, projectId, subsystemId, onClose }: { sco
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-lg bg-accent-soft/60 p-3.5 text-[13px] font-medium text-[#1a3a8a]">What changed in this revision, and why did you make this change?</div>
+            <div className="rounded-lg bg-accent-soft/60 p-3.5 text-[13px] font-medium text-accent">What changed in this revision, and why did you make this change?</div>
             <Field label="What changed?" required><Textarea value={f.description} onChange={(e) => set("description", e.target.value)} className="min-h-[96px]" placeholder="Describe the change in the design." autoFocus /></Field>
             <Field label="Why did you make this change?" required hint="Mention the problem, the research or test result behind it, and anything you rejected."><Textarea value={f.reason} onChange={(e) => set("reason", e.target.value)} className="min-h-[110px]" /></Field>
             {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}

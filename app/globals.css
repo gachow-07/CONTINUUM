@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #0f1623;
-  --surface: #ffffff;
-  --muted: #f1f3f6;
-  --muted-foreground: #667085;
-  --border: #e4e7ec;
-  --border-strong: #d0d5dd;
-  --primary: #0e1b33;
+  --background: #0b0f16;
+  --foreground: #e4e9f2;
+  --surface: #111722;
+  --muted: #171e2b;
+  --muted-foreground: #8a97ab;
+  --border: #1f2836;
+  --border-strong: #2b3649;
+  --primary: #223a63;
   --primary-foreground: #ffffff;
-  --accent: #2563ff;
-  --accent-soft: #eaf0ff;
-  --success: #2f855a;
-  --success-soft: #e8f5ee;
-  --warning: #b7791f;
-  --warning-soft: #fdf3dc;
-  --danger: #c0392b;
-  --danger-soft: #fdecea;
-  --sidebar: #0f1218;
-  --sidebar-hover: #1a1f29;
-  --sidebar-border: #1f2530;
-  --sidebar-foreground: #b4bcc9;
+  --accent: #3d8bff;
+  --accent-soft: rgba(61, 139, 255, 0.14);
+  --success: #4cc38a;
+  --success-soft: rgba(76, 195, 138, 0.13);
+  --warning: #e0a94a;
+  --warning-soft: rgba(224, 169, 74, 0.13);
+  --danger: #f07b70;
+  --danger-soft: rgba(240, 123, 112, 0.14);
+  --sidebar: #090c12;
+  --sidebar-hover: #131925;
+  --sidebar-border: #1a2130;
+  --sidebar-foreground: #9aa7bb;
 }
 
 @theme inline {
@@ -48,11 +48,11 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.04);
-  --shadow-pop: 0 12px 32px -8px rgb(16 24 40 / 0.18), 0 2px 6px rgb(16 24 40 / 0.06);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-pop: 0 14px 34px -10px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.3);
 }
 
-html { color-scheme: light; }
+html { color-scheme: dark; }
 body {
   background: var(--background);
   color: var(--foreground);
@@ -61,7 +61,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-::selection { background: #cddcff; }
+::selection { background: rgba(61, 139, 255, 0.35); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -71,10 +71,10 @@ body {
 .animate-fade-in { animation: fade-in .25s ease-out both; }
 
 .scroll-thin::-webkit-scrollbar { width: 8px; height: 8px; }
-.scroll-thin::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 8px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: #2b3649; border-radius: 8px; }
 
 /* Rendered document / AI text */
-.prose-doc { font-size: 14px; line-height: 1.65; color: #1d2433; }
+.prose-doc { font-size: 14px; line-height: 1.65; color: var(--foreground); }
 .prose-doc p { margin: 0 0 .75em; }
 .prose-doc ul { list-style: disc; padding-left: 1.25em; margin: 0 0 .75em; }
 .prose-doc ol { list-style: decimal; padding-left: 1.25em; margin: 0 0 .75em; }
@@ -83,11 +83,11 @@ body {
 /* ───────── 3D workspace (dark engineering theme, one accent) ───────── */
 .cad-root {
   --c-bg: #0a0d12; --c-panel: #11151c; --c-panel2: #161b24; --c-line: #222a36; --c-line2: #2c3646;
-  --c-text: #d6dce6; --c-muted: #8592a6; --c-accent: #3db4ff; --c-accent-soft: rgba(61, 180, 255, 0.14);
+  --c-text: #d6dce6; --c-muted: #8592a6; --c-accent: #3d8bff; --c-accent-soft: rgba(61, 139, 255, 0.14);
   color-scheme: dark; color: var(--c-text); font-size: 12.5px;
   /* Re-theme the shared light components (chat panel etc.) for the dark workspace. */
   --surface: #11151c; --foreground: #d6dce6; --muted: #1a202b; --muted-foreground: #8592a6; --border: #222a36; --border-strong: #2c3646;
-  --accent: #3db4ff; --accent-soft: rgba(61, 180, 255, 0.14); --primary: #26405e; --primary-foreground: #ffffff;
+  --accent: #3d8bff; --accent-soft: rgba(61, 139, 255, 0.14); --primary: #26405e; --primary-foreground: #ffffff;
   --warning: #e2b25a; --warning-soft: rgba(226, 178, 90, 0.12); --danger-soft: rgba(220, 80, 70, 0.14); --danger: #f08a80; --background: #0a0d12;
 }
 .cad-root ::selection { background: rgba(61, 180, 255, 0.35); }

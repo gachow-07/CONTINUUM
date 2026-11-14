@@ -2,10 +2,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, BookOpen, Box, ChevronRight, ClipboardCheck, Circle, Cylinder, Eye, EyeOff, FileText, Folder, GitCommitHorizontal, Scale, Search } from "lucide-react";
+import { Vector3 } from "three";
 import { cn } from "@/lib/utils";
 import { boxSize, worldBox } from "@/lib/cad/bounds";
-import { KIND_LABEL, childrenOf, fmt, fromUnit, toUnit, totalVolume, volumeMm3 } from "@/lib/cad/ops";
-import type { DisplayMode, Part, Unit } from "@/lib/cad/types";
+import { KIND_LABEL, childrenOf, fmt, fromUnit, subsystemOf, toUnit, totalVolume, volumeMm3 } from "@/lib/cad/ops";
+import type { DisplayMode, Part, Unit, Vec3 } from "@/lib/cad/types";
 import { Group, NumField, Seg, Toggle } from "./ui";
 
 const KindIcon = ({ kind, className }: { kind: Part["kind"]; className?: string }) =>
@@ -74,8 +75,9 @@ export function Hierarchy({ parts, selectedId, onSelect, onToggleVisible, expand
 // ───────────────────────── Properties ─────────────────────────
 const SWATCHES = ["#b9c2cd", "#8b95a3", "#22262d", "#303641", "#3b78c4", "#b87333", "#d9dee6", "#c0392b"];
 
-export function Properties({ parts, selectedId, unit, update, onToggleVisible, subsystems, project }: {
+export function Properties({ parts, selectedId, unit, update, onToggleVisible, subsystems, project, markers, onPlaceMarker }: {
   parts: Part[]; selectedId: string | null; unit: Unit;
+  markers?: Record<string, Vec3 | null>; onPlaceMarker?: (subsystemId: string, position: Vec3 | null) => void;
   update: (id: string, patch: (p: Part) => Part, key?: string, label?: string) => void; onToggleVisible: (id: string) => void;
   subsystems: { id: string; name: string }[];
   project: { name: string; mode: DisplayMode; setMode: (m: DisplayMode) => void; setUnit: (u: Unit) => void; showGrid: boolean; setShowGrid: (v: boolean) => void; showShadows: boolean; setShowShadows: (v: boolean) => void; isSample: boolean; description?: string };
@@ -168,6 +170,24 @@ export function Properties({ parts, selectedId, unit, update, onToggleVisible, s
               <span className="w-8 text-right tabular-nums text-[var(--c-text)]">{p.material[k].toFixed(2)}</span></label>))}
         </Group>)}
 
+      {(() => {
+        const sid = subsystemOf(parts, p.id);
+        const comp = subsystems.find((x) => x.id === sid);
+        if (!comp || !onPlaceMarker || !markers) return null;
+        const placed = markers[comp.id];
+        // Just above the part's top surface, so the marker is visible rather than buried inside the geometry.
+        const centre = (() => { const b = worldBox(parts, p.id); if (b.isEmpty()) return null; const c = b.getCenter(new Vector3()); return [c.x, b.max.y + 8, c.z].map((v) => Math.round(v * 10) / 10) as Vec3; })();
+        return (
+          <Group title="Component marker">
+            <p className="text-[11.5px] leading-relaxed text-[var(--c-muted)]">The {comp.name} marker on the project hub is {placed ? `at ${placed.map((v) => fmt(v, unit)).join(", ")} ${unit}` : "not placed yet"}. Markers are positions you choose; nothing is detected automatically.</p>
+            <div className="flex gap-1.5">
+              <button type="button" disabled={!centre} onClick={() => centre && onPlaceMarker(comp.id, centre)} className="h-7 flex-1 rounded-md border border-[var(--c-line2)] px-2 text-[11.5px] font-medium hover:border-[var(--c-accent)] hover:text-[var(--c-accent)] disabled:opacity-40">{placed ? "Move marker here" : "Place component marker"}</button>
+              {placed && <button type="button" onClick={() => onPlaceMarker(comp.id, null)} className="h-7 rounded-md px-2 text-[11.5px] text-[var(--c-muted)] hover:text-[var(--c-text)]">Remove</button>}
+            </div>
+          </Group>
+        );
+      })()}
+
       <Group title="Measurements">
         {size && <Stat label="Bounding box" value={`${fmt(size[0], unit)} × ${fmt(size[1], unit)} × ${fmt(size[2], unit)} ${unit}`} />}
         {p.kind !== "group" ? <Stat label="Volume" value={`${(volumeMm3(p) / 1000).toFixed(2)} cm³`} /> : <><Stat label="Children" value={String(childrenOf(parts, p.id).length)} /><Stat label="Σ child volume" value={`${(totalVolume(parts, p.id) / 1000).toFixed(1)} cm³`} /></>}
@@ -182,7 +202,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 // ───────────────────────── Project knowledge ─────────────────────────
 export interface Knowledge {
-  projectId: string; subsystems: { id: string; name: string }[];
+  projectId: string; subsystems: { id: string; name: string; marker: Vec3 | null }[];
   research: { id: string; title: string; subsystemId: string | null }[]; decisions: { id: string; title: string; subsystemId: string | null; status: string; documented: boolean }[];
   revisions: { id: string; label: string; title: string; subsystemId: string | null }[]; reviews: { id: string; title: string; status: string; subsystemId: string | null }[];
   files: { id: string; name: string; subsystemId: string | null }[]; openIssues: number; docs: number;

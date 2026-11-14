@@ -16,13 +16,13 @@ import { FileThumb, FilterSelect, RefChip, SearchBox, Section, SubsystemTag, use
 import { REVIEW_STATUS } from "./meta";
 import { UploadRows, useUploader, type PendingFile } from "./upload-rows";
 
-export function ReviewsView({ scope, projectId }: { scope: Scope; projectId?: string }) {
+export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; projectId?: string; subsystemId?: string }) {
   const [open, setOpen] = useOpenParam();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
   const [project, setProject] = useState(projectId ?? "");
   const [status, setStatus] = useState("");
-  const rows = scope.reviews.filter((r) => (!project || r.project_id === project) && (!status || r.status === status) && (!q || `${r.title} ${r.description} ${r.reviewer_name ?? ""}`.toLowerCase().includes(q.toLowerCase())));
+  const rows = scope.reviews.filter((r) => (!project || r.project_id === project) && (!subsystemId || r.subsystem_id === subsystemId) && (!status || r.status === status) && (!q || `${r.title} ${r.description} ${r.reviewer_name ?? ""}`.toLowerCase().includes(q.toLowerCase())));
   const selected = scope.reviews.find((r) => r.id === open) ?? null;
   const pname = (id: string) => scope.projects.find((p) => p.id === id)?.name ?? "";
 
@@ -50,7 +50,7 @@ export function ReviewsView({ scope, projectId }: { scope: Scope; projectId?: st
                       <div className="flex flex-wrap items-center gap-2"><p className="text-[13px] font-semibold">{r.title}</p>{r.is_sample && <SampleBadge />}</div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         {!projectId && <Badge>{pname(r.project_id)}</Badge>}<SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />
-                        <span>Reviewer: <span className="font-medium text-[#344054]">{r.reviewer_name ?? "unassigned"}</span></span><span>· Submitted {formatDate(r.created_at)}</span>
+                        <span>Reviewer: <span className="font-medium text-foreground">{r.reviewer_name ?? "unassigned"}</span></span><span>· Submitted {formatDate(r.created_at)}</span>
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
@@ -64,7 +64,7 @@ export function ReviewsView({ scope, projectId }: { scope: Scope; projectId?: st
           </ul>
         </div>
       )}
-      {adding && <ReviewDialog scope={scope} projectId={projectId} onClose={() => setAdding(false)} />}
+      {adding && <ReviewDialog scope={scope} projectId={projectId} subsystemId={subsystemId} onClose={() => setAdding(false)} />}
       <Dialog open={Boolean(selected)} onOpenChange={(o) => !o && setOpen(null)}>{selected && <ReviewDrawer r={selected} scope={scope} onClose={() => setOpen(null)} />}</Dialog>
     </div>
   );
@@ -96,9 +96,9 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
   const renderComment = (c: ReviewComment, reply?: boolean) => {
     const influenced = scope.revisions.find((x) => x.id === c.influenced_revision_id);
     return (
-      <div key={c.id} className={`rounded-lg border p-3 ${c.resolved ? "border-[#cfe9da] bg-success-soft/40" : "border-border bg-surface"} ${reply ? "ml-6" : ""}`}>
+      <div key={c.id} className={`rounded-lg border p-3 ${c.resolved ? "border-success/30 bg-success-soft/40" : "border-border bg-surface"} ${reply ? "ml-6" : ""}`}>
         <div className="flex items-start gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-[#475467]">{initials(c.author_name)}</div>
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">{initials(c.author_name)}</div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 text-xs"><span className="font-semibold">{c.author_name}</span>
               {c.kind === "question" && <Badge tone="accent"><HelpCircle className="h-3 w-3" />Question</Badge>}{c.is_sample && <SampleBadge />}
@@ -108,7 +108,7 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
             {c.resolved && <p className="mt-1.5 flex items-center gap-1 text-xs text-success"><CheckCircle2 className="h-3.5 w-3.5" />Resolved by {c.resolved_by}{c.resolved_at ? ` · ${formatDate(c.resolved_at)}` : ""}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
               {!reply && <button className="font-medium text-accent hover:underline" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>Reply</button>}
-              {!reply && <button className="font-medium text-[#344054] hover:underline" onClick={async () => { const x = await act(setCommentResolved(c.id, !c.resolved), c.resolved ? "Reopened" : "Marked resolved"); if (x.ok) refresh(); }}>{c.resolved ? "Reopen" : "Mark resolved"}</button>}
+              {!reply && <button className="font-medium text-foreground hover:underline" onClick={async () => { const x = await act(setCommentResolved(c.id, !c.resolved), c.resolved ? "Reopened" : "Marked resolved"); if (x.ok) refresh(); }}>{c.resolved ? "Reopen" : "Mark resolved"}</button>}
               {!reply && (
                 <label className="flex items-center gap-1 text-muted-foreground">Led to revision:
                   <select aria-label="Revision influenced by this comment" className="max-w-[160px] rounded border border-border bg-surface px-1 py-0.5 text-xs" value={c.influenced_revision_id ?? ""} onChange={async (e) => { const x = await act(linkCommentToRevision(c.id, e.target.value || null), "Linked"); if (x.ok) refresh(); }}>
@@ -161,11 +161,11 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
   );
 }
 
-function ReviewDialog({ scope, projectId, onClose }: { scope: Scope; projectId?: string; onClose: () => void }) {
+function ReviewDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope; projectId?: string; subsystemId?: string; onClose: () => void }) {
   const router = useRouter();
   const { upload, progress } = useUploader();
   const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
-  const [f, setF] = useState({ title: "", description: "", subsystem_id: "", decision_id: "", revision_id: "", file_id: "", reviewer: "" });
+  const [f, setF] = useState({ title: "", description: "", subsystem_id: subsystemId ?? "", decision_id: "", revision_id: "", file_id: "", reviewer: "" });
   const [items, setItems] = useState<PendingFile[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

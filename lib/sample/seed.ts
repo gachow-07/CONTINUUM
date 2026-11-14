@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSampleAssembly } from "@/lib/cad/sample";
+import { SAMPLE_MARKERS, createSampleAssembly } from "@/lib/cad/sample";
 import { calcNote, chassisPlate, coverImage, suspensionRevA, suspensionRevB } from "./svg";
 
 const BUCKET = "project-files";
@@ -58,10 +58,10 @@ export async function buildSampleProject(supabase: SupabaseClient, user: { id: s
 
   // ── Subsystems ──
   const subs = await ins<{ id: string; name: string }>(supabase, "subsystems", [
-    { project_id: pid, name: "Suspension", position: 0, is_sample: true, description: "Front and rear suspension: arms, shocks, springs, and the geometry that sets handling." },
-    { project_id: pid, name: "Steering", position: 1, is_sample: true, description: "Servo, steering linkage and Ackermann geometry." },
-    { project_id: pid, name: "Chassis", position: 2, is_sample: true, description: "Main chassis plate, mounting points and layout of electronics." },
-    { project_id: pid, name: "Drivetrain", position: 3, is_sample: true, description: "Motor, pinion/spur gearing, differentials and driveshafts." },
+    { project_id: pid, name: "Suspension", marker_position: SAMPLE_MARKERS.Suspension, position: 0, is_sample: true, description: "Front and rear suspension: arms, shocks, springs, and the geometry that sets handling." },
+    { project_id: pid, name: "Steering", marker_position: SAMPLE_MARKERS.Steering, position: 1, is_sample: true, description: "Servo, steering linkage and Ackermann geometry." },
+    { project_id: pid, name: "Chassis", marker_position: SAMPLE_MARKERS.Chassis, position: 2, is_sample: true, description: "Main chassis plate, mounting points and layout of electronics." },
+    { project_id: pid, name: "Drivetrain", marker_position: SAMPLE_MARKERS.Drivetrain, position: 3, is_sample: true, description: "Motor, pinion/spur gearing, differentials and driveshafts." },
   ], "id,name");
   const sub = (n: string) => subs.find((s) => s.name === n)!.id;
 

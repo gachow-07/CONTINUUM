@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 
 const tones = {
-  neutral: "bg-muted text-[#475467] border-border",
-  accent: "bg-accent-soft text-[#1a4fd6] border-[#d3e0ff]",
-  success: "bg-success-soft text-success border-[#cfe9da]",
-  warning: "bg-warning-soft text-warning border-[#f3e2b3]",
-  danger: "bg-danger-soft text-danger border-[#f6cfca]",
+  neutral: "bg-muted text-muted-foreground border-border",
+  accent: "bg-accent-soft text-accent border-transparent",
+  success: "bg-success-soft text-success border-transparent",
+  warning: "bg-warning-soft text-warning border-transparent",
+  danger: "bg-danger-soft text-danger border-transparent",
 } as const;
 export type Tone = keyof typeof tones;
 

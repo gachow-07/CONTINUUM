@@ -19,7 +19,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
   const knowledge: Knowledge = {
     projectId: id,
-    subsystems: b.subsystems.map((s) => ({ id: s.id, name: s.name })),
+    subsystems: b.subsystems.map((s) => ({ id: s.id, name: s.name, marker: s.marker_position })),
     research: b.research.map((r) => ({ id: r.id, title: r.title, subsystemId: r.subsystem_id })),
     decisions: b.decisions.map((d) => ({ id: d.id, title: d.title, subsystemId: d.subsystem_id, status: d.status, documented: Boolean(d.reasoning.trim()) || b.evidence.some((e) => e.decision_id === d.id) })),
     revisions: b.revisions.map((r) => ({ id: r.id, label: r.rev_label, title: r.title, subsystemId: r.subsystem_id })),
