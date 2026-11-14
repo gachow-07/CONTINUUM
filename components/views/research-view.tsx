@@ -165,6 +165,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const canEditUrl = Boolean(r.url && r.is_sample && scope.projects.some((p) => p.id === r.project_id && p.is_sample));
+  const canEditContent = Boolean(r.is_sample && scope.projects.some((p) => p.id === r.project_id && p.is_sample));
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent title="Edit research">
@@ -174,6 +175,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
             title: String(f.get("title")), why_important: String(f.get("why")), subsystem_id: String(f.get("sub")) || null,
             tags: String(f.get("tags")).split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean),
             ...(canEditUrl && String(f.get("url")) !== r.url ? { url: String(f.get("url")) } : {}),
+            ...(canEditContent && String(f.get("content")) !== (r.content_text ?? "") ? { content_text: String(f.get("content")) } : {}),
           }), "Research updated");
           setBusy(false); if (x.ok) { onClose(); router.refresh(); }
         }}>
@@ -182,6 +184,7 @@ function EditResearchDialog({ r, scope, onClose }: { r: Research; scope: Scope; 
           <Field label="Subsystem"><Select name="sub" defaultValue={r.subsystem_id ?? ""}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === r.project_id).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           <Field label="Tags" hint="Comma-separated"><Input name="tags" defaultValue={r.tags.join(", ")} /></Field>
           <Field label="Why is this important?"><Textarea name="why" defaultValue={r.why_important} /></Field>
+          {canEditContent && <Field label="Content"><Textarea name="content" maxLength={200_000} defaultValue={r.content_text ?? ""} /></Field>}
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>Save</Button></div>
         </form>
       </DialogContent>
