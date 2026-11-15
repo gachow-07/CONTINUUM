@@ -196,7 +196,7 @@ type Mode = "url" | "pdf" | "note" | "image";
 
 export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope; projectId?: string; subsystemId?: string; onClose: () => void }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("url");
+  const [mode, setMode] = useState<Mode>("note");
   const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
   const [url, setUrl] = useState("");
   const [meta, setMeta] = useState({ title: "", site_name: "", description: "" });
@@ -248,7 +248,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
 
-  const tabs: { id: Mode; label: string }[] = [{ id: "url", label: "Website / URL" }, { id: "pdf", label: "PDF" }, { id: "image", label: "Image" }, { id: "note", label: "Personal note" }];
+  const tabs: { id: Mode; label: string }[] = [{ id: "note", label: "Reasoning / note" }, { id: "url", label: "Website / URL" }, { id: "pdf", label: "PDF" }, { id: "image", label: "Image" }];
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent wide title="Add research" description="Capture where it came from and why it matters.">
@@ -287,7 +287,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
             <Field label="Subsystem"><Select name="sub" defaultValue={subsystemId ?? ""} key={pid}><option value="">None</option>{subs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           </div>
           <Field label="Tags" hint="Comma-separated, e.g. suspension, roll, geometry"><Input name="tags" /></Field>
-          <Field label="Why is this source important?" hint="This is what future engineers will thank you for."><Textarea name="why" placeholder="What does it tell us, and how should it influence the design?" /></Field>
+          <Field label={mode === "note" ? "Why does this matter?" : "Why is this source important?"} hint="This is what future engineers will thank you for."><Textarea name="why" placeholder="What does it tell us, and how should it influence the design?" /></Field>
           {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
           <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>Save research</Button></div>
         </form>
