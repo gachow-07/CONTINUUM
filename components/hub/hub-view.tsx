@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { AddComponentButton } from "@/components/hub/add-component";
+import { UndefinedPartsCard } from "@/components/hub/undefined-parts-card";
 import { AssemblyViewer, type HubComponent } from "@/components/hub/assembly-viewer";
 import { ProjectModel, type UploadedModel } from "@/components/hub/project-model";
 import { EmptyModelViewer } from "@/components/hub/empty-model-viewer";
@@ -94,6 +95,7 @@ export function HubView({ b, parts, placeholder, tab, modelLinks, linkCounts = {
                   </div>
                 </Link>
               ))}
+              {viewerModel && <UndefinedPartsCard projectId={id} modelPath={viewerModel.storage_path} modelName={viewerModel.name} linkedCount={new Set(modelLinks.map((l) => l.part_key)).size} />}
             </div>)}
         </div>
       )}
