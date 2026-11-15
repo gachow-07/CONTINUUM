@@ -48,8 +48,8 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
   const [version, setVersion] = useState(0);
   const [savedVersion, setSavedVersion] = useState(0);
   const [histLen, setHistLen] = useState({ undo: 0, redo: 0 });
-  const [status, setStatus] = useState<Status>(project && initialParts ? "saved" : "local");
-  const [isSample, setIsSample] = useState(!initialParts);
+  const [status, setStatus] = useState<Status>(project && initialParts?.length ? "saved" : "local");
+  const [isSample, setIsSample] = useState(initialParts === null || Boolean(project?.isSample));
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tool, setTool] = useState<Tool>("select");

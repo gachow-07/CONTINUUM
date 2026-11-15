@@ -12,8 +12,8 @@ export default async function ProjectHub({ params, searchParams }: { params: Pro
   const b = await getBundle(id);
   if (!b) notFound();
   const saved = await loadModel(supabase, id);
-  const placeholder = saved.length === 0;
-  // With no saved model, show the labelled placeholder assembly so the hub is never an empty box.
+  const placeholder = saved.length === 0 && b.project.is_sample;
+  // Only the sample project may fall back to the illustrative assembly.
   const parts = placeholder ? createSampleAssembly().map((p) => ({ ...p, subsystemId: p.subsystemName ? b.subsystems.find((s) => s.name.toLowerCase() === p.subsystemName!.toLowerCase())?.id ?? null : null })) : saved;
   const { data: modelLinks } = b.project.viewer_model_file_id
     ? await supabase.from("glb_component_links").select("part_key,subsystem_id").eq("project_id", id).eq("file_id", b.project.viewer_model_file_id)

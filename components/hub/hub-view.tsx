@@ -3,6 +3,7 @@ import { Layers } from "lucide-react";
 import { AddComponentButton } from "@/components/hub/add-component";
 import { AssemblyViewer, type HubComponent } from "@/components/hub/assembly-viewer";
 import { ProjectModel } from "@/components/hub/project-model";
+import { EmptyModelViewer } from "@/components/hub/empty-model-viewer";
 import { HubResearchPanel } from "@/components/hub/research-panel";
 import { ComponentIcon } from "@/components/hub/icons";
 import { LivingSummary, NeedsAttention, ReadinessPanel, reviewTone } from "@/components/hub/panels";
@@ -43,7 +44,7 @@ export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: Project
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
             <ProjectModel key={viewerModel?.id ?? "empty"} projectId={id} model={viewerModel} components={hubComps} modelLinks={modelLinks} />
-            {!viewerModel && <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} />}
+            {!viewerModel && (parts.length > 0 ? <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} /> : <EmptyModelViewer />)}
             <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
           </div>
