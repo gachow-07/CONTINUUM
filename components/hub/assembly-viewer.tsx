@@ -9,6 +9,7 @@ import { subsystemOf } from "@/lib/cad/ops";
 import type { Part, Vec3 } from "@/lib/cad/types";
 import type { ViewRequest } from "@/components/cad/viewport";
 import { ComponentIcon } from "./icons";
+import { ViewerTip } from "./viewer-tip";
 
 const Viewport = dynamic(() => import("@/components/cad/viewport"), { ssr: false, loading: () => <Loading /> });
 const Loading = () => <div className="flex h-full items-center justify-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading 3D viewer…</div>;
@@ -21,7 +22,7 @@ export interface HubComponent {
 
 function ToolBtn({ on, onClick, children, label, disabled }: { on?: boolean; onClick: () => void; children: React.ReactNode; label: string; disabled?: boolean }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={on} disabled={disabled} className={cn("flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>{children}<span>{label}</span></button>
+    <ViewerTip label={label}><button type="button" onClick={onClick} aria-pressed={on} disabled={disabled} className={cn("flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>{children}<span>{label}</span></button></ViewerTip>
   );
 }
 
@@ -65,10 +66,10 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
           <ToolBtn on={isolate} onClick={() => setIsolate((v) => !v)} label="Isolate" disabled={!sel}><ScanSearch /></ToolBtn>
           <ToolBtn onClick={() => setView((v) => ({ preset: "fit", nonce: v.nonce + 1 }))} label="Fit"><Scan /></ToolBtn>
           <ToolBtn on={showGrid} onClick={() => setShowGrid((value) => !value)} label="Grid"><Grid3x3 /></ToolBtn>
-          <button type="button" role="switch" aria-checked={markersOn} onClick={() => setMarkersOn((v) => !v)} className="ml-1 flex min-h-10 items-center gap-2 rounded-md px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+          <ViewerTip label="Markers"><button type="button" role="switch" aria-checked={markersOn} onClick={() => setMarkersOn((v) => !v)} className="ml-1 flex min-h-10 items-center gap-2 rounded-md px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <MapPin className="h-3.5 w-3.5" />Markers
             <span className={cn("relative h-4 w-7 rounded-full transition-colors", markersOn ? "bg-accent" : "bg-border-strong")}><span className={cn("absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all", markersOn ? "left-3.5" : "left-0.5")} /></span>
-          </button>
+          </button></ViewerTip>
           <ToolBtn on={listOpen} onClick={() => setListOpen((v) => !v)} label="List"><List /></ToolBtn>
           {individualParts && <ToolBtn on={partMode} onClick={() => { setPartMode((value) => !value); setSelected(null); setListOpen(false); setIsolate(false); }} label={partMode ? "Parts on" : "Show parts"}><Move3d /></ToolBtn>}
         </div>
