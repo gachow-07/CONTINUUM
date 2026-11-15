@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Box, ChevronDown, Copy, Cuboid, Download, EyeOff, Folder, Grid3x3, Hexagon, Loader2, Maximize, MousePointer2, Move3d, PanelLeft, PanelRight, Plus, Redo2, RotateCcw, Rotate3d, Save, Scan, Sun, Trash2, Undo2, CircleDot, Cylinder } from "lucide-react";
+import { Box, ChevronDown, Copy, Cuboid, Download, EyeOff, Folder, Grid3x3, Hexagon, Loader2, Maximize, MousePointer2, Move3d, PanelLeft, PanelRight, Plus, Redo2, RotateCcw, Rotate3d, Save, Scan, Sun, Trash2, Undo2, CircleDot, Cylinder, Sparkles } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import { Logo } from "@/components/shell/logo";
 import { cn } from "@/lib/utils";
@@ -283,7 +283,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
             <div className="flex h-9 shrink-0 border-b border-[var(--c-line)]" role="tablist">
               {([["properties", selected ? "Properties" : "Settings"], ["project", "Knowledge"], ["ai", "Ask AI"]] as const).map(([id, label]) => (
                 <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                  className={cn("flex-1 border-b-2 px-2 text-[11.5px] font-medium transition-colors", tab === id ? "border-[var(--c-accent)] text-[var(--c-text)]" : "border-transparent text-[var(--c-muted)] hover:text-[var(--c-text)]")}>{label}</button>))}
+                  className={cn("flex-1 border-b-2 px-2 text-[11.5px] font-medium transition-colors", tab === id ? "border-[var(--c-accent)] text-[var(--c-text)]" : "border-transparent text-[var(--c-muted)] hover:text-[var(--c-text)]")}>{id === "ai" ? <span className="inline-flex items-center justify-center gap-1"><Sparkles className="h-3 w-3 text-[#a5b4fc]" /><span className="ai-text font-semibold">{label}</span></span> : label}</button>))}
             </div>
             <div className="scroll-thin min-h-0 flex-1 overflow-y-auto">
               {tab === "properties" && <Properties parts={parts} selectedId={selectedId} unit={unit} update={update} onToggleVisible={toggleVisible} subsystems={subsystems} markers={project ? markers : undefined} onPlaceMarker={project ? placeMarker : undefined}

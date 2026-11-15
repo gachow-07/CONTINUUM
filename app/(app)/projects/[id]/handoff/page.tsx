@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ArrowRight, FileDown, Lightbulb } from "lucide-react";
+import { AlertTriangle, ArrowRight, FileDown, Sparkles } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -106,7 +106,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
         </div>
 
         <div className="xl:sticky xl:top-6 xl:self-start">
-          <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground"><Lightbulb className="h-3.5 w-3.5" />Ask the project instead of the previous engineer.</div>
+          <div className="ai-gradient ai-glow mb-3 flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13.5px] font-semibold"><Sparkles className="h-4 w-4" />Ask the project instead of the previous engineer</div>
           <ChatPanel compact projectId={id} projectName={b.project.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId}
             suggestions={["Why did we change the suspension design?", "What should I work on next?", "What failed and what did we learn?", "Which decisions are missing documentation?"]} />
         </div>

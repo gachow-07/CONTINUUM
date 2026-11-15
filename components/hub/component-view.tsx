@@ -63,6 +63,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
                   <p className="mt-2 text-[12px] text-muted-foreground">Everything below is built from recorded decisions, revisions and research. Nothing is inferred.</p>
                 </div>
               </Card>
+              <AskBar projectId={id} componentName={sub.name} aiEnabled={ai} />
               {c.decisions.length === 0 ? (
                 <Card><div className="flex flex-col items-center gap-2 p-8 text-center"><p className="text-[13px] font-medium">No decisions recorded for {sub.name} yet</p><p className="max-w-sm text-xs text-muted-foreground">Record what was chosen, what was rejected and why, and it will appear here with its sources.</p>
                   <Link href={`${base}/components/${sid}?tab=decisions`} className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[12px] font-semibold text-[#031317]"><Plus className="h-3.5 w-3.5" />Record a decision</Link></div></Card>
@@ -126,7 +127,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
           </Card>
         </aside>
       </div>
-      <AskBar projectId={id} componentName={sub.name} aiEnabled={ai} />
+      {tab !== "summary" && <AskBar projectId={id} componentName={sub.name} aiEnabled={ai} />}
     </div>
   );
 }

@@ -125,7 +125,7 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
       <Section title="Peer reviews">
         {reviews.length === 0 ? <span className="text-muted-foreground">No reviews requested for this decision.</span> : <ul className="space-y-1.5">{reviews.map((r) => <li key={r.id}><RefChip projectId={pid} type="review" id={r.id} label={r.title} onNavigate={onClose} /></li>)}</ul>}
       </Section>
-      <Section title="AI summary" action={aiEnabled ? <button disabled={busy} onClick={summarize} className="inline-flex items-center gap-1 text-xs text-accent hover:underline disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{d.ai_summary ? "Regenerate" : "Generate"}</button> : undefined}>
+      <Section title="AI summary" action={aiEnabled ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{d.ai_summary ? "Regenerate" : "Generate"}</button> : undefined}>
         {d.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{d.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.</span> : <SetupNotice title="AI not configured">Add OPENAI_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       <ConfirmDialog open={del} onOpenChange={setDel} title="Delete this decision?" description="Evidence links are removed with it. Research, revisions and files are kept." onConfirm={async () => { const r = await act(deleteDecision(d.id), "Decision deleted"); if (r.ok) { onClose(); router.refresh(); } }} />
