@@ -35,16 +35,17 @@ create trigger protect_project_member_identity before update on public.project_m
 
 create function public.send_project_invitation(p_project_id uuid, p_email text, p_role text) returns void
 language plpgsql security definer set search_path = public as $$
-declare target public.profiles%rowtype;
+declare target_id uuid; target_email text;
 begin
   if auth.uid() is null or not public.is_project_owner(p_project_id) then raise exception 'Only the project owner can invite people'; end if;
   if p_role not in ('editor','viewer') or p_role is null then raise exception 'Invalid role'; end if;
-  select * into target from public.profiles where lower(email) = lower(trim(p_email)) limit 1;
-  if target.id is null then raise exception 'No CONTINUUM account uses that email yet. Ask them to sign up first.'; end if;
-  if exists (select 1 from public.project_members where project_id = p_project_id and user_id = target.id) then raise exception 'That person is already on the project.'; end if;
-  if exists (select 1 from public.project_invitations where project_id = p_project_id and invitee_id = target.id and status = 'pending') then raise exception 'That person already has a pending invitation.'; end if;
+  select u.id, u.email into target_id, target_email from auth.users u
+  where lower(u.email) = lower(trim(p_email)) and u.email_confirmed_at is not null limit 1;
+  if target_id is null then raise exception 'No verified CONTINUUM account uses that email yet. Ask them to sign up and confirm their email first.'; end if;
+  if exists (select 1 from public.project_members where project_id = p_project_id and user_id = target_id) then raise exception 'That person is already on the project.'; end if;
+  if exists (select 1 from public.project_invitations where project_id = p_project_id and invitee_id = target_id and status = 'pending') then raise exception 'That person already has a pending invitation.'; end if;
   insert into public.project_invitations(project_id, inviter_id, invitee_id, invitee_email, role)
-  values (p_project_id, auth.uid(), target.id, target.email, p_role);
+  values (p_project_id, auth.uid(), target_id, target_email, p_role);
 exception when unique_violation then raise exception 'That person already has a pending invitation.';
 end $$;
 
