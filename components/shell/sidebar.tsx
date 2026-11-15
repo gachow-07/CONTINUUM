@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, ChevronDown, ClipboardCheck, FileText, Home, Inbox, LogOut, Menu, Scale, Settings, Users, X } from "lucide-react";
+import { BookOpen, ChevronDown, ClipboardCheck, FileText, Home, Inbox, LogOut, Menu, Scale, Settings, Users, X, ArrowRightLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn, initials } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -22,7 +22,8 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
     { href: pid ? `${base}/research` : "/research", label: "Research", icon: BookOpen, on: pathname.startsWith(`${base}/research`) || (!pid && pathname.startsWith("/research")) },
     { href: pid ? `${base}/decisions` : "/decisions", label: "Decisions", icon: Scale, on: pathname.startsWith(`${base}/decisions`) || (!pid && pathname.startsWith("/decisions")) },
     { href: pid ? `${base}/reviews` : "/reviews", label: "Reviews", icon: ClipboardCheck, on: pathname.startsWith(`${base}/reviews`) || (!pid && pathname.startsWith("/reviews")) },
-    { href: pid ? `${base}/docs` : "/documentation", label: "Documentation", icon: FileText, on: pid ? ["/docs", "/handoff", "/files", "/assistant"].some((s) => pathname.startsWith(base + s)) : pathname.startsWith("/documentation") },
+    ...(pid ? [{ href: `${base}/handoff`, label: "Handoff", icon: ArrowRightLeft, on: pathname.startsWith(`${base}/handoff`) }] : []),
+    { href: pid ? `${base}/docs` : "/documentation", label: "Documentation", icon: FileText, on: pid ? ["/docs", "/files", "/assistant"].some((s) => pathname.startsWith(base + s)) : pathname.startsWith("/documentation") },
   ];
 
   async function signOut() { await createClient().auth.signOut(); router.replace("/login"); router.refresh(); }
