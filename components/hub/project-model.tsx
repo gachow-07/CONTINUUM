@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BookOpen, ChevronDown, ChevronRight, Grid3x3, Hand, History, MapPin, Move3d, Orbit, PanelLeft, Plus, Scale, Scan, ScanSearch, Search, Sparkles, Upload } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ChevronRight, Grid3x3, Hand, History, Link2, MapPin, Move3d, Orbit, PanelLeft, Plus, Scale, Scan, ScanSearch, Search, Sparkles, Upload } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import Link from "next/link";
 import type { HubComponent } from "./assembly-viewer";
@@ -396,12 +396,13 @@ function usePopover(width: number, height: number) {
 }
 
 /** "+" on the selected-part card: add documentation to the part's component, or link the part to a component (or a new one) in place. */
-function PartAddMenu({ partName, component, components, onAssign, onCreate }: { partName: string; component?: HubComponent; components: HubComponent[]; onAssign: (componentId: string) => Promise<void>; onCreate: (name: string) => Promise<boolean> }) {
-  const { open, setOpen, pos, button, popover, toggle } = usePopover(252, 360);
+function PartAddMenu({ projectId, partName, component, components, onAssign, onCreate }: { projectId: string; partName: string; component?: HubComponent; components: HubComponent[]; onAssign: (componentId: string) => Promise<void>; onCreate: (name: string) => Promise<boolean> }) {
+  const { open, setOpen, pos, button, popover, toggle } = usePopover(252, 470);
   const [adding, setAdding] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
-  const close = () => { setOpen(false); setAdding(false); setName(""); };
+  const close = () => { setOpen(false); setAdding(false); setName(""); setLinkOpen(false); };
   const item = "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-foreground hover:bg-muted disabled:opacity-50";
   const icon = "h-4 w-4 shrink-0 text-muted-foreground";
   const link = async (id: string) => { setBusy(true); try { await onAssign(id); close(); } finally { setBusy(false); } };
@@ -418,21 +419,30 @@ function PartAddMenu({ partName, component, components, onAssign, onCreate }: { 
           <Link role="menuitem" className={item} href={`${component.href}?tab=research`} onClick={close}><BookOpen className={icon} />Add research</Link>
           <Link role="menuitem" className={item} href={`${component.href}?tab=revisions`} onClick={close}><History className={icon} />Record a revision</Link>
         </> : <>
-          <p className="px-2.5 pb-0.5 pt-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Link to</p>
+          {/* Same three actions as a linked part; without a subsystem they open the project-wide pages. */}
+          <Link role="menuitem" className={item} href={`/projects/${projectId}/decisions`} onClick={close}><Scale className={icon} />Add a decision</Link>
+          <Link role="menuitem" className={item} href={`/projects/${projectId}/research`} onClick={close}><BookOpen className={icon} />Add research</Link>
+          <Link role="menuitem" className={item} href={`/projects/${projectId}/history`} onClick={close}><History className={icon} />Record a revision</Link>
+          <div className="my-1 h-px bg-border" />
+          <button type="button" aria-expanded={linkOpen} onClick={() => setLinkOpen((v) => !v)} className={item}>
+            <Link2 className={icon} /><span className="flex-1">Link to a subsystem</span><ChevronRight className={cn("ease-premium h-4 w-4 text-muted-foreground transition-transform duration-300", linkOpen && "rotate-90")} />
+          </button>
+          {linkOpen && <div className="ml-3 border-l border-border pl-1">
           <div className="scroll-thin max-h-48 overflow-y-auto">
             {components.map((c, i) => <button key={c.id} role="menuitem" type="button" disabled={busy} className={item} onClick={() => void link(c.id)}>
               <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: componentColor(i) }} /><span className="min-w-0 truncate">{c.name}</span></button>)}
-            {components.length === 0 && <p className="px-2.5 py-2 text-xs text-muted-foreground">No components yet. Add the first one below.</p>}
+            {components.length === 0 && <p className="px-2.5 py-2 text-xs text-muted-foreground">No subsystems yet. Add the first one below.</p>}
           </div>
           <div className="my-1 h-px bg-border" />
           {adding ? (
             <form className="flex items-center gap-1.5 p-1" onSubmit={(e) => { e.preventDefault(); void create(); }}>
-              <input autoFocus value={name} onChange={(e) => setName(e.target.value)} disabled={busy} aria-label="New component name" placeholder="New component name"
+              <input autoFocus value={name} onChange={(e) => setName(e.target.value)} disabled={busy} aria-label="New subsystem name" placeholder="New subsystem name"
                 onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setAdding(false); setName(""); } }}
                 className="h-8 min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-2 text-[13px] text-foreground outline-none focus:border-accent" />
               <button type="submit" disabled={busy || !name.trim()} className="h-8 shrink-0 rounded-md bg-accent px-2.5 text-[12px] font-semibold text-[#031317] disabled:opacity-50">{busy ? "Adding…" : "Add"}</button>
             </form>
-          ) : <button role="menuitem" type="button" className={item} onClick={() => setAdding(true)}><Plus className={icon} />Add component</button>}
+          ) : <button role="menuitem" type="button" className={item} onClick={() => setAdding(true)}><Plus className={icon} />Add subsystem</button>}
+          </div>}
         </>}
       </div>, document.body)}
   </>;
@@ -442,7 +452,7 @@ function PartAddMenu({ partName, component, components, onAssign, onCreate }: { 
 export function SelectedPartCard({ projectId, projectName, aiEnabled, part, component, components, onLink, onAssign, onCreate }: { projectId: string; projectName: string; aiEnabled: boolean; part: ImportedPart; component?: HubComponent; components: HubComponent[]; onLink: () => void; onAssign: (componentId: string) => Promise<void>; onCreate: (name: string) => Promise<boolean> }) {
   return <div data-part-card className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
     <div className="flex items-center justify-between gap-2"><p className="text-[#a9adb3]">Selected part</p>
-      <div className="flex items-center gap-1.5"><PartAddMenu partName={part.name} component={component} components={components} onAssign={onAssign} onCreate={onCreate} /><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={part.name} componentName={component?.name} /></div></div>
+      <div className="flex items-center gap-1.5"><PartAddMenu projectId={projectId} partName={part.name} component={component} components={components} onAssign={onAssign} onCreate={onCreate} /><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={part.name} componentName={component?.name} /></div></div>
     <p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{part.name}</p>
     {component ? <>
       <p className="mt-1 text-[#a9adb3]">Component: {component.name}</p>
