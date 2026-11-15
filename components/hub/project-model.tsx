@@ -14,6 +14,7 @@ import { uploadToProject } from "@/lib/client";
 import { createClient } from "@/lib/supabase/client";
 import type { FileRow } from "@/lib/types";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
+import { ViewerTip } from "./viewer-tip";
 
 const Scene = dynamic(() => import("./glb-scene"), { ssr: false, loading: () => <div className="p-8 text-sm text-muted-foreground">Loading 3D viewer…</div> });
 const LIMIT = 50 * 1024 * 1024;
@@ -124,5 +125,5 @@ export function ProjectModel({ projectId, model, components, modelLinks }: { pro
 }
 
 function ViewerButton({ active, disabled, label, onClick, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" aria-pressed={active} disabled={disabled} onClick={onClick} className={`flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 [&_svg]:h-3.5 [&_svg]:w-3.5 ${active ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{children}<span>{label}</span></button>;
+  return <ViewerTip label={label}><button type="button" aria-pressed={active} disabled={disabled} onClick={onClick} className={`flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 [&_svg]:h-3.5 [&_svg]:w-3.5 ${active ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{children}<span>{label}</span></button></ViewerTip>;
 }
