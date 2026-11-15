@@ -40,11 +40,28 @@ export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: Project
         {TABS.map(([k, label]) => <Link key={k} role="tab" aria-selected={tab === k} href={k === "overview" ? `/projects/${id}` : `/projects/${id}?tab=${k}`} className={cn("-mb-px border-b-2 px-4 py-2.5 text-[13.5px] font-medium", tab === k ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>{label}</Link>)}
       </div>
 
-      {tab === "overview" && (
+      {tab === "overview" && viewerModel && (
+        // Immersive layout: the uploaded model is the page backdrop; the rest of the overview scrolls up over it.
+        <div className="space-y-8">
+          <ProjectModel key={viewerModel.id} projectId={id} model={viewerModel} components={hubComps} modelLinks={modelLinks}
+            aside={<ReadinessPanel projectId={id} comps={comps} className="glass" />} />
+          <div id="overview-details" className="grid scroll-mt-20 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div className="min-w-0 space-y-5">
+              <HubResearchPanel bundle={b} />
+              <LivingSummary b={b} comps={comps} />
+            </div>
+            <div className="space-y-5">
+              <NeedsAttention items={attentionItems(b, comps)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "overview" && !viewerModel && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <ProjectModel key={viewerModel?.id ?? "empty"} projectId={id} model={viewerModel} components={hubComps} modelLinks={modelLinks} />
-            {!viewerModel && (parts.length > 0 ? <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} /> : <EmptyModelViewer />)}
+            <ProjectModel key="empty" projectId={id} model={null} components={hubComps} modelLinks={modelLinks} />
+            {(parts.length > 0 ? <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} /> : <EmptyModelViewer />)}
             <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
           </div>
