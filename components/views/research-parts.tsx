@@ -88,7 +88,7 @@ export function ResearchParts({ projectId, components, initialParts, model, link
     <div className="mt-4 flex flex-wrap gap-2">
       <input aria-label="Search model parts" placeholder="Search model parts" value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-48 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm" />
       <select aria-label="Choose component for selected parts" disabled={!ready} value={destination} onChange={(e) => setDestination(e.target.value)} className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Choose component</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-      <button type="button" disabled={!ready || !destination || !selected.length || busy !== null} onClick={() => void assignSelected()} className="rounded-md bg-accent px-3 py-2 text-sm text-white disabled:opacity-40">Assign selected ({selected.length})</button>
+      <button type="button" disabled={!ready || !destination || !selected.length || busy !== null} onClick={() => void assignSelected()} className="rounded-md bg-accent px-3 py-2 text-sm text-[#031317] disabled:opacity-40">Assign selected ({selected.length})</button>
     </div>
     {(loadError || modelError) && <p role="alert" className="mt-4 text-sm text-danger">Model parts could not be loaded: {loadError || modelError} Refresh the page to retry.</p>}
     {assignmentError && <p role="alert" className="mt-4 text-sm text-danger">{assignmentError}</p>}

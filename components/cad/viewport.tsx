@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { descendantIds } from "@/lib/cad/ops";
 import type { DisplayMode, Part, Tool, Vec3, ViewPreset } from "@/lib/cad/types";
 
-export const ACCENT = "#3d8bff";
+export const ACCENT = "#14c3dd";
 export type ViewRequest = { preset: ViewPreset | "fit"; nonce: number; immediate?: boolean };
 
 // Camera directions in world space. Model nose is +Z (matches the view cube's "Front"), right is +X.
@@ -40,10 +40,10 @@ export default function Viewport(props: Props) {
         {props.markers?.map((m) => (
           <button key={m.id} data-marker-id={m.id} type="button" onClick={() => props.onMarker?.(m.id)} aria-pressed={m.active} aria-label={`${m.name}: ${m.summary}. Select`}
             className="group pointer-events-auto absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full outline-none" style={{ visibility: "hidden" }}>
-            <span className={`absolute inset-0 rounded-full border-2 transition-all ${m.active ? "scale-110 border-[#3d8bff] bg-[#3d8bff]/25" : "border-[#3d8bff]/70 bg-[#0b0f16]/55 group-hover:border-[#3d8bff] group-focus-visible:border-[#3d8bff]"}`} />
-            <span className={`relative h-2.5 w-2.5 rounded-full ${m.active ? "bg-white" : "bg-[#3d8bff]"}`} />
+            <span className={`absolute inset-0 rounded-full border-2 transition-all ${m.active ? "scale-110 border-[#14c3dd] bg-[#14c3dd]/25" : "border-[#14c3dd]/70 bg-[#0d0e10]/55 group-hover:border-[#14c3dd] group-focus-visible:border-[#14c3dd]"}`} />
+            <span className={`relative h-2.5 w-2.5 rounded-full ${m.active ? "bg-white" : "bg-[#14c3dd]"}`} />
             <span className="absolute inset-[-3px] rounded-full ring-2 ring-white/0 group-focus-visible:ring-white/90" />
-            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2b3649] bg-[#090c12]/95 px-2 py-1 text-[11px] font-medium text-[#e4e9f2] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{m.name}</span>
+            <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-[#2b3649] bg-[#0a0b0c]/95 px-2 py-1 text-[11px] font-medium text-[#e4e9f2] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">{m.name}</span>
           </button>
         ))}
       </div>

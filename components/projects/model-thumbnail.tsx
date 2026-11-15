@@ -32,7 +32,7 @@ function createModel(parts: Part[]) {
 }
 
 /** Render the saved assembly using the same stage as uploaded model previews. */
-export function ModelThumbnail({ parts, name, hiRes = false, className = "bg-[#0d131c]" }: { parts: Part[]; name: string; hiRes?: boolean; className?: string }) {
+export function ModelThumbnail({ parts, name, hiRes = false, className = "bg-[#0f1113]" }: { parts: Part[]; name: string; hiRes?: boolean; className?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const hovered = useCardHover(container);
@@ -65,5 +65,5 @@ export function EmptyModelThumbnail({ name }: { name: string }) {
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
-  return <div ref={container} role="img" aria-label={`${name}: no model yet`} className="pointer-events-none relative h-full w-full bg-[#0d131c]">{visible && <Canvas frameloop="demand" dpr={1} camera={{ position: [6, 4.2, 6], fov: 45 }}><FadingGrid span={10} /><OrbitControls enabled={false} /></Canvas>}<span className="absolute bottom-3 left-3 text-xs text-muted-foreground">No model yet</span></div>;
+  return <div ref={container} role="img" aria-label={`${name}: no model yet`} className="pointer-events-none relative h-full w-full bg-[#0f1113]">{visible && <Canvas frameloop="demand" dpr={1} camera={{ position: [6, 4.2, 6], fov: 45 }}><FadingGrid span={10} /><OrbitControls enabled={false} /></Canvas>}<span className="absolute bottom-3 left-3 text-xs text-muted-foreground">No model yet</span></div>;
 }

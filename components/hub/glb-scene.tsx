@@ -14,7 +14,7 @@ export type ImportedPart = { key: string; name: string };
 type Marker = { id: string; name: string; partKeys: string[] };
 function Model({ scene, highlighted, isolate, onSelect, onParts }: { scene: Group; highlighted: string[]; isolate: boolean; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void }) {
   const parts = useMemo(() => importedParts(scene), [scene]);
-  const highlightMaterial = useMemo(() => new MeshStandardMaterial({ color: "#299fff", emissive: "#074987", emissiveIntensity: 0.5, roughness: 0.5 }), []);
+  const highlightMaterial = useMemo(() => new MeshStandardMaterial({ color: "#22d3ee", emissive: "#0a5560", emissiveIntensity: 0.5, roughness: 0.5 }), []);
   useEffect(() => { onParts?.(parts.map(({ key, name }) => ({ key, name }))); }, [parts, onParts]);
   useEffect(() => {
     const original = parts.map(({ mesh }) => mesh.material);
@@ -53,7 +53,7 @@ function Markers({ scene, markers, onMarker }: { scene: Group; markers: Marker[]
       return box.isEmpty() ? [] : [{ ...marker, position: box.getCenter(new Vector3()), radius }];
     });
   }, [scene, markers]);
-  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#3d8bff" depthTest={false} /></mesh>)}</>;
+  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#14c3dd" depthTest={false} /></mesh>)}</>;
 }
 /** Shifts the rendered image so the model is centred in the open area between overlay panels, not the canvas centre. */
 function ViewOffset({ x, y }: { x: number; y: number }) {

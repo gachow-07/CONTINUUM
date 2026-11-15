@@ -51,7 +51,7 @@ function AssistantMessage({ m, onNavigate }: { m: ChatMessage; onNavigate?: () =
 
 function CiteNum({ n, cite, onNavigate }: { n: number; cite?: Citation; onNavigate?: () => void }) {
   if (!cite || n < 1) return null;
-  return <Link href={cite.href} onClick={onNavigate} title={cite.title} className="ml-0.5 inline-flex h-4 min-w-4 -translate-y-px items-center justify-center rounded bg-accent-soft px-1 align-baseline text-[10px] font-semibold text-accent no-underline hover:bg-accent hover:text-white">{n}</Link>;
+  return <Link href={cite.href} onClick={onNavigate} title={cite.title} className="ml-0.5 inline-flex h-4 min-w-4 -translate-y-px items-center justify-center rounded bg-accent-soft px-1 align-baseline text-[10px] font-semibold text-accent no-underline hover:bg-accent hover:text-[#031317]">{n}</Link>;
 }
 
 export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, initialConversationId, suggestions = DEFAULT_SUGGESTIONS, compact, height, initialQuestion }: {

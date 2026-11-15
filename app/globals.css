@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0f16;
-  --foreground: #e4e9f2;
-  --surface: #111722;
-  --muted: #171e2b;
-  --muted-foreground: #8a97ab;
-  --border: #1f2836;
-  --border-strong: #2b3649;
-  --primary: #223a63;
+  --background: #0d0e10;
+  --foreground: #f2f4f5;
+  --surface: #141518;
+  --muted: #1b1d21;
+  --muted-foreground: #9ea3aa;
+  --border: #23262a;
+  --border-strong: #30343a;
+  --primary: #1d3f46;
   --primary-foreground: #ffffff;
-  --accent: #3d8bff;
-  --accent-soft: rgba(61, 139, 255, 0.14);
-  --success: #4cc38a;
-  --success-soft: rgba(76, 195, 138, 0.13);
-  --warning: #e0a94a;
-  --warning-soft: rgba(224, 169, 74, 0.13);
-  --danger: #f07b70;
-  --danger-soft: rgba(240, 123, 112, 0.14);
-  --sidebar: #090c12;
-  --sidebar-hover: #131925;
-  --sidebar-border: #1a2130;
-  --sidebar-foreground: #9aa7bb;
+  --accent: #22d3ee;
+  --accent-soft: rgba(34, 211, 238, 0.14);
+  --success: #4ade80;
+  --success-soft: rgba(74, 222, 128, 0.13);
+  --warning: #f5b74f;
+  --warning-soft: rgba(245, 183, 79, 0.13);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.14);
+  --sidebar: #0a0b0c;
+  --sidebar-hover: #16181b;
+  --sidebar-border: #1c1f23;
+  --sidebar-foreground: #9ea3aa;
 }
 
 @theme inline {
@@ -61,7 +61,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-::selection { background: rgba(61, 139, 255, 0.35); }
+::selection { background: rgba(34,211,238, 0.35); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 @keyframes fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -83,11 +83,11 @@ body {
 /* ───────── 3D workspace (dark engineering theme, one accent) ───────── */
 .cad-root {
   --c-bg: #0a0d12; --c-panel: #11151c; --c-panel2: #161b24; --c-line: #222a36; --c-line2: #2c3646;
-  --c-text: #d6dce6; --c-muted: #8592a6; --c-accent: #3d8bff; --c-accent-soft: rgba(61, 139, 255, 0.14);
+  --c-text: #d6dce6; --c-muted: #8592a6; --c-accent: #14c3dd; --c-accent-soft: rgba(34,211,238, 0.14);
   color-scheme: dark; color: var(--c-text); font-size: 12.5px;
   /* Re-theme the shared light components (chat panel etc.) for the dark workspace. */
   --surface: #11151c; --foreground: #d6dce6; --muted: #1a202b; --muted-foreground: #8592a6; --border: #222a36; --border-strong: #2c3646;
-  --accent: #3d8bff; --accent-soft: rgba(61, 139, 255, 0.14); --primary: #26405e; --primary-foreground: #ffffff;
+  --accent: #14c3dd; --accent-soft: rgba(34,211,238, 0.14); --primary: #26405e; --primary-foreground: #ffffff;
   --warning: #e2b25a; --warning-soft: rgba(226, 178, 90, 0.12); --danger-soft: rgba(220, 80, 70, 0.14); --danger: #f08a80; --background: #0a0d12;
 }
 .cad-root ::selection { background: rgba(61, 180, 255, 0.35); }
@@ -111,11 +111,11 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.4), 0 30px 70px -30px rgba(0, 0, 0, 0.85);
 }
 .glass {
-  background: rgba(13, 17, 25, 0.58); border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(16,17,19, 0.58); border: 1px solid rgba(255, 255, 255, 0.08);
   -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 24px 60px -24px rgba(0, 0, 0, 0.85);
 }
-.eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; color: #6b7689; }
+.eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; color: #6c7178; }
 .ease-premium { transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
 
 @keyframes ring-draw { from { stroke-dashoffset: var(--ring-c); } to { stroke-dashoffset: var(--ring-to); } }
@@ -136,12 +136,12 @@ body {
 
 /* When the immersive 3D stage is on screen, the app chrome turns to glass over it. */
 html:has([data-immersive-stage]) [data-shell="sidebar"] {
-  background: rgba(8, 11, 17, 0.55); -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+  background: rgba(10,11,12, 0.55); -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
   border-color: rgba(255, 255, 255, 0.06);
 }
 html:has([data-immersive-stage]) [data-shell="sidebar"] > div { background: transparent; }
 html:has([data-immersive-stage]) [data-shell="header"] {
-  background: linear-gradient(180deg, rgba(8, 11, 17, 0.6), rgba(8, 11, 17, 0.25)); border-color: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(10,11,12, 0.6), rgba(10,11,12, 0.25)); border-color: rgba(255, 255, 255, 0.05);
 }
 
 @media (prefers-reduced-motion: reduce) {

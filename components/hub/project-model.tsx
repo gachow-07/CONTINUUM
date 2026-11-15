@@ -100,10 +100,10 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
     toast.success("Switched model. Its linked parts are back.");
     router.refresh();
   }
-  const switcher = (variant: "glass" | "plain") => models.length > (model ? 1 : 0) && <label className={cn("flex items-center gap-2 text-xs", variant === "glass" ? "mt-3 text-[#6b7689]" : "text-muted-foreground")}>
+  const switcher = (variant: "glass" | "plain") => models.length > (model ? 1 : 0) && <label className={cn("flex items-center gap-2 text-xs", variant === "glass" ? "mt-3 text-[#6c7178]" : "text-muted-foreground")}>
     {model ? "Model" : "Use an earlier upload"}
     <select aria-label="Choose which uploaded model to show" disabled={busy} value={model?.id ?? ""} onChange={(e) => void switchModel(e.target.value)}
-      className={cn("h-8 min-w-0 max-w-[220px] flex-1 truncate rounded-lg border px-2 text-xs", variant === "glass" ? "border-white/[0.08] bg-[#0d1119]/80 text-[#eef2f8]" : "border-border bg-surface text-foreground")}>
+      className={cn("h-8 min-w-0 max-w-[220px] flex-1 truncate rounded-lg border px-2 text-xs", variant === "glass" ? "border-white/[0.08] bg-[#101113]/80 text-[#f2f4f5]" : "border-border bg-surface text-foreground")}>
       {!model && <option value="">Choose a model…</option>}
       {models.map((m) => <option key={m.id} value={m.id}>{m.name} · {formatDate(m.uploadedAt)} · {m.links} linked</option>)}
     </select>
@@ -130,12 +130,12 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
       eventSource={stage.eventSource} viewOffset={stage.viewOffset} fitMargin={stage.fitMargin} gizmo={stage.gizmo} />}
     title={<>
       <p className="eyebrow">Current assembly</p>
-      <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#b9c6da] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 12 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
-      <p className="mt-1 font-mono text-[11.5px] text-[#6b7689]">.glb · self-contained · up to 50 MB</p>
-      <p className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-[#a6b0c0]">
-        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{parts.length}</b> parts</span>
-        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{components.length}</b> components</span>
-        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{links.length}</b> linked</span>
+      <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#bfc6cc] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 12 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
+      <p className="mt-1 font-mono text-[11.5px] text-[#6c7178]">.glb · self-contained · up to 50 MB</p>
+      <p className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-[#a9adb3]">
+        <span><b className="font-semibold tabular-nums text-[#f2f4f5]">{parts.length}</b> parts</span>
+        <span><b className="font-semibold tabular-nums text-[#f2f4f5]">{components.length}</b> components</span>
+        <span><b className="font-semibold tabular-nums text-[#f2f4f5]">{links.length}</b> linked</span>
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {uploadInput}
@@ -144,34 +144,34 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
       {switcher("glass")}
       {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
     </>}
-    panel={listOpen ? <aside aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#eef2f8]">
-      <h3 className="flex items-baseline justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#6b7689]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
-      {components.length === 0 ? <p className="mt-2 text-xs text-[#a6b0c0]">Add components to your project first.</p> : (
+    panel={listOpen ? <aside aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
+      <h3 className="flex items-baseline justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
+      {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
         <div className="relative mt-2 grid gap-0.5">
-          <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border border-[#4d94ff]/30 bg-linear-to-b from-[#4d94ff]/18 to-[#4d94ff]/8 transition-[transform,opacity] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)` }} />
+          <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border border-[#22d3ee]/30 bg-linear-to-b from-[#22d3ee]/18 to-[#22d3ee]/8 transition-[transform,opacity] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)` }} />
           {components.map((c, i) => { const count = links.filter((l) => l.subsystem_id === c.id).length; const on = componentFilter === c.id; return (
             <button key={c.id} type="button" aria-pressed={on} onClick={() => { setComponentFilter(on ? null : c.id); setSelected(null); if (on) setIsolate(false); }}
-              className={cn("relative flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-left text-xs font-medium transition-colors", on ? "text-[#eef2f8]" : "text-[#a6b0c0] hover:text-[#eef2f8]")}>
-              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: componentColor(i) }} /><span className="min-w-0 flex-1 truncate">{c.name}</span><span className="text-[11px] tabular-nums text-[#6b7689]">{count}</span>
+              className={cn("relative flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-left text-xs font-medium transition-colors", on ? "text-[#f2f4f5]" : "text-[#a9adb3] hover:text-[#f2f4f5]")}>
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: componentColor(i) }} /><span className="min-w-0 flex-1 truncate">{c.name}</span><span className="text-[11px] tabular-nums text-[#6c7178]">{count}</span>
             </button>); })}
         </div>
       )}
-      {chosenComponent && !chosenPart && <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/20 p-2.5 text-xs text-[#a6b0c0]">
+      {chosenComponent && !chosenPart && <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/20 p-2.5 text-xs text-[#a9adb3]">
         <p>{chosenComponent.done} of {chosenComponent.total} documented · {chosenComponent.statusLabel}</p>
-        <p className="mt-0.5 truncate text-[#eef2f8]">{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p>
-        <Link className="mt-1.5 inline-flex items-center gap-1 font-medium text-[#8fc3ff] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>
+        <p className="mt-0.5 truncate text-[#f2f4f5]">{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p>
+        <Link className="mt-1.5 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>
       </div>}
-      <button type="button" aria-expanded={partsOpen} onClick={() => setPartsOpen((value) => !value)} className="mt-3 flex w-full items-center justify-between border-t border-white/[0.07] pt-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[#6b7689] hover:text-[#a6b0c0]">
+      <button type="button" aria-expanded={partsOpen} onClick={() => setPartsOpen((value) => !value)} className="mt-3 flex w-full items-center justify-between border-t border-white/[0.07] pt-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[#6c7178] hover:text-[#a9adb3]">
         Model parts <span className="flex items-center gap-1.5 tracking-normal tabular-nums">{parts.length}<ChevronRight className={cn("ease-premium h-3 w-3 transition-transform duration-500", partsOpen && "rotate-90")} /></span>
       </button>
       <div className="expand" data-open={partsOpen}><div>
-        <label className="relative mt-2 block"><Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[#6b7689]" /><input aria-label="Search model parts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parts" tabIndex={partsOpen ? 0 : -1}
-          className="h-[30px] w-full rounded-lg border border-white/[0.06] bg-black/30 pl-8 pr-2 text-xs text-[#eef2f8] outline-none transition-shadow focus:border-[#4d94ff]/45 focus:shadow-[0_0_0_4px_rgba(77,148,255,0.12)]" /></label>
+        <label className="relative mt-2 block"><Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[#6c7178]" /><input aria-label="Search model parts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parts" tabIndex={partsOpen ? 0 : -1}
+          className="h-[30px] w-full rounded-lg border border-white/[0.06] bg-black/30 pl-8 pr-2 text-xs text-[#f2f4f5] outline-none transition-shadow focus:border-[#22d3ee]/45 focus:shadow-[0_0_0_4px_rgba(34,211,238,0.12)]" /></label>
         <ul className="scroll-thin mt-1.5 max-h-40 overflow-y-auto">{shownParts.map((part) => <li key={part.key}><button type="button" tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
-          className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#4d94ff]/10 text-[#8fc3ff]" : "text-[#6b7689] hover:bg-white/[0.04] hover:text-[#a6b0c0]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
-        {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6b7689]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
-          <label className="block text-[11px] text-[#6b7689]">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#0d1119] px-2 text-xs text-[#eef2f8]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-          {chosenComponent && <Link className="inline-flex items-center gap-1 text-xs font-medium text-[#8fc3ff] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>}</div>}
+          className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#22d3ee]/10 text-[#8be9f7]" : "text-[#6c7178] hover:bg-white/[0.04] hover:text-[#a9adb3]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
+        {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6c7178]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
+          <label className="block text-[11px] text-[#6c7178]">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          {chosenComponent && <Link className="inline-flex items-center gap-1 text-xs font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>}</div>}
       </div></div>
     </aside> : null}
     aside={aside}
@@ -194,20 +194,20 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
 }
 
 function GlassButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" {...props} className="ease-premium inline-flex h-8 items-center gap-1.5 rounded-[9px] border border-white/10 bg-linear-to-b from-white/10 to-white/4 px-3 text-[12.5px] font-medium text-[#eef2f8] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_16px_-8px_rgba(0,0,0,0.8)] backdrop-blur-md transition-[transform,border-color] duration-300 hover:-translate-y-px hover:border-white/20 disabled:pointer-events-none disabled:opacity-50">{children}</button>;
+  return <button type="button" {...props} className="ease-premium inline-flex h-8 items-center gap-1.5 rounded-[9px] border border-white/10 bg-linear-to-b from-white/10 to-white/4 px-3 text-[12.5px] font-medium text-[#f2f4f5] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_16px_-8px_rgba(0,0,0,0.8)] backdrop-blur-md transition-[transform,border-color] duration-300 hover:-translate-y-px hover:border-white/20 disabled:pointer-events-none disabled:opacity-50">{children}</button>;
 }
 
 function SegmentButton({ on, onClick, children, tip }: { on: boolean; onClick: () => void; children: React.ReactNode; tip: string }) {
-  return <button type="button" role="radio" aria-checked={on} onClick={onClick} title={tip} className={cn("relative z-10 flex w-[76px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors duration-300 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "text-[#eef2f8]" : "text-[#6b7689] hover:text-[#a6b0c0]")}>{children}</button>;
+  return <button type="button" role="radio" aria-checked={on} onClick={onClick} title={tip} className={cn("relative z-10 flex w-[76px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors duration-300 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "text-[#f2f4f5]" : "text-[#6c7178] hover:text-[#a9adb3]")}>{children}</button>;
 }
 
 function DockButton({ active, disabled, label, onClick, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
   const tips: Record<string, string> = { "Isolate selection": "Show only the selected part or component.", "Fit to view": "Fit the model in the viewer.", Grid: "Show or hide the ground grid.", Markers: "Show or hide the current component or part markers.", "Part markers on": "Switch back to component markers.", "Show part markers": "Switch to individual part markers.", "Components panel": "Show or hide the parts and components panel." };
   return <button type="button" aria-pressed={active} aria-label={label} disabled={disabled} onClick={onClick}
-    className={cn("group ease-premium relative grid h-[34px] w-9 place-items-center rounded-[10px] transition-[color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] hover:text-[#eef2f8] active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:h-4 [&_svg]:w-4", active ? "text-[#eef2f8]" : "text-[#6b7689]")}>
+    className={cn("group ease-premium relative grid h-[34px] w-9 place-items-center rounded-[10px] transition-[color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] hover:text-[#f2f4f5] active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:h-4 [&_svg]:w-4", active ? "text-[#f2f4f5]" : "text-[#6c7178]")}>
     {children}
-    {active && <span aria-hidden className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#4d94ff] shadow-[0_0_8px_#4d94ff]" />}
-    <span aria-hidden className="ease-premium pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-white/10 bg-[#0a0d13]/95 px-2 py-1 text-[11px] font-medium text-[#eef2f8] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">{tips[label] ?? label}</span>
+    {active && <span aria-hidden className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#22d3ee] shadow-[0_0_8px_#22d3ee]" />}
+    <span aria-hidden className="ease-premium pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-white/10 bg-[#0b0c0d]/95 px-2 py-1 text-[11px] font-medium text-[#f2f4f5] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">{tips[label] ?? label}</span>
   </button>;
 }
 
@@ -279,9 +279,9 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
   }, [layout.height]);
 
   const stage = mounted ? createPortal(
-    <div data-immersive-stage aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(1200px_700px_at_55%_58%,#121a26_0%,#0b1017_55%,#080b11_100%)]">
+    <div data-immersive-stage aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(1200px_700px_at_55%_58%,#17191c_0%,#0e0f11_55%,#09090b_100%)]">
       <div className="animate-rise-in absolute inset-0">{scene({ eventSource: hit, viewOffset: layout.offset, fitMargin: layout.fitMargin, gizmo: scrolled || !layout.wide ? null : { alignment: "bottom-left", margin: [layout.gizmoX, 150] } })}</div>
-      <div className="absolute inset-0 bg-[radial-gradient(130%_100%_at_55%_55%,transparent_50%,rgba(4,6,9,0.7)),linear-gradient(180deg,rgba(4,6,9,0.45),transparent_22%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(130%_100%_at_55%_55%,transparent_50%,rgba(6,7,8,0.7)),linear-gradient(180deg,rgba(6,7,8,0.45),transparent_22%)]" />
       <div ref={dim} className="absolute inset-0 bg-[#06090e] opacity-0" />
     </div>, document.body) : null;
 
@@ -297,13 +297,13 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
       {/* On small screens the model shows through this window between the title and the panels below. */}
       <div ref={viewport} className="relative order-2 h-[52svh] min-h-[300px] lg:pointer-events-none lg:absolute lg:inset-0 lg:h-auto">
         <div className="absolute inset-0 touch-none lg:hidden" ref={(node) => { if (node && !window.matchMedia("(min-width: 1024px)").matches) setHit(node); }} />
-        <p className={cn("pointer-events-none absolute bottom-[78px] hidden -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-white/[0.06] bg-[#0a0d13]/55 px-3 py-1.5 text-[11px] text-[#6b7689] backdrop-blur-md transition-opacity duration-1000 lg:flex", hints ? "opacity-100" : "opacity-0")} style={{ left: layout.dockX }}>
+        <p className={cn("pointer-events-none absolute bottom-[78px] hidden -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-white/[0.06] bg-[#0b0c0d]/55 px-3 py-1.5 text-[11px] text-[#6c7178] backdrop-blur-md transition-opacity duration-1000 lg:flex", hints ? "opacity-100" : "opacity-0")} style={{ left: layout.dockX }}>
           <Hint k="Drag">{pan ? "pan" : "orbit"}</Hint><Hint k="Right-drag">{pan ? "orbit" : "pan"}</Hint><Hint k="Scroll">zoom</Hint><Hint k="Click">select</Hint>
         </p>
         <div role="toolbar" aria-label="Viewer controls" className="glass animate-dock-in absolute bottom-3 left-1/2 flex max-w-[calc(100%-16px)] items-center gap-0.5 overflow-x-auto rounded-2xl p-1.5 lg:pointer-events-auto lg:bottom-5 lg:overflow-visible" style={layout.wide ? { left: layout.dockX } : undefined}>{dock}</div>
       </div>
       {aside && <div ref={rightCol} className="animate-rise-in relative z-10 order-4 mt-4 [--rise-delay:220ms] lg:pointer-events-auto lg:absolute lg:right-0 lg:top-0 lg:mt-0 lg:max-h-[calc(100%-8px)] lg:w-[360px] lg:overflow-y-auto lg:rounded-2xl lg:[scrollbar-width:none]">{aside}</div>}
-      <button type="button" onClick={() => document.getElementById("overview-details")?.scrollIntoView({ behavior: "smooth" })} className="pointer-events-auto absolute bottom-7 right-0 hidden items-center gap-1.5 text-[11px] text-[#6b7689] transition-colors hover:text-[#a6b0c0] lg:flex">
+      <button type="button" onClick={() => document.getElementById("overview-details")?.scrollIntoView({ behavior: "smooth" })} className="pointer-events-auto absolute bottom-7 right-0 hidden items-center gap-1.5 text-[11px] text-[#6c7178] transition-colors hover:text-[#a9adb3] lg:flex">
         More below <ChevronDown className="h-3.5 w-3.5 motion-safe:animate-bounce" />
       </button>
     </section>
@@ -311,5 +311,5 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
 }
 
 function Hint({ k, children }: { k: string; children: React.ReactNode }) {
-  return <span className="flex items-center gap-1.5"><kbd className="rounded-md border border-white/[0.09] bg-white/[0.07] px-1.5 py-0.5 font-sans text-[10px] font-medium text-[#a6b0c0]">{k}</kbd>{children}</span>;
+  return <span className="flex items-center gap-1.5"><kbd className="rounded-md border border-white/[0.09] bg-white/[0.07] px-1.5 py-0.5 font-sans text-[10px] font-medium text-[#a9adb3]">{k}</kbd>{children}</span>;
 }
