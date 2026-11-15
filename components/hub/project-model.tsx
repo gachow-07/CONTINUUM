@@ -178,8 +178,8 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
     dock={<>
       <div role="radiogroup" aria-label="Left-drag action" className="relative flex rounded-[11px] bg-black/30 p-[3px]">
         <span aria-hidden className="ease-premium absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-lg bg-linear-to-b from-white/14 to-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_14px_-4px_rgba(0,0,0,0.6)] transition-transform duration-500" style={{ transform: pan ? "translateX(100%)" : "none" }} />
-        <SegmentButton on={!pan} onClick={() => setPan(false)}><Orbit />Orbit</SegmentButton>
-        <SegmentButton on={pan} onClick={() => setPan(true)}><Hand />Pan</SegmentButton>
+        <SegmentButton tip="Drag to rotate the view around the model." on={!pan} onClick={() => setPan(false)}><Orbit />Orbit</SegmentButton>
+        <SegmentButton tip="Drag to move the view without rotating it." on={pan} onClick={() => setPan(true)}><Hand />Pan</SegmentButton>
       </div>
       <span className="mx-1 h-5 w-px bg-white/10" aria-hidden />
       <DockButton active={isolate} disabled={highlighted.length === 0 && !isolate} onClick={() => setIsolate((value) => !value)} label="Isolate selection"><ScanSearch /></DockButton>
@@ -197,16 +197,17 @@ function GlassButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButt
   return <button type="button" {...props} className="ease-premium inline-flex h-8 items-center gap-1.5 rounded-[9px] border border-white/10 bg-linear-to-b from-white/10 to-white/4 px-3 text-[12.5px] font-medium text-[#eef2f8] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_16px_-8px_rgba(0,0,0,0.8)] backdrop-blur-md transition-[transform,border-color] duration-300 hover:-translate-y-px hover:border-white/20 disabled:pointer-events-none disabled:opacity-50">{children}</button>;
 }
 
-function SegmentButton({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("relative z-10 flex w-[76px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors duration-300 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "text-[#eef2f8]" : "text-[#6b7689] hover:text-[#a6b0c0]")}>{children}</button>;
+function SegmentButton({ on, onClick, children, tip }: { on: boolean; onClick: () => void; children: React.ReactNode; tip: string }) {
+  return <button type="button" role="radio" aria-checked={on} onClick={onClick} title={tip} className={cn("relative z-10 flex w-[76px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors duration-300 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "text-[#eef2f8]" : "text-[#6b7689] hover:text-[#a6b0c0]")}>{children}</button>;
 }
 
 function DockButton({ active, disabled, label, onClick, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
+  const tips: Record<string, string> = { "Isolate selection": "Show only the selected part or component.", "Fit to view": "Fit the model in the viewer.", Grid: "Show or hide the ground grid.", Markers: "Show or hide the current component or part markers.", "Part markers on": "Switch back to component markers.", "Show part markers": "Switch to individual part markers.", "Components panel": "Show or hide the parts and components panel." };
   return <button type="button" aria-pressed={active} aria-label={label} disabled={disabled} onClick={onClick}
     className={cn("group ease-premium relative grid h-[34px] w-9 place-items-center rounded-[10px] transition-[color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] hover:text-[#eef2f8] active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:h-4 [&_svg]:w-4", active ? "text-[#eef2f8]" : "text-[#6b7689]")}>
     {children}
     {active && <span aria-hidden className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#4d94ff] shadow-[0_0_8px_#4d94ff]" />}
-    <span aria-hidden className="ease-premium pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-white/10 bg-[#0a0d13]/95 px-2 py-1 text-[11px] font-medium text-[#eef2f8] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">{label}</span>
+    <span aria-hidden className="ease-premium pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-white/10 bg-[#0a0d13]/95 px-2 py-1 text-[11px] font-medium text-[#eef2f8] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">{tips[label] ?? label}</span>
   </button>;
 }
 

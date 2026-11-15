@@ -42,7 +42,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
         <h2 className="mt-1 text-xl font-semibold tracking-tight">Pick up {b.project.name} without starting from scratch</h2>
         <p className="mt-1.5 max-w-2xl text-[13px] text-[#b4bcc9]">Everything below is assembled from what the team documented. Where something wasn&apos;t written down, it&apos;s flagged as a knowledge gap rather than guessed.</p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          <span className="rounded-md bg-white/10 px-2.5 py-1">{b.decisions.length} decisions</span><span className="rounded-md bg-white/10 px-2.5 py-1">{b.research.length} research sources</span><span className="rounded-md bg-white/10 px-2.5 py-1">{b.revisions.length} revisions</span>
+          <span className="rounded-md bg-white/10 px-2.5 py-1">{b.decisions.length} decisions</span><span className="rounded-md bg-white/10 px-2.5 py-1">{b.research.length} research records</span><span className="rounded-md bg-white/10 px-2.5 py-1">{b.revisions.length} revisions</span>
           <span className={`rounded-md px-2.5 py-1 ${gaps ? "bg-[#b7791f]/40 text-[#ffe3a3]" : "bg-white/10"}`}>{gaps} knowledge gap{gaps === 1 ? "" : "s"}</span>
         </div>
         <div className="mt-4"><Link href={`/projects/${id}/docs`} className="inline-flex h-8 items-center gap-1.5 rounded-md bg-white px-3 text-[13px] font-medium text-primary hover:bg-accent-soft"><FileDown className="h-4 w-4" />Generate handoff document</Link></div>
@@ -77,7 +77,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
                   <li key={d.id}><Link href={refHref(id, "decision", d.id)} className="block px-5 py-3.5 hover:bg-muted/60">
                     <div className="flex flex-wrap items-center gap-2"><p className="text-[13px] font-semibold">{d.title}</p><Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge>{gap && <Badge tone="warning"><AlertTriangle className="h-3 w-3" />Knowledge gap</Badge>}</div>
                     <p className="mt-1 text-[13px] text-muted-foreground">{d.reasoning ? d.reasoning.slice(0, 220) + (d.reasoning.length > 220 ? "…" : "") : <span className="text-warning">No reasoning was recorded for this decision.</span>}</p>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">{sub(d.subsystem_id) ?? "No subsystem"} · {alts} alternative{alts === 1 ? "" : "s"} rejected · {evCount(d.id)} evidence link{evCount(d.id) === 1 ? "" : "s"}</p>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">{sub(d.subsystem_id) ?? "No subsystem"} · {alts} alternative{alts === 1 ? "" : "s"} considered · {evCount(d.id)} evidence link{evCount(d.id) === 1 ? "" : "s"}</p>
                   </Link></li>);
               })}</ul>)}
           </Card>
