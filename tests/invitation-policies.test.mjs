@@ -1,0 +1,28 @@
+import { PGlite } from '@electric-sql/pglite';
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const db = new PGlite();
+const owner='00000000-0000-0000-0000-000000000001', target='00000000-0000-0000-0000-000000000002', stranger='00000000-0000-0000-0000-000000000003', project='10000000-0000-0000-0000-000000000001';
+await db.exec(`create role authenticated; create role anon; create schema auth; create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$; grant usage on schema auth to authenticated; grant execute on function auth.uid() to authenticated;
+create table auth.users(id uuid primary key); create table public.profiles(id uuid primary key references auth.users(id),full_name text,email text); create table public.projects(id uuid primary key,name text); create table public.project_members(id uuid primary key default gen_random_uuid(),project_id uuid references public.projects(id),user_id uuid references auth.users(id),display_name text not null,email text,role text not null, unique(project_id,user_id));
+create function public.is_project_member(pid uuid) returns boolean language sql stable security definer set search_path=public as $$ select exists(select 1 from project_members where project_id=pid and user_id=auth.uid()) $$;
+create function public.is_project_owner(pid uuid) returns boolean language sql stable security definer set search_path=public as $$ select exists(select 1 from project_members where project_id=pid and user_id=auth.uid() and role='owner') $$;
+alter table public.project_members enable row level security; create policy members_select on public.project_members for select to authenticated using (public.is_project_member(project_id)); create policy members_insert on public.project_members for insert to authenticated with check (public.is_project_owner(project_id)); create policy members_update on public.project_members for update to authenticated using (public.is_project_owner(project_id)); grant usage on schema public to authenticated; grant select,insert,update,delete on all tables in schema public to authenticated;
+insert into auth.users values ('${owner}'), ('${target}'), ('${stranger}'); insert into profiles values ('${owner}','Owner','owner@example.com'),('${target}','Receiver','receiver@example.com'),('${stranger}','Stranger','stranger@example.com'); insert into projects values ('${project}','Test project'); insert into project_members(project_id,user_id,display_name,role) values ('${project}','${owner}','Owner','owner');`);
+await db.exec(await readFile(new URL('../supabase/migrations/0008_project_invitations.sql', import.meta.url),'utf8'));
+await db.exec('grant select,insert,update,delete on public.project_invitations to authenticated');
+async function as(id){await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub','${id}',false);`)}
+await as(owner);
+await db.query('select public.send_project_invitation($1,$2,$3)',[project,'receiver@example.com','viewer']);
+assert.equal((await db.query('select * from public.project_members where user_id=$1',[target])).rows.length,0,'invitation does not add member');
+await assert.rejects(db.query('insert into public.project_members(project_id,user_id,display_name,role) values($1,$2,$3,$4)',[project,target,'Bypass','editor']));
+await assert.rejects(db.query('select public.send_project_invitation($1,$2,$3)',[project,'receiver@example.com','editor']));
+let invite=(await db.query('select id from public.project_invitations')).rows[0].id;
+await as(stranger); assert.equal((await db.query('select * from public.list_my_project_invitations()')).rows.length,0);await assert.rejects(db.query('select public.respond_project_invitation($1,true)',[invite]));
+await as(target); assert.equal((await db.query('select * from public.list_my_project_invitations()')).rows.length,1); await db.query('select public.respond_project_invitation($1,true)',[invite]);
+assert.equal((await db.query('select role from public.project_members where user_id=$1',[target])).rows[0].role,'viewer'); await assert.rejects(db.query('select public.respond_project_invitation($1,true)',[invite]));
+await as(owner);await db.query('select public.send_project_invitation($1,$2,$3)',[project,'stranger@example.com','editor']);invite=(await db.query("select id from public.project_invitations where status='pending'")).rows[0].id;
+await as(stranger);await db.query('select public.respond_project_invitation($1,false)',[invite]);assert.equal((await db.query('select * from public.project_members where user_id=$1',[stranger])).rows.length,0);
+await as(owner);await db.query('select public.send_project_invitation($1,$2,$3)',[project,'stranger@example.com','viewer']);invite=(await db.query("select id from public.project_invitations where status='pending'")).rows[0].id;await db.query('select public.cancel_project_invitation($1)',[invite]);await as(stranger);await assert.rejects(db.query('select public.respond_project_invitation($1,true)',[invite]));
+await as(owner);await db.query('insert into public.project_members(project_id,user_id,display_name,role) values($1,null,$2,$3)',[project,'Name only','viewer']);await assert.rejects(db.query('update public.project_members set user_id=$1 where display_name=$2',[stranger,'Name only']));
+console.log('PASS: pending, accept, decline, cancel, duplicate, bypass and unrelated-recipient checks');await db.close();
