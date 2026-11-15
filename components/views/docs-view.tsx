@@ -1,4 +1,5 @@
 "use client";
+import { notifyAnonymousAiLimit } from "@/lib/ai/anonymous-limit-notice";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,7 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
     try {
       const res = await fetch("/api/ai/generate-doc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ projectId: pid, docType, selection: selection(), guidance: guidance || undefined }) });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) { setError({ text: j.error ?? "Generation failed", setup: j.code === "not_configured" }); return; }
       setDraft({ id: null, docType, title: j.title, sections: j.sections, params: { selection: selection(), guidance }, projectId: pid, dirty: true });
       toast.success("Draft generated — review it, edit anything, then save it to the project.");
@@ -149,6 +151,7 @@ function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draf
     try {
       const res = await fetch("/api/ai/generate-doc", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ projectId: draft.projectId, docType: draft.docType, selection: (draft.params.selection as object) ?? {}, onlySection: key, guidance: draft.params.guidance || undefined }) });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) return void toast.error(j.error ?? "Couldn't regenerate");
       update(key, j.sections[0]);
       toast.success("Section regenerated");

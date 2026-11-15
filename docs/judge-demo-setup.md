@@ -22,3 +22,7 @@ The judge entry signs in with a distinct Supabase anonymous user, calls `create_
 7. Only after those tests pass, set `NEXT_PUBLIC_JUDGE_DEMO_ENABLED=true` in the target deployment and redeploy. Check the actual login and guest flow in production. Until then leave the flag unset and the template disabled.
 
 The guest flow depends on the existing signed-in project pages and save paths. SQL, policies, real model uploads, AI, and multi-user isolation **have not been tested against a running Supabase instance** in this checkout.
+
+## Anonymous AI limit
+
+The draft adds an atomic, database-backed limit of three valid AI requests per anonymous user, shared across chat, summaries, decision assistance, and document generation. A request consumes one use before the AI response is generated, including requests that subsequently fail. If the counter cannot be checked, anonymous AI requests fail closed. Regular signed-in users are not subject to this limit. This is per anonymous account, not per person or device: a new anonymous session can obtain another quota, so it does not replace rate limiting or other abuse controls. Apply and test `0011_anonymous_ai_limit.sql` alongside the judge migration; verify concurrent requests, each endpoint, refresh, permanent users, and a missing migration before enabling.

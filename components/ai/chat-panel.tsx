@@ -1,4 +1,5 @@
 "use client";
+import { notifyAnonymousAiLimit } from "@/lib/ai/anonymous-limit-notice";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowUp, FileSearch, Plus, Sparkles } from "lucide-react";
@@ -80,6 +81,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
     try {
       const res = await fetch("/api/ai/chat", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ projectId, conversationId: conv, message: q }) });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) { setError({ text: j.error ?? "The assistant couldn't answer.", setup: j.code === "not_configured" }); return; }
       setConv(j.conversationId);
       setMessages((m) => [...m, j.message]);
