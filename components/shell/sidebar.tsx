@@ -9,7 +9,7 @@ import { cn, initials } from "@/lib/utils";
 import { Logo } from "./logo";
 import { SearchPalette } from "./search-palette";
 
-export function AppShell({ user, pendingInvites, projects, aiEnabled, children }: { user: { name: string; email: string; role: string | null; workspace: string }; pendingInvites: number; projects: { id: string; name: string }[]; aiEnabled: boolean; children: React.ReactNode }) {
+export function AppShell({ user, pendingInvites, projects, aiEnabled, children }: { user: { name: string; email: string; role: string | null; workspace: string; isGuest?: boolean }; pendingInvites: number; projects: { id: string; name: string }[]; aiEnabled: boolean; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -72,7 +72,7 @@ export function AppShell({ user, pendingInvites, projects, aiEnabled, children }
           {!pid && !pathname.startsWith("/assistant") && <AskAiDropdown projects={projects} aiEnabled={aiEnabled} size="sm" />}
           <Link href="/team" className="flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[13px] font-medium text-[#031317] hover:bg-accent/85"><Users className="h-3.5 w-3.5" />Share</Link>
         </header>
-        <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-8 sm:py-7">{children}</main>
+        <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-8 sm:py-7">{user.isGuest && <div className="mb-4 rounded-lg border border-border bg-surface px-4 py-2 text-xs text-muted-foreground">Judge demo · Your changes are saved in this browser’s temporary workspace and do not affect the team’s project.</div>}{children}</main>
       </div>
     </div>
   );
