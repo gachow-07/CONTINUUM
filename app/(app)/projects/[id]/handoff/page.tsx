@@ -77,7 +77,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
                   <li key={d.id}><Link href={refHref(id, "decision", d.id)} className="block px-5 py-3.5 hover:bg-muted/60">
                     <div className="flex flex-wrap items-center gap-2"><p className="text-[13px] font-semibold">{d.title}</p><Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge>{gap && <Badge tone="warning"><AlertTriangle className="h-3 w-3" />Knowledge gap</Badge>}</div>
                     <p className="mt-1 text-[13px] text-muted-foreground">{d.reasoning ? d.reasoning.slice(0, 220) + (d.reasoning.length > 220 ? "…" : "") : <span className="text-warning">No reasoning was recorded for this decision.</span>}</p>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">{sub(d.subsystem_id) ?? "No subsystem"} · {alts} alternative{alts === 1 ? "" : "s"} rejected · {evCount(d.id)} evidence link{evCount(d.id) === 1 ? "" : "s"}</p>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">{sub(d.subsystem_id) ?? "No subsystem"} · {alts} alternative{alts === 1 ? "" : "s"} considered · {evCount(d.id)} evidence link{evCount(d.id) === 1 ? "" : "s"}</p>
                   </Link></li>);
               })}</ul>)}
           </Card>
