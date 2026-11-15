@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Check, CircleCheck, Plus } from "lucide-react";
+import { SubteamComponents } from "@/components/hub/subteam-components";
 import { AskBar } from "@/components/hub/ask-bar";
 import { ComponentIcon } from "@/components/hub/icons";
 import { reviewTone } from "@/components/hub/panels";
@@ -34,7 +35,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
 
   return (
     <div className="space-y-5">
-      <nav aria-label="Breadcrumb" className="-mt-2 text-xs text-muted-foreground"><Link href={`${base}?tab=components`} className="hover:text-foreground">Components</Link> <span className="mx-1">›</span> <span className="text-foreground">{sub.name}</span></nav>
+      <nav aria-label="Breadcrumb" className="-mt-2 text-xs text-muted-foreground"><Link href={`${base}?tab=components`} className="hover:text-foreground">Subteams</Link> <span className="mx-1">›</span> <span className="text-foreground">{sub.name}</span></nav>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent"><ComponentIcon name={sub.name} className="h-5 w-5" /></span>
           <div><h2 className="text-xl font-semibold tracking-tight">{sub.name}</h2><div className="mt-1 flex flex-wrap gap-1.5"><Badge tone={c.status.tone}>{c.status.label}</Badge><Badge tone={reviewTone(c.reviewState)}>{reviewStateLabel(c.reviewState)}</Badge></div></div></div>
@@ -46,7 +47,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
 
       <div className="grid gap-5 xl:grid-cols-[210px_minmax(0,1fr)_330px]">
         <aside className="order-2 xl:order-1">
-          <Card><CardHeader title="Components" /><ul className="p-1.5">{all.map((x) => (
+          <Card><CardHeader title="Subteams" /><ul className="p-1.5">{all.map((x) => (
             <li key={x.subsystem.id}><Link href={`${base}/components/${x.subsystem.id}?tab=${tab}`} aria-current={x.subsystem.id === sid ? "page" : undefined} className={cn("flex items-center gap-2.5 rounded-md px-2.5 py-2 hover:bg-muted", x.subsystem.id === sid && "bg-accent-soft ring-1 ring-accent/40")}>
               <ComponentIcon name={x.subsystem.name} className="h-4 w-4 shrink-0 text-muted-foreground" /><span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium">{x.subsystem.name}</span><span className="block text-[11px] text-muted-foreground">{x.done} / {x.total} complete</span></span>
               {x.done === x.total ? <CircleCheck className="h-4 w-4 shrink-0 text-success" aria-label="Fully documented" /> : <Ring v={x.done / x.total} />}
@@ -56,10 +57,11 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
         <section className="order-1 min-w-0 xl:order-2">
           {tab === "summary" && (
             <div className="space-y-4">
+              <SubteamComponents projectId={id} subteamId={sid} components={b.components.filter((item) => item.subsystem_id === sid)} />
               <Card>
                 <div className="p-5">
                   <h3 className="text-[17px] font-semibold">Why this design?</h3>
-                  <p className="mt-1.5 max-w-prose text-[13px] leading-relaxed text-muted-foreground">{sub.description || <span className="text-warning">No description recorded for this component.</span>}</p>
+                  <p className="mt-1.5 max-w-prose text-[13px] leading-relaxed text-muted-foreground">{sub.description || <span className="text-warning">No description recorded for this subteam.</span>}</p>
                   <p className="mt-2 text-[12px] text-muted-foreground">Everything below is built from recorded decisions, revisions and research. Nothing is inferred.</p>
                 </div>
               </Card>

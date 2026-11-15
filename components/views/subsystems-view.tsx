@@ -18,17 +18,17 @@ export function SubsystemDialog({ projectId, subsystem, onClose }: { projectId: 
   const [error, setError] = useState("");
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent title={subsystem ? "Edit subsystem" : "New subsystem"}>
+      <DialogContent title={subsystem ? "Edit subteam" : "New subteam"}>
         <form className="space-y-4" onSubmit={async (e) => {
           e.preventDefault(); const f = new FormData(e.currentTarget); setError(""); setBusy(true);
           const name = String(f.get("name")), description = String(f.get("description"));
-          const r = subsystem ? await act(updateSubsystem(subsystem.id, name, description), "Subsystem updated") : await act(createSubsystem(projectId, name, description), "Subsystem created");
+          const r = subsystem ? await act(updateSubsystem(subsystem.id, name, description), "Subteam updated") : await act(createSubsystem(projectId, name, description), "Subteam created");
           setBusy(false); if (r.ok) { onClose(); router.refresh(); } else setError(r.error);
         }}>
           <Field label="Name" required><Input name="name" defaultValue={subsystem?.name} placeholder="e.g. Drivetrain" autoFocus maxLength={80} /></Field>
-          <Field label="Description"><Textarea name="description" defaultValue={subsystem?.description} placeholder="What does this subsystem do?" /></Field>
+          <Field label="Description"><Textarea name="description" defaultValue={subsystem?.description} placeholder="What does this subteam work on?" /></Field>
           {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
-          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>{subsystem ? "Save" : "Create subsystem"}</Button></div>
+          <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" variant="accent" loading={busy}>{subsystem ? "Save" : "Create subteam"}</Button></div>
         </form>
       </DialogContent>
     </Dialog>
@@ -44,7 +44,7 @@ export function SubsystemActions({ subsystem, redirectTo }: { subsystem: Subsyst
       <Button variant="outline" size="sm" onClick={() => setEdit(true)}><Pencil className="h-3.5 w-3.5" />Rename / edit</Button>
       <Button variant="danger-ghost" size="sm" onClick={() => setDel(true)}><Trash2 className="h-3.5 w-3.5" />Delete</Button>
       {edit && <SubsystemDialog projectId={subsystem.project_id} subsystem={subsystem} onClose={() => setEdit(false)} />}
-      <ConfirmDialog open={del} onOpenChange={setDel} title={`Delete “${subsystem.name}”?`} description="The subsystem is removed. Its research, files, revisions and decisions are kept but become unassigned." onConfirm={async () => { const r = await act(deleteSubsystem(subsystem.id), "Subsystem deleted"); if (r.ok) { if (redirectTo) router.push(redirectTo); router.refresh(); } }} />
+      <ConfirmDialog open={del} onOpenChange={setDel} title={`Delete “${subsystem.name}”?`} description="The subteam and its created components are removed. Its research, files, revisions and decisions are kept but become unassigned." onConfirm={async () => { const r = await act(deleteSubsystem(subsystem.id), "Subteam deleted"); if (r.ok) { if (redirectTo) router.push(redirectTo); router.refresh(); } }} />
     </>
   );
 }

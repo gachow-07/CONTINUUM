@@ -5,6 +5,6 @@ import type { loadAll } from "./bundle";
 export type Scope = Awaited<ReturnType<typeof loadAll>>;
 
 export const scopeFromBundle = (b: ProjectBundle): Scope => ({
-  projects: [b.project], subsystems: b.subsystems, research: b.research, revisions: b.revisions, files: b.files, decisions: b.decisions,
+  projects: [b.project], subsystems: b.subsystems, components: b.components, research: b.research, revisions: b.revisions, files: b.files, decisions: b.decisions,
   evidence: b.evidence, notes: b.notes, reviews: b.reviews, comments: b.comments, activity: b.activity, docs: b.docs, members: b.members,
 });

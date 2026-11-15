@@ -10,6 +10,8 @@ export interface Project {
 export interface Member { id: string; project_id: string; user_id: string | null; display_name: string; email: string | null; role: MemberRole; is_sample: boolean }
 export interface Subsystem { id: string; project_id: string; name: string; description: string; position: number; marker_position: [number, number, number] | null; is_sample: boolean; created_at: string; updated_at: string }
 
+export interface ProjectComponent { id: string; project_id: string; subsystem_id: string; name: string; created_at: string }
+
 export type ResearchType = "url" | "pdf" | "paper" | "article" | "image" | "note";
 export interface Research {
   id: string; project_id: string; subsystem_id: string | null; type: ResearchType; title: string; url: string | null;
@@ -51,6 +53,7 @@ export interface ProjectNote {
 export type ReviewStatus = "pending" | "in_review" | "changes_requested" | "approved" | "resolved";
 export interface Review {
   id: string; project_id: string; subsystem_id: string | null; decision_id: string | null; revision_id: string | null; file_id: string | null;
+  component_id?: string | null; model_part_id?: string | null; glb_link_id?: string | null; component_name?: string | null;
   title: string; description: string; status: ReviewStatus; reviewer_member_id: string | null; reviewer_name: string | null;
   requested_by: string | null; requester_name: string; is_sample: boolean; created_at: string; updated_at: string;
 }
