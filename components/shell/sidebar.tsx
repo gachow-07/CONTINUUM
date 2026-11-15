@@ -34,8 +34,8 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
       <nav className="flex-1 space-y-1 px-3 pt-3" aria-label="Main">
         {nav.map((n) => (
           <Link key={n.label} href={n.href} onClick={() => setOpen(false)} aria-current={n.on ? "page" : undefined}
-            className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors", n.on ? "bg-accent text-white" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white")}>
-            <n.icon className="h-4 w-4" />{n.label}{n.label === "Inbox" && pendingInvites > 0 && <span aria-label={`${pendingInvites} pending invitations`} className="ml-auto rounded-full bg-accent px-1.5 text-[11px] text-white">{pendingInvites}</span>}
+            className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors", n.on ? "bg-accent text-[#031317]" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white")}>
+            <n.icon className="h-4 w-4" />{n.label}{n.label === "Inbox" && pendingInvites > 0 && <span aria-label={`${pendingInvites} pending invitations`} className="ml-auto rounded-full bg-accent px-1.5 text-[11px] text-[#031317]">{pendingInvites}</span>}
           </Link>
         ))}
         {pid && <Link href="/projects" className="mt-3 block px-3 py-1.5 text-xs text-sidebar-foreground hover:text-white">← All projects</Link>}
@@ -49,7 +49,7 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
             <button role="menuitem" onClick={signOut} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] text-foreground hover:bg-muted"><LogOut className="h-4 w-4 text-muted-foreground" />Sign out</button>
           </div></>)}
         <button type="button" onClick={() => setMenu((m) => !m)} aria-expanded={menu} className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left hover:bg-sidebar-hover">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1d2a44] text-[11px] font-semibold text-[#9db8ff]">{initials(user.name)}</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1d2a2f] text-[11px] font-semibold text-[#8be9f7]">{initials(user.name)}</span>
           <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium">{user.name}</span><span className="block truncate text-[11px] text-sidebar-foreground">{user.role || user.workspace}</span></span>
           <ChevronDown className="h-4 w-4 text-sidebar-foreground" />
         </button>
@@ -65,7 +65,7 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
         <header data-shell="header" className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-8">
           <button onClick={() => setOpen(true)} aria-label="Open menu" className="rounded p-1.5 hover:bg-muted lg:hidden"><Menu className="h-5 w-5" /></button>
           <div className="flex flex-1 justify-center lg:justify-start"><SearchPalette /></div>
-          <Link href="/team" className="flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[13px] font-medium text-white hover:bg-accent/85"><Users className="h-3.5 w-3.5" />Share</Link>
+          <Link href="/team" className="flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[13px] font-medium text-[#031317] hover:bg-accent/85"><Users className="h-3.5 w-3.5" />Share</Link>
         </header>
         <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-8 sm:py-7">{children}</main>
       </div>

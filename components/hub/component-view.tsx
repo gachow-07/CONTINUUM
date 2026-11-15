@@ -65,7 +65,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
               </Card>
               {c.decisions.length === 0 ? (
                 <Card><div className="flex flex-col items-center gap-2 p-8 text-center"><p className="text-[13px] font-medium">No decisions recorded for {sub.name} yet</p><p className="max-w-sm text-xs text-muted-foreground">Record what was chosen, what was rejected and why, and it will appear here with its sources.</p>
-                  <Link href={`${base}/components/${sid}?tab=decisions`} className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[12px] font-semibold text-white"><Plus className="h-3.5 w-3.5" />Record a decision</Link></div></Card>
+                  <Link href={`${base}/components/${sid}?tab=decisions`} className="mt-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[12px] font-semibold text-[#031317]"><Plus className="h-3.5 w-3.5" />Record a decision</Link></div></Card>
               ) : c.decisions.map((d) => {
                 const ev = b.evidence.filter((e) => e.decision_id === d.id);
                 return (
@@ -106,7 +106,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
                 {c.items.map((it) => (
                   <li key={it.key} className="py-1">
                     <div className="flex items-center gap-2.5 text-[13px]">
-                      <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border", it.ok ? "border-accent bg-accent text-white" : "border-border-strong")} aria-hidden>{it.ok && <Check className="h-3 w-3" />}</span>
+                      <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border", it.ok ? "border-accent bg-accent text-[#031317]" : "border-border-strong")} aria-hidden>{it.ok && <Check className="h-3 w-3" />}</span>
                       <span className={it.ok ? "" : "font-medium"}>{it.label}</span><span className="sr-only">{it.ok ? "complete" : "incomplete"}</span>
                       {!it.ok && <Link href={`${base}/components/${sid}?tab=${FIX_TAB[it.key]}`} className="ml-auto text-[11.5px] font-medium text-accent hover:underline">Resolve</Link>}
                     </div>

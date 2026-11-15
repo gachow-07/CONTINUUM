@@ -75,7 +75,7 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
         </div>
       </div>
 
-      <div className="relative h-[340px] sm:h-[460px]" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 45%, #1a2230 0%, #0f141d 60%, #0b0f16 100%)" }}>
+      <div className="relative h-[340px] sm:h-[460px]" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 45%, #1a2230 0%, #101113 60%, #0d0e10 100%)" }}>
         <Viewport parts={shownParts} selectedId={null} onSelect={(id) => { if (id === null) setSelected(null); }} mode="solid" tool="select" showGrid={showGrid} showShadows viewRequest={view}
           onTransform={() => undefined} onReady={() => setReady(true)} pickable={false} highlightIds={highlight} leftMouse={pan ? "pan" : "rotate"} showGizmo
           markers={markers} showMarkers={markersOn} onMarker={(id) => setSelected((cur) => (cur === id ? null : id))} />
@@ -91,7 +91,7 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
             {!partMode && <><p className="mt-2.5 text-[11px] text-muted-foreground">Latest documented decision</p>
             <p className="text-[12px] leading-snug">{sel.latestDecision ? <Link href={sel.latestDecision.href ?? `/projects/${projectId}/decisions?open=${sel.latestDecision.id}`} className="hover:text-accent hover:underline">{sel.latestDecision.title}</Link> : <span className="text-warning">None with recorded reasoning</span>}</p></>}
             <div className="mt-2 flex flex-wrap gap-1.5"><Badge tone={sel.reviewTone}>{sel.reviewLabel}</Badge>{sel.statusLabel !== sel.reviewLabel && <Badge tone={sel.statusTone}>{sel.statusLabel}</Badge>}</div>
-            <Link href={sel.href} className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-accent text-[12px] font-semibold text-white hover:bg-accent/85">Open {partMode ? "part" : "component"} <ArrowRight className="h-3.5 w-3.5" /></Link>
+            <Link href={sel.href} className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-accent text-[12px] font-semibold text-[#031317] hover:bg-accent/85">Open {partMode ? "part" : "component"} <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
         )}
 

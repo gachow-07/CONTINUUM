@@ -11,7 +11,7 @@ import { ProjectCover } from "./cover";
 import { ThumbnailStage, useCardHover } from "./thumbnail-scene";
 
 /** Render only visible cards so projects with many models don't exhaust WebGL contexts. */
-export function GlbThumbnail({ path, filename, name, cover, hiRes = false, className = "bg-[#0d131c]" }: { path: string; filename: string; name: string; cover: string | null; hiRes?: boolean; className?: string }) {
+export function GlbThumbnail({ path, filename, name, cover, hiRes = false, className = "bg-[#0f1113]" }: { path: string; filename: string; name: string; cover: string | null; hiRes?: boolean; className?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const hovered = useCardHover(container);
