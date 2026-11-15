@@ -6,6 +6,7 @@ import { Badge, SampleBadge } from "@/components/ui/badge";
 import { ProjectMenu } from "@/components/projects/project-dialogs";
 import { STATUS_META } from "@/components/projects/project-card";
 import { getBundle } from "@/lib/bundle-cache";
+import { requireSession } from "@/lib/session";
 
 export default async function ProjectLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,6 +14,7 @@ export default async function ProjectLayout({ children, params }: { children: Re
   const b = await getBundle(id);
   if (!b) notFound();
   const p = b.project;
+  const { user } = await requireSession();
   const st = STATUS_META[p.status];
   return (
     <div className="animate-fade-in">
@@ -27,7 +29,7 @@ export default async function ProjectLayout({ children, params }: { children: Re
           <ProjectMenu project={p} />
         </div>
       </div>
-      {p.is_sample && (
+      {p.is_sample && !user.is_anonymous && (
         <div className="mb-5 rounded-lg border border-warning/30 bg-warning-soft px-4 py-2.5 text-xs text-warning">
           <strong>Sample project.</strong> “RC Car Design” is illustrative demonstration data, not verified engineering information. The 3D model is a placeholder built from simple shapes and the images are drawings.
         </div>
