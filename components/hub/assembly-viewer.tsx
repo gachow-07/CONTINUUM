@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowRight, Hand, List, Loader2, MapPin, Move3d, Orbit, ScanSearch, Scan, X } from "lucide-react";
+import { ArrowRight, Grid3x3, Hand, List, Loader2, MapPin, Move3d, Orbit, ScanSearch, Scan, X } from "lucide-react";
 import { Badge, type Tone } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { subsystemOf } from "@/lib/cad/ops";
@@ -32,6 +32,7 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
   const displayed = partMode ? (individualParts ?? []) : components;
   const [selected, setSelected] = useState<string | null>(null);
   const [markersOn, setMarkersOn] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
   const [pan, setPan] = useState(false);
   const [isolate, setIsolate] = useState(false);
   const [listOpen, setListOpen] = useState(false);
@@ -63,6 +64,7 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
           <ToolBtn on={pan} onClick={() => setPan(true)} label="Pan"><Hand /></ToolBtn>
           <ToolBtn on={isolate} onClick={() => setIsolate((v) => !v)} label="Isolate" disabled={!sel}><ScanSearch /></ToolBtn>
           <ToolBtn onClick={() => setView((v) => ({ preset: "fit", nonce: v.nonce + 1 }))} label="Fit"><Scan /></ToolBtn>
+          <ToolBtn on={showGrid} onClick={() => setShowGrid((value) => !value)} label="Grid"><Grid3x3 /></ToolBtn>
           <button type="button" role="switch" aria-checked={markersOn} onClick={() => setMarkersOn((v) => !v)} className="ml-1 flex min-h-10 items-center gap-2 rounded-md px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
             <MapPin className="h-3.5 w-3.5" />Markers
             <span className={cn("relative h-4 w-7 rounded-full transition-colors", markersOn ? "bg-accent" : "bg-border-strong")}><span className={cn("absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all", markersOn ? "left-3.5" : "left-0.5")} /></span>
@@ -73,7 +75,7 @@ export function AssemblyViewer({ projectId, parts, components, individualParts, 
       </div>
 
       <div className="relative h-[340px] sm:h-[460px]" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 45%, #1a2230 0%, #0f141d 60%, #0b0f16 100%)" }}>
-        <Viewport parts={shownParts} selectedId={null} onSelect={(id) => { if (id === null) setSelected(null); }} mode="solid" tool="select" showGrid showShadows viewRequest={view}
+        <Viewport parts={shownParts} selectedId={null} onSelect={(id) => { if (id === null) setSelected(null); }} mode="solid" tool="select" showGrid={showGrid} showShadows viewRequest={view}
           onTransform={() => undefined} onReady={() => setReady(true)} pickable={false} highlightIds={highlight} leftMouse={pan ? "pan" : "rotate"} showGizmo
           markers={markers} showMarkers={markersOn} onMarker={(id) => setSelected((cur) => (cur === id ? null : id))} />
         {!ready && <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60"><Loading /></div>}

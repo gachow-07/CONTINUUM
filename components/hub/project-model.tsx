@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Upload, Search, ArrowRight, Hand, List, MapPin, Move3d, Orbit, Scan, ScanSearch } from "lucide-react";
+import { Box, Upload, Search, ArrowRight, Grid3x3, Hand, List, MapPin, Move3d, Orbit, Scan, ScanSearch } from "lucide-react";
 import Link from "next/link";
 import type { HubComponent } from "./assembly-viewer";
 import type { ImportedPart } from "./glb-scene";
@@ -35,6 +35,7 @@ export function ProjectModel({ projectId, model, components, modelLinks }: { pro
   const [markersOn, setMarkersOn] = useState(true);
   const [partMode, setPartMode] = useState(false);
   const [listOpen, setListOpen] = useState(true);
+  const [showGrid, setShowGrid] = useState(true);
   const receiveParts = useCallback((next: ImportedPart[]) => { setParts(next); setSelected(null); setComponentFilter(null); }, []);
   const highlighted = useMemo(() => componentFilter ? links.filter((l) => l.subsystem_id === componentFilter).map((l) => l.part_key) : selected ? [selected] : [], [componentFilter, links, selected]);
   const markers = useMemo(() => {
@@ -102,13 +103,14 @@ export function ProjectModel({ projectId, model, components, modelLinks }: { pro
           <ViewerButton active={pan} onClick={() => setPan(true)} label="Pan"><Hand /></ViewerButton>
           <ViewerButton active={isolate} disabled={highlighted.length === 0 && !isolate} onClick={() => setIsolate((value) => !value)} label="Isolate"><ScanSearch /></ViewerButton>
           <ViewerButton onClick={() => setFitRequest((value) => value + 1)} label="Fit"><Scan /></ViewerButton>
+          <ViewerButton active={showGrid} onClick={() => setShowGrid((value) => !value)} label="Grid"><Grid3x3 /></ViewerButton>
           <ViewerButton active={markersOn} onClick={() => setMarkersOn((value) => !value)} label="Markers"><MapPin /></ViewerButton>
           <ViewerButton active={listOpen} onClick={() => setListOpen((value) => !value)} label="List"><List /></ViewerButton>
           <ViewerButton active={partMode} onClick={() => { setPartMode((value) => !value); setMarkersOn(true); }} label={partMode ? "Parts on" : "Show parts"}><Move3d /></ViewerButton>
         </div>
       </div>
       <div className={listOpen ? "grid lg:grid-cols-[minmax(0,1fr)_260px]" : "grid"}>
-        <div className="relative min-w-0"><div className="h-[340px] bg-[#10151d] sm:h-[460px]"><Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts} onSelect={(key) => { setSelected(key); setComponentFilter(null); setIsolate(false); }} onMarker={(id) => { if (partMode) { setSelected(id); setComponentFilter(null); } else { setComponentFilter(id); setSelected(null); } setIsolate(false); }} /></div><p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">{pan ? "Drag to pan · right-drag to orbit" : "Drag to orbit · right-drag to pan"} · scroll to zoom · click a part to select</p></div>
+        <div className="relative min-w-0"><div className="h-[340px] bg-[#10151d] sm:h-[460px]"><Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts} onSelect={(key) => { setSelected(key); setComponentFilter(null); setIsolate(false); }} onMarker={(id) => { if (partMode) { setSelected(id); setComponentFilter(null); } else { setComponentFilter(id); setSelected(null); } setIsolate(false); }} /></div><p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">{pan ? "Drag to pan · right-drag to orbit" : "Drag to orbit · right-drag to pan"} · scroll to zoom · click a part to select</p></div>
         {listOpen && <aside className="border-t border-border p-4 lg:border-l lg:border-t-0" aria-label="Model parts and components">
           <h3 className="text-sm font-semibold">Components</h3><p className="mt-1 text-xs text-muted-foreground">Select a component to highlight its linked parts.</p>
           <div className="mt-3 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">{components.map((c) => { const count = links.filter((l) => l.subsystem_id === c.id).length; return <button key={c.id} type="button" onClick={() => { setComponentFilter(componentFilter === c.id ? null : c.id); setSelected(null); }} aria-pressed={componentFilter === c.id} className={`rounded-md border px-2 py-1 text-xs ${componentFilter === c.id ? "border-accent bg-accent-soft text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}>{c.name} · {count}</button>; })}{components.length === 0 && <p className="text-xs text-muted-foreground">Add components to your project first.</p>}</div>

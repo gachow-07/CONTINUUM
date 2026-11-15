@@ -32,7 +32,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
   return (
     <Workspace
       project={{ id, name: b.project.name, description: b.project.description, isSample: b.project.is_sample }}
-      initialParts={parts.length ? parts : null}
+      initialParts={parts.length || !b.project.is_sample ? parts : null}
       knowledge={knowledge}
       aiEnabled={openaiConfigured()}
       chat={{ messages: conv.messages, conversationId: conv.conversationId }}

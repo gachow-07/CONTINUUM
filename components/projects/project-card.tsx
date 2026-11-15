@@ -6,6 +6,7 @@ import type { Project } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
 import { ProjectCover } from "./cover";
 import { ModelThumbnail } from "./model-thumbnail";
+import { GlbThumbnail } from "./glb-thumbnail";
 import type { Part } from "@/lib/cad/types";
 
 export const STATUS_META: Record<string, { label: string; tone: Tone }> = {
@@ -29,9 +30,10 @@ export function projectStats(p: Project, s: Scope) {
 export function ProjectCard({ project, scope, model }: { project: Project; scope: Scope; model?: Part[] }) {
   const st = projectStats(project, scope);
   const status = STATUS_META[project.status];
+  const viewerFile = scope.files.find((file) => file.id === project.viewer_model_file_id && file.project_id === project.id);
   return (
     <Link href={`/projects/${project.id}`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[var(--shadow-pop)]">
-      <div className="relative h-32 overflow-hidden">{model?.length ? <ModelThumbnail parts={model} name={project.name} /> : <ProjectCover path={project.cover_path} name={project.name} className="transition-transform duration-500 group-hover:scale-[1.03]" />}
+      <div className="relative h-32 overflow-hidden">{viewerFile ? <GlbThumbnail key={viewerFile.id} path={viewerFile.storage_path} filename={viewerFile.name} name={project.name} cover={project.cover_path} /> : model?.length ? <ModelThumbnail parts={model} name={project.name} /> : <ProjectCover path={project.cover_path} name={project.name} className="transition-transform duration-500 group-hover:scale-[1.03]" />}
         <div className="absolute left-3 top-3 flex gap-1.5">{project.is_sample && <SampleBadge />}{project.archived && <Badge>Archived</Badge>}</div>
       </div>
       <div className="flex flex-1 flex-col p-4">
