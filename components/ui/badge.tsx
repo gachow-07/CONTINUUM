@@ -19,5 +19,5 @@ export function Badge({ tone = "neutral", className, children, dot }: { tone?: T
 }
 
 export function SampleBadge() {
-  return <Badge tone="warning" className="uppercase tracking-wide">Sample data</Badge>;
+  return <Badge tone="warning" className="font-mono text-[10px] uppercase tracking-[0.04em]">Sample data</Badge>;
 }

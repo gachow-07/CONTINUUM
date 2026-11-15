@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Martian_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Manrope for all text; Martian Mono for part numbers, file names, figures and small uppercase labels.
+const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"], display: "swap" });
+const martianMono = Martian_Mono({ variable: "--font-martian-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "CONTINUUM", template: "%s · CONTINUUM" },
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+    <html lang="en" className={`${manrope.variable} ${martianMono.variable} h-full`}>
       <body className="min-h-full">
         {children}
         <Toaster position="bottom-right" toastOptions={{ style: { fontSize: 13 } }} />

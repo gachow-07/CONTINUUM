@@ -110,7 +110,7 @@ export function Dropzone({ files, onChange, multiple = true, accept, hint }: { f
 export function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section className="mb-5">
-      <div className="mb-1.5 flex items-center justify-between"><h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>{action}</div>
+      <div className="mb-1.5 flex items-center justify-between"><h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{title}</h4>{action}</div>
       <div className="text-[13px] leading-relaxed text-foreground">{children}</div>
     </section>
   );

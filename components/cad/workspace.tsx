@@ -215,7 +215,7 @@ export function Workspace({ project, initialParts, knowledge, aiEnabled, chat }:
       <div className="grid min-h-0 flex-1" style={{ gridTemplateColumns: `${leftOpen ? 216 : 0}px minmax(0,1fr) ${rightOpen ? 296 : 0}px` }}>
         <aside className={cn("min-w-0 overflow-hidden border-r border-[var(--c-line)] bg-[var(--c-panel)]", !leftOpen && "invisible border-r-0")} aria-label="Parts" inert={!leftOpen}>
           <div className="flex h-full w-[216px] flex-col">
-            <div className="flex h-9 items-center justify-between border-b border-[var(--c-line)] px-3"><h2 className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--c-muted)]">Parts</h2><span className="text-[11px] tabular-nums text-[var(--c-muted)]">{prims.length}</span></div>
+            <div className="flex h-9 items-center justify-between border-b border-[var(--c-line)] px-3"><h2 className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--c-muted)]">Parts</h2><span className="text-[11px] tabular-nums text-[var(--c-muted)]">{prims.length}</span></div>
             <div className="min-h-0 flex-1"><Hierarchy parts={parts} selectedId={selectedId} onSelect={select} onToggleVisible={toggleVisible} expanded={expanded} setExpanded={setExpanded} /></div>
           </div>
         </aside>

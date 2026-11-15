@@ -164,7 +164,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
         <p className="text-[#a9adb3]">Selected part</p><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
         {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
       </div>}
-      <h3 className="flex items-baseline justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
+      <h3 className="flex items-baseline justify-between font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
       {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
         <div className="relative mt-2 grid gap-0.5">
           <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border border-[#22d3ee]/30 bg-linear-to-b from-[#22d3ee]/18 to-[#22d3ee]/8 transition-[transform,opacity] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)` }} />
@@ -181,7 +181,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
         <p className="mt-0.5 truncate text-[#f2f4f5]">{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p>
         <Link className="mt-1.5 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>
       </div>}
-      <button type="button" aria-expanded={partsOpen} onClick={() => setPartsOpen((value) => !value)} className="mt-3 flex w-full items-center justify-between border-t border-white/[0.07] pt-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[#6c7178] hover:text-[#a9adb3]">
+      <button type="button" aria-expanded={partsOpen} onClick={() => setPartsOpen((value) => !value)} className="mt-3 flex w-full items-center justify-between border-t border-white/[0.07] pt-3 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178] hover:text-[#a9adb3]">
         Model parts <span className="flex items-center gap-1.5 tracking-normal tabular-nums">{parts.length}<ChevronRight className={cn("ease-premium h-3 w-3 transition-transform duration-500", partsOpen && "rotate-90")} /></span>
       </button>
       <div className="expand" data-open={partsOpen}><div>

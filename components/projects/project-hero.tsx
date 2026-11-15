@@ -7,7 +7,7 @@ import type { ProjectSummary } from "./project-summary";
 /** "Continue where you left off": the most recently updated project, with its model on a 3D stage. */
 export function ProjectHero({ summary: p, preview }: { summary: ProjectSummary; preview: React.ReactNode }) {
   const href = `/projects/${p.id}`;
-  const subtitle = [p.modelName, p.components ? `${p.components} component${p.components === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ") || p.description || "No components yet";
+  const count = p.components ? `${p.components} component${p.components === 1 ? "" : "s"}` : null;
   return (
     <section aria-labelledby="hero-title" className="animate-rise-in relative mb-7 h-[296px] overflow-hidden rounded-[22px] border border-white/[0.07] bg-[radial-gradient(900px_420px_at_72%_70%,#16232a_0%,#111417_55%,#0b0c0e_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_30px_70px_-30px_rgba(0,0,0,0.9)] [--rise-delay:80ms]">
       {/* The model: a link, so hovering spins the preview and clicking opens the project. */}
@@ -20,7 +20,7 @@ export function ProjectHero({ summary: p, preview }: { summary: ProjectSummary; 
       <div className="relative flex h-full max-w-[520px] flex-col px-8 py-6">
         <p className="eyebrow">Continue where you left off</p>
         <h2 id="hero-title" className="mt-2 truncate bg-linear-to-b from-white to-[#bfc6cc] bg-clip-text text-[30px] font-semibold leading-[1.1] tracking-[-0.035em] text-transparent">{p.name}</h2>
-        <p className="mt-1 truncate text-[13px] text-[#a9adb3]">{subtitle}</p>
+        <p className="mt-1 truncate text-[13px] text-[#a9adb3]">{p.modelName || count ? <>{p.modelName && <span className="font-mono text-[11.5px]">{p.modelName}</span>}{p.modelName && count && " · "}{count}</> : p.description || "No components yet"}</p>
         <div className="mt-4 flex items-center gap-4">
           {p.readiness.total > 0 && <ProgressRing value={p.readiness.pct} size={64} stroke={5} label={`Documentation readiness ${p.readiness.pct} percent (${p.readiness.done} of ${p.readiness.total} criteria)`} />}
           <div className="grid gap-2">

@@ -228,7 +228,7 @@ export function ProjectPanel({ k, subsystemId }: { k: Knowledge; subsystemId: st
       </div>
       {sections.map((s) => (
         <section key={s.title} className="border-b border-[var(--c-line)] px-3.5 py-3">
-          <div className="mb-1.5 flex items-center justify-between"><h4 className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--c-muted)] [&_svg]:h-3.5 [&_svg]:w-3.5">{s.icon}{s.title} <span className="font-normal tabular-nums">{s.items.length}</span></h4>
+          <div className="mb-1.5 flex items-center justify-between"><h4 className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--c-muted)] [&_svg]:h-3.5 [&_svg]:w-3.5">{s.icon}{s.title} <span className="font-normal tabular-nums">{s.items.length}</span></h4>
             <Link href={s.href} target="_blank" className="text-[11px] text-[var(--c-accent)] hover:underline">Open</Link></div>
           {s.items.length === 0 ? <p className="text-[11.5px] text-[var(--c-muted)]">{s.empty}</p> : (
             <ul className="space-y-0.5">{s.items.slice(0, 5).map((it) => <li key={it.id}><Link href={s.open(it.id)} target="_blank" className="flex items-start gap-1.5 rounded px-1 py-0.5 text-[12px] hover:bg-[var(--c-panel2)]"><span className="min-w-0 flex-1 truncate">{it.label}</span>{it.flag && <span title="No reasoning or evidence recorded"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--c-accent)]" /></span>}</Link></li>)}

@@ -53,7 +53,7 @@ export function ProjectsList({ rows, recentId, archived, counts }: { rows: Proje
 
       <div className="glass overflow-x-auto rounded-[18px]">
         <div className="min-w-[860px]">
-          <div className={cn("grid h-[38px] items-center gap-3.5 border-b border-white/[0.07] px-[18px] text-[10.5px] uppercase tracking-[0.12em] text-[#6c7178]", COLS)}>
+          <div className={cn("grid h-[38px] items-center gap-3.5 border-b border-white/[0.07] px-[18px] font-mono text-[10px] uppercase tracking-[0.08em] text-[#6c7178]", COLS)}>
             <span>Project</span><span>Readiness</span><span>Attention</span><span>Decisions</span><span>Team</span><span>Last activity</span><span />
           </div>
           {shown.length === 0 && <p className="px-[18px] py-6 text-[13px] text-[#a9adb3]">{query ? `No projects match “${query}”.` : archived ? "Projects you archive appear here." : "No projects yet."}</p>}
@@ -67,7 +67,7 @@ export function ProjectsList({ rows, recentId, archived, counts }: { rows: Proje
                     {r.id === recentId && <Tag tone="blue">Recent</Tag>}
                     {r.isSample && <Tag tone="amber">Sample</Tag>}
                   </span>
-                  <span className="block truncate text-[11.5px] text-[#6c7178]">{[r.modelName, r.components ? `${r.components} components` : null].filter(Boolean).join(" · ") || r.description || "No description yet"}</span>
+                  <span className="block truncate text-[11.5px] text-[#6c7178]">{r.modelName || r.components ? <>{r.modelName && <span className="font-mono text-[10.5px]">{r.modelName}</span>}{r.modelName && r.components ? " · " : null}{r.components ? `${r.components} components` : null}</> : r.description || "No description yet"}</span>
                 </span>
               </span>
               <span className="flex items-center gap-2.5 text-xs tabular-nums text-[#a9adb3]">
@@ -96,5 +96,5 @@ function Segments({ pct }: { pct: number }) {
 }
 
 function Tag({ tone, children }: { tone: "blue" | "amber"; children: React.ReactNode }) {
-  return <span className={cn("shrink-0 rounded-md border px-1.5 py-px text-[10px] font-semibold uppercase tracking-[0.08em]", tone === "blue" ? "border-[#22d3ee]/25 bg-[#22d3ee]/12 text-[#8be9f7]" : "border-[#f5b74f]/25 bg-[#f5b74f]/14 text-[#fbd99a]")}>{children}</span>;
+  return <span className={cn("shrink-0 rounded-md border px-1.5 py-px font-mono text-[9.5px] font-semibold uppercase tracking-[0.06em]", tone === "blue" ? "border-[#22d3ee]/25 bg-[#22d3ee]/12 text-[#8be9f7]" : "border-[#f5b74f]/25 bg-[#f5b74f]/14 text-[#fbd99a]")}>{children}</span>;
 }

@@ -42,7 +42,7 @@ export function NumField({ label, value, onChange, step = 1, min, suffix, classN
 export function Group({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section className="border-b border-[var(--c-line)] px-3.5 py-3">
-      <div className="mb-2 flex items-center justify-between"><h4 className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[var(--c-muted)]">{title}</h4>{action}</div>
+      <div className="mb-2 flex items-center justify-between"><h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--c-muted)]">{title}</h4>{action}</div>
       <div className="space-y-1.5">{children}</div>
     </section>
   );
