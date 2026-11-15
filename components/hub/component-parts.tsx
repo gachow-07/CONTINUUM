@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LoadingManager } from "three";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { importedParts } from "@/lib/cad/imported-parts.mjs";
-import { validateGlb } from "@/lib/cad/validate-glb.mjs";
-import { fileUrl } from "@/lib/client";
+import { loadModelParts } from "@/lib/cad/model-parts-cache";
 import type { Decision, Research } from "@/lib/types";
 
 type Part = { key: string; name: string };
@@ -42,23 +37,14 @@ export function ComponentParts({ projectId, componentId, initialPart, model, lin
   const keys = JSON.stringify(links.map((link) => link.part_key));
   useEffect(() => {
     if (loadError) return;
-    const controller = new AbortController();
-    const manager = new LoadingManager();
-    manager.setURLModifier((url) => { if (url.startsWith("blob:") || url.startsWith("data:")) return url; throw new Error("External model resources are not supported."); });
-    const draco = new DRACOLoader(); draco.setDecoderPath("/draco/");
-    const loader = new GLTFLoader(manager); loader.setDRACOLoader(draco);
-    (async () => {
-      try {
-        const response = await fetch(fileUrl(model.path), { signal: controller.signal });
-        if (!response.ok) throw new Error("The model could not be opened.");
-        const data = await response.arrayBuffer(); validateGlb(data);
-        const gltf = await loader.parseAsync(data, "");
-        const allowed = new Set<string>(JSON.parse(keys));
-        if (!controller.signal.aborted) setParts(importedParts(gltf.scene).filter((part: Part) => allowed.has(part.key)).map((part: Part) => ({ key: part.key, name: part.name })));
-      } catch { if (!controller.signal.aborted) setError("Model parts could not be loaded. Please return to the project and try again."); }
-      finally { if (!controller.signal.aborted) setLoading(false); draco.dispose(); }
-    })();
-    return () => { controller.abort(); };
+    let live = true;
+    const allowed = new Set<string>(JSON.parse(keys));
+    // Shared with the Parts list on the same page, so the model is downloaded and parsed once.
+    loadModelParts(model.path)
+      .then((all) => { if (live) setParts(all.filter((part) => allowed.has(part.key))); })
+      .catch(() => { if (live) setError("Model parts could not be loaded. Please return to the project and try again."); })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; };
   }, [model.path, keys, loadError]);
   const part = parts.find((item) => item.key === selected);
   const demo = model.name.toLowerCase() === "f26-aer-0000-501.glb" && projectId === "f2110fcf-2834-4f9a-85a8-81f3b18386a6";
@@ -70,7 +56,7 @@ export function ComponentParts({ projectId, componentId, initialPart, model, lin
       <h3 className="mt-2 text-lg font-semibold">{part.name}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description ?? "A description of this part’s purpose has not been recorded."}</p>
       {description && <p className="mt-1 text-xs text-muted-foreground">Illustrative description based on the demo model; not verified engineering information.</p>}
-      <details className="mt-4 rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Why this design?</summary><p className="mt-2 text-xs text-muted-foreground">These decisions are recorded for the component as a whole.</p>{decisions.length ? <ul className="mt-2 space-y-3">{decisions.map((d) => <li key={d.id}><p className="text-sm font-medium">{d.title}</p><p className="mt-1 text-sm text-muted-foreground">{d.reasoning || "No reasoning recorded."}</p></li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No design decisions recorded yet.</p>}<Link href={`${base}/components/${componentId}?tab=decisions`} className="mt-2 inline-block text-xs text-accent hover:underline">View component decisions</Link></details>
+      <details open className="mt-4 rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Why this design?</summary><p className="mt-2 text-xs text-muted-foreground">These decisions are recorded for the component as a whole.</p>{decisions.length ? <ul className="mt-2 space-y-3">{decisions.map((d) => <li key={d.id}><p className="text-sm font-medium">{d.title}</p><p className="mt-1 text-sm text-muted-foreground">{d.reasoning || "No reasoning recorded."}</p></li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No design decisions recorded yet.</p>}<Link href={`${base}/components/${componentId}?tab=decisions`} className="mt-2 inline-block text-xs text-accent hover:underline">View component decisions</Link></details>
       <details className="mt-2 rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Research links</summary><p className="mt-2 text-xs text-muted-foreground">Research associated with this component.</p>{research.length ? <ul className="mt-2 space-y-2">{research.map((r) => <li key={r.id}><Link className="text-sm text-accent hover:underline" href={`${base}/research?open=${r.id}`}>{r.title}</Link>{r.why_important && <p className="mt-0.5 text-xs text-muted-foreground">{r.why_important}</p>}</li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No research recorded for this component yet.</p>}</details>
       <details className="mt-2 rounded-lg border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Other parts in this component ({parts.length})</summary><label className="mt-3 block text-xs text-muted-foreground">Select a part<select aria-label="Select another part in this component" value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-1 block w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground">{parts.map((item) => <option key={item.key} value={item.key}>{item.name}</option>)}</select></label></details>
     </>}

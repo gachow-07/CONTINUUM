@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ComponentParts } from "@/components/hub/component-parts";
+import { SubsystemParts } from "@/components/hub/subsystem-parts";
 import { AlertTriangle, ArrowRight, Check, CircleCheck, Plus } from "lucide-react";
 import { AskBar } from "@/components/hub/ask-bar";
 import { ComponentIcon } from "@/components/hub/icons";
@@ -52,12 +53,13 @@ export function ComponentView({ b, sid, tab, ai, partKey, modelFile, modelLinks,
               <ComponentIcon name={x.subsystem.name} className="h-4 w-4 shrink-0 text-muted-foreground" /><span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium">{x.subsystem.name}</span><span className="block text-[11px] text-muted-foreground">{x.done} / {x.total} complete</span></span>
               {x.done === x.total ? <CircleCheck className="h-4 w-4 shrink-0 text-success" aria-label="Fully documented" /> : <Ring v={x.done / x.total} />}
             </Link></li>))}</ul></Card>
+          <SubsystemParts base={base} sid={sid} modelPath={modelFile?.path ?? null} partKeys={modelLinks.map((link) => link.part_key)} selectedKey={partKey} loadError={partsError} />
         </aside>
 
         <section className="order-1 min-w-0 xl:order-2">
           {tab === "summary" && (
             <div className="space-y-4">
-              {partKey && modelFile && <ComponentParts projectId={id} componentId={sid} initialPart={partKey} model={modelFile} links={modelLinks} loadError={partsError} decisions={c.decisions} research={c.research} />}
+              {partKey && modelFile && <ComponentParts key={partKey} projectId={id} componentId={sid} initialPart={partKey} model={modelFile} links={modelLinks} loadError={partsError} decisions={c.decisions} research={c.research} />}
               <Card>
                 <div className="p-5">
                   <h3 className="text-[17px] font-semibold">Why this design?</h3>
