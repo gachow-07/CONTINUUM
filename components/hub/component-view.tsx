@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ComponentParts } from "@/components/hub/component-parts";
 import { AlertTriangle, ArrowRight, Check, CircleCheck, Plus } from "lucide-react";
 import { AskBar } from "@/components/hub/ask-bar";
 import { ComponentIcon } from "@/components/hub/icons";
@@ -20,7 +21,7 @@ const TABS = [["summary", "Summary"], ["research", "Research"], ["decisions", "D
 const FIX_TAB: Record<ChecklistItem["key"], string> = { described: "summary", choices: "decisions", alternatives: "decisions", sources: "research", revision: "revisions", review: "reviews" };
 const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n).trimEnd() + "…" : s);
 
-export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: string; tab: string; ai: boolean }) {
+export function ComponentView({ b, sid, tab, ai, partKey, modelFile, modelLinks, partsError }: { b: ProjectBundle; sid: string; tab: string; ai: boolean; partKey?: string; modelFile?: { path: string; name: string } | null; modelLinks: { part_key: string; subsystem_id: string }[]; partsError: boolean }) {
   const id = b.project.id;
   const sub = b.subsystems.find((s) => s.id === sid)!;
   const c = buildComponent(b, sub);
@@ -56,6 +57,7 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
         <section className="order-1 min-w-0 xl:order-2">
           {tab === "summary" && (
             <div className="space-y-4">
+              {partKey && modelFile && <ComponentParts projectId={id} componentId={sid} initialPart={partKey} model={modelFile} links={modelLinks} loadError={partsError} decisions={c.decisions} research={c.research} />}
               <Card>
                 <div className="p-5">
                   <h3 className="text-[17px] font-semibold">Why this design?</h3>

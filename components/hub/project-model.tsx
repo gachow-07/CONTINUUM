@@ -164,7 +164,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
     panel={listOpen ? <aside ref={panelRef} aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
       {chosenPart && <div className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
         <p className="text-[#a9adb3]">Selected part</p><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
-        {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
+        {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={`${chosenComponent.href}?part=${encodeURIComponent(chosenPart.key)}`}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
       </div>}
       <h3 className="flex items-baseline justify-between font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
       {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
