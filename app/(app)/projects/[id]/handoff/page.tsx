@@ -8,7 +8,7 @@ import { NotesPanel } from "@/components/views/notes-panel";
 import { DECISION_STATUS, REVISION_KIND } from "@/components/views/meta";
 import { loadBundle } from "@/lib/bundle";
 import { loadLatestConversation } from "@/lib/conversation";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { refHref } from "@/lib/links";
 import { DocTabs } from "@/components/hub/doc-tabs";
 import { requireSession } from "@/lib/session";
@@ -107,7 +107,7 @@ export default async function Handoff({ params }: { params: Promise<{ id: string
 
         <div className="xl:sticky xl:top-6 xl:self-start">
           <div className="ai-gradient ai-glow mb-3 flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13.5px] font-semibold"><Sparkles className="h-4 w-4" />Ask the project instead of the previous engineer</div>
-          <ChatPanel compact projectId={id} projectName={b.project.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId}
+          <ChatPanel compact projectId={id} projectName={b.project.name} aiEnabled={anthropicConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId}
             suggestions={["Why did we change the suspension design?", "What should I work on next?", "What failed and what did we learn?", "Which decisions are missing documentation?"]} />
         </div>
       </div>

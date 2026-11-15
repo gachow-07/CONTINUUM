@@ -31,7 +31,7 @@ export function AskBar({ projectId, projectName, componentName, aiEnabled }: { p
       <Sparkles className="h-[18px] w-[18px] shrink-0 text-[#7dd3fc]" />
       <input value={q} onChange={(e) => setQ(e.target.value)} disabled={!aiEnabled} aria-label={`Ask about ${componentName}`} placeholder={aiEnabled ? `Ask this component… e.g. “Why did we choose this ${componentName.toLowerCase()} design?”` : "Ask this component… (AI assistant not configured)"}
         className="h-9 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed" />
-      {!aiEnabled && <Link href="/setup" className="shrink-0 text-xs text-warning underline">Set up OpenAI key</Link>}
+      {!aiEnabled && <Link href="/setup" className="shrink-0 text-xs text-warning underline">Set up Anthropic key</Link>}
       <button type="submit" disabled={!aiEnabled || !q.trim()} aria-label="Ask" className="ai-gradient flex h-9 w-9 shrink-0 items-center justify-center rounded-lg disabled:opacity-40"><Send className="h-4 w-4" /></button>
     </form>
   );

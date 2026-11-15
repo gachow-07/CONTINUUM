@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
-import { openaiConfigured } from "@/lib/env";
+import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
+import { anthropicConfigured } from "@/lib/env";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 
 export const maxDuration = 60;
@@ -12,7 +12,7 @@ const SYSTEM = `Summarize the provided engineering record in 2–4 sentences for
 export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
-  if (!openaiConfigured()) return aiErrorResponse(new AiNotConfigured());
+  if (!anthropicConfigured()) return aiErrorResponse(new AiNotConfigured());
   const supabase = await createClient();
   const { kind, id } = parsed.data;
 

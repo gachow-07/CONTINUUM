@@ -2,6 +2,6 @@
 export const supabaseConfigured = () =>
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-export const openaiConfigured = () => Boolean(process.env.OPENAI_API_KEY);
+export const anthropicConfigured = () => Boolean(process.env.ANTHROPIC_API_KEY);
 
-export const OPENAI_MODEL = () => process.env.OPENAI_MODEL || "gpt-4o";
+export const ANTHROPIC_MODEL = () => process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";

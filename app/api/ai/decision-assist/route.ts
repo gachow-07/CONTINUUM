@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { loadBundle } from "@/lib/bundle";
-import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
+import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { DECISION_SCHEMA, DECISION_SYSTEM } from "@/lib/ai/prompts";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import { formatDate } from "@/lib/utils";
 
@@ -22,7 +22,7 @@ const body = z.object({
 export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
-  if (!openaiConfigured()) return aiErrorResponse(new AiNotConfigured());
+  if (!anthropicConfigured()) return aiErrorResponse(new AiNotConfigured());
   const { projectId, draft } = parsed.data;
   if (![draft.title, draft.problem, draft.selected_solution, draft.reasoning, draft.free_text].some((s) => s.trim())) {
     return Response.json({ error: "Write something about the decision first — even a rough sentence — then ask for help." }, { status: 400 });

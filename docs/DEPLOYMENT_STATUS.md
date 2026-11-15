@@ -34,7 +34,7 @@ Create an account in the production app to use shared data. Gabe can then use th
 - Teammate sign-up, project sharing, and simultaneous access from separate accounts.
 - The complete demo path: Suspension component -> reasoning -> linked source -> decision -> handoff.
 - Source URLs in the sample are placeholder `example.com` links and should be replaced with real sources before judging.
-- OpenAI is not yet confirmed in production. AI features need `OPENAI_API_KEY` in Vercel; never put this key in GitHub or prefix it with `NEXT_PUBLIC_`.
+- Anthropic is not yet confirmed in production. AI features need `ANTHROPIC_API_KEY` in Vercel; never put this key in GitHub or prefix it with `NEXT_PUBLIC_`.
 - Teammate access to the Supabase and Vercel administrative dashboards.
 - File upload/storage behavior and generated-document export in production.
 
@@ -46,7 +46,7 @@ Create an account in the production app to use shared data. Gabe can then use th
 4. Wait for the Vercel status on the GitHub commit to say **Deployment has completed**.
 5. Test the production URL while signed in.
 
-Do not commit `.env.local`, Supabase service-role keys, database passwords, OpenAI keys, or values copied from Vercel's secret environment variables.
+Do not commit `.env.local`, Supabase service-role keys, database passwords, Anthropic keys, or values copied from Vercel's secret environment variables.
 
 ## Immediate team checklist
 
@@ -54,5 +54,5 @@ Do not commit `.env.local`, Supabase service-role keys, database passwords, Open
 2. Gabe opens the RC Car Design project, selects **Share**, and adds both registered teammates.
 3. Each teammate confirms that the shared RC Car project opens from their own account.
 4. Gabe invites teammates to the Supabase organization from the Supabase organization/team settings if they need to inspect the database directly.
-5. Add the OpenAI key directly in Vercel, redeploy, and test one grounded AI question.
+5. Add the Anthropic key directly in Vercel, redeploy, and test one grounded AI question.
 6. Replace the placeholder research links and run the full three-minute demo from start to finish.

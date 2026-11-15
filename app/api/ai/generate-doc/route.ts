@@ -2,9 +2,9 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { loadBundle } from "@/lib/bundle";
 import { buildCorpus } from "@/lib/ai/corpus";
-import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
+import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { DOC_SCHEMA, DOC_SYSTEM, DOC_TYPES } from "@/lib/ai/prompts";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { DocSection } from "@/lib/types";
 
@@ -25,7 +25,7 @@ const body = z.object({
 export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
-  if (!openaiConfigured()) return aiErrorResponse(new AiNotConfigured());
+  if (!anthropicConfigured()) return aiErrorResponse(new AiNotConfigured());
   const { projectId, docType, selection: sel, onlySection, guidance } = parsed.data;
   const spec = DOC_TYPES[docType];
   if (!spec) return Response.json({ error: "Unknown document type" }, { status: 400 });
@@ -70,7 +70,7 @@ ${sources}`;
 
   try {
     const out = await callJson<{ sections: { key: string; content: string; status: DocSection["status"]; sources: string[] }[] }>({
-      system: DOC_SYSTEM, name: "project_document", schema: DOC_SCHEMA, messages: [{ role: "user", content: prompt }], temperature: 0.3,
+      system: DOC_SYSTEM, name: "project_document", schema: DOC_SCHEMA, messages: [{ role: "user", content: prompt }],
     });
     const sections: DocSection[] = wanted.map((w) => {
       const got = out.sections.find((s) => s.key === w.key);

@@ -101,7 +101,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
             <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent"><FileSearch className="h-5 w-5" /></div>
             <h3 className="text-sm font-semibold">Ask anything about {projectName}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">Answers come only from what&apos;s documented in this project — research, decisions, revisions, reviews and notes — with sources. If something isn&apos;t documented, it will say so.</p>
-            {!aiEnabled && <div className="mt-4 text-left"><SetupNotice title="AI assistant not configured">Add <code className="rounded bg-white/60 px-1">OPENAI_API_KEY</code> to your environment and restart to enable answers.</SetupNotice></div>}
+            {!aiEnabled && <div className="mt-4 text-left"><SetupNotice title="AI assistant not configured">Add <code className="rounded bg-white/60 px-1">ANTHROPIC_API_KEY</code> to your environment and restart to enable answers.</SetupNotice></div>}
             <div className="mt-5 flex flex-wrap justify-center gap-2">{suggestions.map((s) => <button key={s} onClick={() => send(s)} disabled={!aiEnabled} className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50">{s}</button>)}</div>
           </div>
         )}

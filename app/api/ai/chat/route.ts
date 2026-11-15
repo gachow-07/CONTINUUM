@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { loadBundle } from "@/lib/bundle";
 import { buildCorpus } from "@/lib/ai/corpus";
 import { nothingRelevant, retrieve } from "@/lib/ai/retrieve";
-import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
+import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { CHAT_SCHEMA, GAP_SENTENCE, GROUNDING_RULES } from "@/lib/ai/prompts";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { AnswerSegment, Citation } from "@/lib/types";
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
   const { projectId, message } = parsed.data;
-  if (!openaiConfigured()) return aiErrorResponse(new AiNotConfigured());
+  if (!anthropicConfigured()) return aiErrorResponse(new AiNotConfigured());
 
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();

@@ -128,7 +128,7 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
         {reviews.length === 0 ? <span className="text-muted-foreground">No reviews requested for this decision.</span> : <ul className="space-y-1.5">{reviews.map((r) => <li key={r.id}><RefChip projectId={pid} type="review" id={r.id} label={r.title} onNavigate={onClose} /></li>)}</ul>}
       </Section>
       <Section title="AI summary" action={aiEnabled ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{d.ai_summary ? "Regenerate" : "Generate"}</button> : undefined}>
-        {d.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{d.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.</span> : <SetupNotice title="AI not configured">Add OPENAI_API_KEY to enable summaries.</SetupNotice>}
+        {d.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{d.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.</span> : <SetupNotice title="AI not configured">Add ANTHROPIC_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       <ConfirmDialog open={del} onOpenChange={setDel} title="Delete this decision?" description="Evidence links are removed with it. Research, revisions and files are kept." onConfirm={async () => { const r = await act(deleteDecision(d.id), "Decision deleted"); if (r.ok) { onClose(); router.refresh(); } }} />
     </DrawerContent>
@@ -213,7 +213,7 @@ function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, on
             <Textarea value={free} onChange={(e) => setFree(e.target.value)} className="min-h-[64px] bg-surface" placeholder='Explain the decision informally, e.g. "We changed the suspension geometry because the previous design had too much body roll."' />
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <Button size="sm" variant="accent" onClick={assist} loading={aiBusy} disabled={!aiEnabled}><Sparkles className="h-3.5 w-3.5" />Organize &amp; find gaps</Button>
-              {!aiEnabled ? <span className="text-xs text-warning">OPENAI_API_KEY isn&apos;t configured — AI assistance is off.</span> : <span className="text-xs text-muted-foreground">Works only from what you write and this project&apos;s records. It never invents results.</span>}
+              {!aiEnabled ? <span className="text-xs text-warning">ANTHROPIC_API_KEY isn&apos;t configured — AI assistance is off.</span> : <span className="text-xs text-muted-foreground">Works only from what you write and this project&apos;s records. It never invents results.</span>}
             </div>
             {ai && (
               <div className="mt-3 space-y-3 border-t border-accent/20 pt-3 text-[13px]">

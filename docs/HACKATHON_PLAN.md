@@ -9,14 +9,14 @@ Goal for the demo: **a new engineer opens the RC Car Design project, sees the 3D
 | UI, hub, component workspace, 3D viewer, markers, readiness logic, 3D editor | Built. Rendered and clicked through in a browser using sample data. |
 | Database schema, RLS, atomic model save | Written. Tested on a local Postgres with stand-ins for Supabase auth and storage. **Never run on a real Supabase project.** |
 | Sign up / sign in, creating projects, uploads, PDF text extraction, search | Written. **Never run against real Supabase.** |
-| AI: assistant, decision help, document generation | Written. **Never called against OpenAI.** Retrieval logic is tested on sample data. |
+| AI: assistant, decision help, document generation | Written. **Never called against Anthropic Claude.** Retrieval logic is tested on sample data. |
 | PDF export, JSON import/export, Vercel deploy | Written or configured. **Untested.** |
 
 So the first hour is about finding out what breaks, together. Then you split.
 
 ## Hour 0 to 1: everyone, one laptop on a call (Setup Sprint)
 
-1. One person creates the Supabase project and the OpenAI key. Share them in a password manager, never in git.
+1. One person creates the Supabase project and the Anthropic API key. Share them in a password manager, never in git.
 2. Run the three files in `supabase/migrations/` in order in the Supabase SQL editor. Turn off "Confirm email".
 3. Create `.env.local` from `.env.example`. Run `npm install && npm run dev`.
 4. Smoke test as a group, writing down every failure in the issue list (GitHub Issues, label `smoke`):
@@ -64,7 +64,7 @@ Each track owns specific folders. Stay inside yours and merge conflicts mostly d
 
 | # | Task | Done when |
 |---|---|---|
-| C1 | Get every AI route working against real OpenAI (chat, decision-assist, generate-doc, summarize). Check `OPENAI_MODEL` supports structured outputs | All four return valid output; failures show a clear message |
+| C1 | Get every AI route working against real Anthropic Claude (chat, decision-assist, generate-doc, summarize). Check `ANTHROPIC_MODEL` supports structured outputs | All four return valid output; failures show a clear message |
 | C2 | Grounding tests: run the 7 demo questions plus 3 off-topic ones | Cites real records; drivetrain gearing question returns the exact "couldn't find a documented explanation" sentence; off-topic says nothing is documented |
 | C3 | Document generation: all 6 types, regenerate a section, save, export a readable PDF | PDF opens and shows documented / partial / not-documented labels |
 | C4 | Decision assistant in the decision form | Rough sentence in, organised fields and missing-info questions out; never invents numbers |

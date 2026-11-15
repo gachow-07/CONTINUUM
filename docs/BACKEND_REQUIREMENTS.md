@@ -13,15 +13,15 @@ Handoff concept: https://www.figma.com/design/Ti5JKelG61EeFJHxsX17jr?node-id=11-
 ## What exists and confidence level
 The repo contains a Next.js/TypeScript application, Supabase SQL migrations, auth/session handling, project and knowledge server actions, RLS policies, private file storage, AI routes, a primitive-based 3D model editor, and a project handoff page. The handoff page already derives information from project records; the Figma screen and outgoing-team editor described below are proposed changes, not evidence they are implemented.
 
-The repository's hackathon plan reports that the UI was exercised with sample data and schema tested on local Postgres with stand-ins, but auth, storage and RLS had not been run against real Supabase, and AI had not been called against OpenAI when that plan was written. This may be outdated; verify current deployment and test history with the team. The Figma screens use example data and are static mockups.
+The repository's hackathon plan reports that the UI was exercised with sample data and schema tested on local Postgres with stand-ins, but auth, storage and RLS had not been run against real Supabase, and AI had not been called against Anthropic Claude when that plan was written. This may be outdated; verify current deployment and test history with the team. The Figma screens use example data and are static mockups.
 
-Current stack: Next.js App Router / React / TypeScript; Supabase Auth, Postgres and Storage; OpenAI for optional AI; Vercel as documented deployment target. Do not assume a new backend or rewrite is required.
+Current stack: Next.js App Router / React / TypeScript; Supabase Auth, Postgres and Storage; Anthropic Claude for optional AI; Vercel as documented deployment target. Do not assume a new backend or rewrite is required.
 
 ## P0 — Make the existing foundation work end to end
 
 ### Setup and baseline
 - Provision a development Supabase project. Apply migrations 0001_schema.sql, 0002_model.sql and 0003_markers.sql in order on a fresh project; configure local environment from .env.example. Do not edit a migration already applied to a shared database; add a new migration.
-- Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY. OPENAI_API_KEY is server-only and optional for non-AI flows. Share secrets through an agreed secure channel, never Git.
+- Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY. ANTHROPIC_API_KEY is server-only and optional for non-AI flows. Share secrets through an agreed secure channel, never Git.
 - Install dependencies, run the app, type-check, lint and build. Record the environment and failures. Confirm deployment and current test status with the team.
 - Acceptance: a fresh user can sign up, sign in, create a project, add a component, reload and see persisted data; sign out and back in successfully. Test both email-confirmation behavior and redirect configuration appropriate to the actual environment.
 
