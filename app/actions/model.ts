@@ -17,6 +17,24 @@ const partSchema = z.object({
   visible: z.boolean(),
 });
 
+/** Assign a saved assembly part to a component in the same project. */
+export async function assignResearchModelPart(projectId: string, partId: string, componentId: string | null): Promise<ActionResult> {
+  try {
+    const uuid = z.string().uuid();
+    if (!uuid.safeParse(projectId).success || !uuid.safeParse(partId).success || (componentId && !uuid.safeParse(componentId).success)) return fail("Invalid project, part or component.");
+    const c = await ctx();
+    if (componentId) {
+      const { data, error } = await c.supabase.from("subsystems").select("id").eq("id", componentId).eq("project_id", projectId).maybeSingle();
+      if (error) return fail(error.message);
+      if (!data) return fail("Choose a component in this project.");
+    }
+    const { data, error } = await c.supabase.from("model_parts").update({ subsystem_id: componentId }).eq("id", partId).eq("project_id", projectId).select("id").maybeSingle();
+    if (error) return fail(error.message);
+    if (!data) return fail("Could not update this part. Check your project permissions.");
+    refresh(); return { ok: true };
+  } catch (e) { return fail(e); }
+}
+
 /** Select an existing project file as the hub's GLB model, or return to the built-in assembly. */
 export async function setViewerModel(projectId: string, fileId: string | null): Promise<ActionResult> {
   try {
