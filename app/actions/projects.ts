@@ -66,15 +66,9 @@ export async function updateProject(id: string, input: Partial<z.input<typeof pr
 export async function addMemberByEmail(projectId: string, email: string, role: "editor" | "viewer"): Promise<ActionResult> {
   try {
     const c = await ctx();
-    const { data: found, error } = await c.supabase.rpc("find_user_by_email", { p_email: email.trim() });
+    const { error } = await c.supabase.rpc("send_project_invitation", { p_project_id: projectId, p_email: email.trim(), p_role: role });
     if (error) return fail(error.message);
-    const u = (found as { id: string; full_name: string | null; email: string }[] | null)?.[0];
-    if (!u) return fail("No CONTINUUM account uses that email yet. Ask them to sign up first, then add them.");
-    const { error: e2 } = await c.supabase.from("project_members").insert({
-      project_id: projectId, user_id: u.id, display_name: u.full_name || u.email, email: u.email, role,
-    });
-    if (e2) return fail(e2.code === "23505" ? "That person is already on the project." : e2.message);
-    await logActivity(c, projectId, "project", `Added ${u.full_name || u.email} to the team`);
+    await logActivity(c, projectId, "project", `Sent a project invitation`);
     refresh();
     return { ok: true };
   } catch (e) {
