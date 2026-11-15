@@ -32,13 +32,13 @@ export function ProjectCard({ project, scope, model }: { project: Project; scope
   const status = STATUS_META[project.status];
   const viewerFile = scope.files.find((file) => file.id === project.viewer_model_file_id && file.project_id === project.id);
   return (
-    <Link href={`/projects/${project.id}`} className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-[var(--shadow-pop)]">
-      <div className="relative h-32 overflow-hidden">{viewerFile ? <GlbThumbnail key={viewerFile.id} path={viewerFile.storage_path} filename={viewerFile.name} name={project.name} cover={project.cover_path} /> : model?.length ? <ModelThumbnail parts={model} name={project.name} /> : project.cover_path ? <ProjectCover path={project.cover_path} name={project.name} className="transition-transform duration-500 group-hover:scale-[1.03]" /> : <EmptyModelThumbnail name={project.name} />}
+    <Link href={`/projects/${project.id}`} className="card-hover group flex flex-col overflow-hidden rounded-lg border border-border bg-surface bg-gradient-to-b from-white/[0.018] to-transparent shadow-card">
+      <div className="relative h-32 overflow-hidden after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-10 after:bg-gradient-to-t after:from-surface after:to-transparent">{viewerFile ? <GlbThumbnail key={viewerFile.id} path={viewerFile.storage_path} filename={viewerFile.name} name={project.name} cover={project.cover_path} /> : model?.length ? <ModelThumbnail parts={model} name={project.name} /> : project.cover_path ? <ProjectCover path={project.cover_path} name={project.name} className="transition-transform duration-500 group-hover:scale-[1.03]" /> : <EmptyModelThumbnail name={project.name} />}
         <div className="absolute left-3 top-3 flex gap-1.5">{project.is_sample && <SampleBadge />}{project.archived && <Badge>Archived</Badge>}</div>
       </div>
       <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-[15px] font-semibold leading-snug">{project.name}</h3>
+          <h3 className="text-[15px] font-semibold leading-snug transition-colors duration-200 group-hover:text-[#cfe0ff]">{project.name}</h3>
           <Badge tone={status.tone} dot>{status.label}</Badge>
         </div>
         <p className="mt-1 line-clamp-2 text-[13px] text-muted-foreground">{project.description || "No description yet."}</p>
@@ -49,7 +49,7 @@ export function ProjectCard({ project, scope, model }: { project: Project; scope
         </div>
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-[11px] text-muted-foreground"><span>Decisions fully documented</span><span>{st.hasDecisions ? `${st.pct}%` : "—"}</span></div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-accent transition-all" style={{ width: `${st.pct}%` }} /></div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="progress-fill h-full rounded-full bg-gradient-to-r from-[#2f7cf2] to-[#6aa8ff] shadow-[0_0_10px_rgb(61_139_255/0.5)]" style={{ width: `${st.pct}%` }} /></div>
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">Updated {formatDate(project.updated_at)}</p>
       </div>

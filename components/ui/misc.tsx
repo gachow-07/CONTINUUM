@@ -9,8 +9,8 @@ export function EmptyState({ icon, title, description, action }: {
   icon: React.ReactNode; title: string; description?: string; action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-strong bg-surface/60 px-6 py-12 text-center">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">{icon}</div>
+    <div className="animate-rise flex flex-col items-center justify-center rounded-lg border border-dashed border-border-strong bg-surface/60 px-6 py-12 text-center">
+      <div className="animate-float mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-b from-accent-soft to-muted text-accent ring-1 ring-accent/20">{icon}</div>
       <h3 className="text-sm font-semibold">{title}</h3>
       {description && <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -52,10 +52,10 @@ export function ConfirmDialog({ open, onOpenChange, title, description, confirmL
 
 export function PageHeader({ title, description, actions, eyebrow }: { title: string; description?: string; actions?: React.ReactNode; eyebrow?: React.ReactNode }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="animate-fade-in mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
         {eyebrow && <div className="mb-1 text-xs text-muted-foreground">{eyebrow}</div>}
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-[13px] text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}

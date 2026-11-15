@@ -4,6 +4,7 @@ import { AskBar } from "@/components/hub/ask-bar";
 import { ComponentIcon } from "@/components/hub/icons";
 import { reviewTone } from "@/components/hub/panels";
 import { Badge } from "@/components/ui/badge";
+import { TabBar } from "@/components/ui/tab-bar";
 import { Card, CardHeader } from "@/components/ui/card";
 import { SubsystemActions } from "@/components/views/subsystems-view";
 import { DecisionsView } from "@/components/views/decisions-view";
@@ -36,26 +37,24 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
     <div className="space-y-5">
       <nav aria-label="Breadcrumb" className="-mt-2 text-xs text-muted-foreground"><Link href={`${base}?tab=components`} className="hover:text-foreground">Components</Link> <span className="mx-1">›</span> <span className="text-foreground">{sub.name}</span></nav>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent"><ComponentIcon name={sub.name} className="h-5 w-5" /></span>
+        <div className="flex items-center gap-3"><span className="animate-pop flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent ring-1 ring-accent/25 shadow-[0_0_24px_-6px_rgb(61_139_255/0.6)]"><ComponentIcon name={sub.name} className="h-5 w-5" /></span>
           <div><h2 className="text-xl font-semibold tracking-tight">{sub.name}</h2><div className="mt-1 flex flex-wrap gap-1.5"><Badge tone={c.status.tone}>{c.status.label}</Badge><Badge tone={reviewTone(c.reviewState)}>{reviewStateLabel(c.reviewState)}</Badge></div></div></div>
         <div className="flex gap-2"><SubsystemActions subsystem={sub} redirectTo={`${base}?tab=components`} /></div>
       </div>
-      <div className="flex gap-1 border-b border-border" role="tablist">
-        {TABS.map(([k, label]) => <Link key={k} role="tab" aria-selected={tab === k} href={`${base}/components/${sid}?tab=${k}`} className={cn("-mb-px border-b-2 px-3.5 py-2.5 text-[13px] font-medium", tab === k ? "border-accent text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>{label}</Link>)}
-      </div>
+      <TabBar size="sm" className="mb-0" tabs={TABS.map(([k, label]) => ({ label, active: tab === k, href: `${base}/components/${sid}?tab=${k}` }))} />
 
       <div className="grid gap-5 xl:grid-cols-[210px_minmax(0,1fr)_330px]">
         <aside className="order-2 xl:order-1">
           <Card><CardHeader title="Components" /><ul className="p-1.5">{all.map((x) => (
-            <li key={x.subsystem.id}><Link href={`${base}/components/${x.subsystem.id}?tab=${tab}`} aria-current={x.subsystem.id === sid ? "page" : undefined} className={cn("flex items-center gap-2.5 rounded-md px-2.5 py-2 hover:bg-muted", x.subsystem.id === sid && "bg-accent-soft ring-1 ring-accent/40")}>
+            <li key={x.subsystem.id}><Link href={`${base}/components/${x.subsystem.id}?tab=${tab}`} aria-current={x.subsystem.id === sid ? "page" : undefined} className={cn("flex items-center gap-2.5 rounded-md px-2.5 py-2 transition-[background-color,box-shadow,transform] duration-200 hover:translate-x-0.5 hover:bg-muted", x.subsystem.id === sid && "bg-accent-soft ring-1 ring-accent/40 hover:translate-x-0 hover:bg-accent-soft")}>
               <ComponentIcon name={x.subsystem.name} className="h-4 w-4 shrink-0 text-muted-foreground" /><span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-medium">{x.subsystem.name}</span><span className="block text-[11px] text-muted-foreground">{x.done} / {x.total} complete</span></span>
               {x.done === x.total ? <CircleCheck className="h-4 w-4 shrink-0 text-success" aria-label="Fully documented" /> : <Ring v={x.done / x.total} />}
             </Link></li>))}</ul></Card>
         </aside>
 
-        <section className="order-1 min-w-0 xl:order-2">
+        <section key={tab} className="animate-fade-in order-1 min-w-0 xl:order-2">
           {tab === "summary" && (
-            <div className="space-y-4">
+            <div className="stagger space-y-4">
               <Card>
                 <div className="p-5">
                   <h3 className="text-[17px] font-semibold">Why this design?</h3>
@@ -69,10 +68,10 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
               ) : c.decisions.map((d) => {
                 const ev = b.evidence.filter((e) => e.decision_id === d.id);
                 return (
-                  <Link key={d.id} href={refHref(id, "decision", d.id)} className="group block rounded-lg border border-border bg-surface p-4 shadow-card transition-colors hover:border-border-strong">
+                  <Link key={d.id} href={refHref(id, "decision", d.id)} className="card-hover group block rounded-lg border border-border bg-surface bg-gradient-to-b from-white/[0.018] to-transparent p-4 shadow-card">
                     <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-[14px] font-semibold">{d.title}</p>
                       <p className="mt-1 text-[13px] text-muted-foreground"><span className="text-foreground/90">Selected:</span> {clip(d.selected_solution, 200) || "—"}</p></div>
-                      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent" /></div>
+                      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-[color,transform] duration-300 ease-[var(--ease-out)] group-hover:translate-x-1 group-hover:text-accent" /></div>
                     <p className="mt-2 text-[13px] leading-relaxed">{d.reasoning.trim() ? clip(d.reasoning, 280) : <span className="inline-flex items-center gap-1.5 text-warning"><AlertTriangle className="h-3.5 w-3.5" />No reasoning recorded for this decision.</span>}</p>
                     {d.alternatives.length > 0 && <p className="mt-2 text-xs text-muted-foreground"><span className="font-medium text-foreground/80">Alternatives considered:</span> {d.alternatives.map((a) => a.name).join(" · ")}</p>}
                     <div className="mt-3 flex flex-wrap gap-1.5">
@@ -101,12 +100,12 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
           <Card>
             <CardHeader title="Documentation checklist" action={<span className="text-xs tabular-nums text-muted-foreground">{c.done} of {c.total} complete</span>} />
             <div className="p-4">
-              <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-accent" style={{ width: `${(c.done / c.total) * 100}%` }} /></div>
-              <ul className="space-y-1">
+              <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-muted"><div className="progress-fill h-full rounded-full bg-gradient-to-r from-[#2f7cf2] to-[#6aa8ff]" style={{ width: `${(c.done / c.total) * 100}%` }} /></div>
+              <ul className="stagger space-y-1">
                 {c.items.map((it) => (
                   <li key={it.key} className="py-1">
                     <div className="flex items-center gap-2.5 text-[13px]">
-                      <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border", it.ok ? "border-accent bg-accent text-white" : "border-border-strong")} aria-hidden>{it.ok && <Check className="h-3 w-3" />}</span>
+                      <span className={cn("flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors", it.ok ? "border-accent bg-accent text-white shadow-[0_0_10px_-2px_rgb(61_139_255/0.7)]" : "border-border-strong")} aria-hidden>{it.ok && <Check className="animate-pop h-3 w-3" />}</span>
                       <span className={it.ok ? "" : "font-medium"}>{it.label}</span><span className="sr-only">{it.ok ? "complete" : "incomplete"}</span>
                       {!it.ok && <Link href={`${base}/components/${sid}?tab=${FIX_TAB[it.key]}`} className="ml-auto text-[11.5px] font-medium text-accent hover:underline">Resolve</Link>}
                     </div>
@@ -133,5 +132,5 @@ export function ComponentView({ b, sid, tab, ai }: { b: ProjectBundle; sid: stri
 
 function Ring({ v }: { v: number }) {
   const r = 7, c = 2 * Math.PI * r;
-  return <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0 -rotate-90" aria-hidden><circle cx="9" cy="9" r={r} fill="none" stroke="var(--border-strong)" strokeWidth="2" /><circle cx="9" cy="9" r={r} fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray={`${c * v} ${c}`} strokeLinecap="round" /></svg>;
+  return <svg width="18" height="18" viewBox="0 0 18 18" className="shrink-0 -rotate-90" aria-hidden><circle cx="9" cy="9" r={r} fill="none" stroke="var(--border-strong)" strokeWidth="2" /><circle className="ring-fill" cx="9" cy="9" r={r} fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray={`${c * v} ${c}`} strokeLinecap="round" /></svg>;
 }

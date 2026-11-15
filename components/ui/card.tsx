@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export function Card({ className, ...p }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-lg border border-border bg-surface shadow-card", className)} {...p} />;
+  return <div className={cn("rounded-lg border border-border bg-surface bg-gradient-to-b from-white/[0.018] to-transparent shadow-card transition-[border-color,box-shadow] duration-300", className)} {...p} />;
 }
 export function CardHeader({ title, description, action, className }: { title: React.ReactNode; description?: React.ReactNode; action?: React.ReactNode; className?: string }) {
   return (

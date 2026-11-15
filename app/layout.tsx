@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
       <body className="min-h-full">
         {children}
-        <Toaster position="bottom-right" toastOptions={{ style: { fontSize: 13 } }} />
+        <Toaster theme="dark" position="bottom-right" toastOptions={{ style: { fontSize: 13, background: "rgb(17 23 34 / 0.92)", border: "1px solid #2b3649", backdropFilter: "blur(12px)", boxShadow: "0 14px 34px -10px rgb(0 0 0 / 0.6)" } }} />
       </body>
     </html>
   );

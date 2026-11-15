@@ -15,15 +15,15 @@ export default async function ProjectLayout({ children, params }: { children: Re
   const st = STATUS_META[p.status];
   return (
     <div className="animate-fade-in">
-      <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground"><Link href="/projects" className="hover:text-foreground">Projects</Link> <span className="mx-1">›</span> <Link href={`/projects/${id}`} className="hover:text-foreground">{p.name}</Link></nav>
+      <nav aria-label="Breadcrumb" className="mb-2 text-xs text-muted-foreground"><Link href="/projects" className="transition-colors hover:text-foreground">Projects</Link> <span className="mx-1">›</span> <Link href={`/projects/${id}`} className="transition-colors hover:text-foreground">{p.name}</Link></nav>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl font-semibold tracking-tight">{p.name}</h1>
+          <h1 className="text-gradient text-[26px] font-semibold tracking-tight">{p.name}</h1>
           {p.is_sample && <SampleBadge />}<Badge tone={st.tone} dot>{st.label}</Badge>{p.archived && <Badge>Archived</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/projects/${id}/workspace`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong px-3 text-[13px] font-medium hover:bg-muted"><Box className="h-4 w-4" />3D editor</Link>
-          <Link href={`/projects/${id}/assistant`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong px-3 text-[13px] font-medium hover:bg-muted"><Sparkles className="h-4 w-4" />Ask AI</Link>
+          <Link href={`/projects/${id}/workspace`} className="group inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-surface/60 px-3 text-[13px] font-medium transition-[background-color,border-color,transform] duration-200 hover:-translate-y-px hover:border-accent/40 hover:bg-muted active:scale-[0.97]"><Box className="h-4 w-4 transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[20deg] group-hover:text-accent" />3D editor</Link>
+          <Link href={`/projects/${id}/assistant`} className="group inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong bg-surface/60 px-3 text-[13px] font-medium transition-[background-color,border-color,transform] duration-200 hover:-translate-y-px hover:border-accent/40 hover:bg-muted active:scale-[0.97]"><Sparkles className="h-4 w-4 transition-transform duration-500 ease-[var(--ease-spring)] group-hover:scale-125 group-hover:text-accent" />Ask AI</Link>
           <ProjectMenu project={p} />
         </div>
       </div>

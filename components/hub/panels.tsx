@@ -23,11 +23,11 @@ export function ReadinessPanel({ projectId, comps }: { projectId: string; comps:
             <ul className="space-y-2.5">
               {comps.map((c) => (
                 <li key={c.subsystem.id}>
-                  <Link href={`/projects/${projectId}/components/${c.subsystem.id}`} className="group block rounded-md p-1.5 -m-1.5 hover:bg-muted/60">
+                  <Link href={`/projects/${projectId}/components/${c.subsystem.id}`} className="group -m-1.5 block rounded-md p-1.5 transition-colors duration-200 hover:bg-muted/60">
                     <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5">
                       <span className="text-[13px] font-semibold">{c.subsystem.name}</span>
                       <Badge tone={c.status.tone}>{c.status.label}</Badge>
-                      <div className="flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(c.done / c.total) * 100}%` }} /></div></div>
+                      <div className="flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"><div className="progress-fill h-full rounded-full bg-gradient-to-r from-[#2f7cf2] to-[#6aa8ff]" style={{ width: `${(c.done / c.total) * 100}%` }} /></div></div>
                       <span className="text-right text-[11.5px] tabular-nums text-muted-foreground">{c.done} / {c.total} complete</span>
                     </div>
                     {c.missing.length > 0 && <p className="mt-1 text-[11.5px] text-muted-foreground">Missing: {c.missing.map((m) => m.label.toLowerCase()).join(", ")}</p>}
@@ -54,10 +54,10 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
       {items.length === 0 ? <p className="p-4 text-[13px] text-muted-foreground">Nothing needs attention right now.</p> : (
         <ul className="divide-y divide-border">
           {items.map((it) => (
-            <li key={it.id}><Link href={it.href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/60">
+            <li key={it.id}><Link href={it.href} className="group flex items-center gap-3 px-4 py-2.5 transition-colors duration-200 hover:bg-muted/60">
               <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1"><span className="block text-[13px]">{it.label}</span><span className="block truncate text-[11.5px] text-muted-foreground">{it.detail}</span></span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 ease-[var(--ease-out)] group-hover:translate-x-1 group-hover:text-foreground" />
             </Link></li>
           ))}
         </ul>
@@ -96,7 +96,7 @@ export function LivingSummary({ b, comps }: { b: ProjectBundle; comps: Component
                     <p className="text-[13px]">{d.selected_solution || d.title}</p>
                     <p className="text-[11.5px] text-muted-foreground">{d.title} · {formatDate(d.decided_on)}{rev ? ` · ${rev.rev_label}` : ""}{!d.reasoning.trim() && <span className="ml-1.5 text-warning">· no reasoning recorded</span>}</p>
                   </div>
-                  <Link href={`${base}/decisions?open=${d.id}`} className="inline-flex h-7 items-center gap-1 rounded-md border border-accent/30 bg-accent-soft px-2.5 text-[12px] font-medium text-accent hover:bg-accent/20">View decision <ArrowRight className="h-3 w-3" /></Link>
+                  <Link href={`${base}/decisions?open=${d.id}`} className="group inline-flex h-7 items-center gap-1 rounded-md border border-accent/30 bg-accent-soft px-2.5 text-[12px] font-medium text-accent transition-colors duration-200 hover:border-accent/60 hover:bg-accent/20">View decision <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5" /></Link>
                 </li>
               );
             });
