@@ -30,6 +30,10 @@ export type UploadedModel = { id: string; name: string; uploadedAt: string; link
 export function ProjectModel({ projectId, model, models = [], components, modelLinks, aside }: { projectId: string; model: FileRow | null; models?: UploadedModel[]; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
+  const partList = useRef<HTMLUListElement>(null);
+  const partRows = useRef(new Map<string, HTMLLIElement>());
+  const panelRef = useRef<HTMLElement>(null);
+  const [revealRequest, setRevealRequest] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [parts, setParts] = useState<ImportedPart[]>([]);
@@ -59,6 +63,17 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
   const selectedLink = links.find((l) => l.part_key === selected);
   const chosenComponent = components.find((c) => c.id === (componentFilter ?? selectedLink?.subsystem_id));
   const shownParts = parts.filter((part) => part.name.toLowerCase().includes(search.toLowerCase()));
+  useLayoutEffect(() => {
+    if (!revealRequest || !selected || !partsOpen || !listOpen) return;
+    const list = partList.current;
+    const row = partRows.current.get(selected);
+    if (list && row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top;
+  }, [revealRequest, selected, partsOpen, listOpen, shownParts.length]);
+  function revealPart(key: string) {
+    setSelected(key); setComponentFilter(null); setIsolate(false);
+    setSearch(""); setListOpen(true); setPartsOpen(true);
+    setRevealRequest((value) => value + 1);
+  }
   async function assign(componentId: string) {
     if (!model || !selected) return;
     setLinkBusy(true); setError("");
@@ -124,9 +139,9 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
   return <ImmersiveStage
     sceneLabel={`3D view of ${title}. Drag to ${pan ? "pan" : "orbit"}, right-drag to ${pan ? "orbit" : "pan"}, scroll to zoom, click a part to select it.`}
     pan={pan}
-    scene={(stage) => <Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts}
-      onSelect={(key) => { setSelected(key); setComponentFilter(null); setIsolate(false); setPartsOpen(true); }}
-      onMarker={(id) => { if (partMode) { setSelected(id); setComponentFilter(null); setPartsOpen(true); } else { setComponentFilter(id); setSelected(null); } setIsolate(false); }}
+    scene={(stage) => stage.eventSource && <Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts}
+      onSelect={revealPart}
+      onMarker={(id) => { if (partMode) { revealPart(id); } else { setComponentFilter(id); setSelected(null); setListOpen(true); setIsolate(false); } if (panelRef.current) panelRef.current.scrollTop = 0; }}
       eventSource={stage.eventSource} viewOffset={stage.viewOffset} fitMargin={stage.fitMargin} gizmo={stage.gizmo} />}
     title={<>
       <p className="eyebrow">Current assembly</p>
@@ -144,7 +159,11 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
       {switcher("glass")}
       {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
     </>}
-    panel={listOpen ? <aside aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
+    panel={listOpen ? <aside ref={panelRef} aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
+      {chosenPart && <div className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
+        <p className="text-[#a9adb3]">Selected part</p><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
+        {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
+      </div>}
       <h3 className="flex items-baseline justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
       {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
         <div className="relative mt-2 grid gap-0.5">
@@ -157,6 +176,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
         </div>
       )}
       {chosenComponent && !chosenPart && <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/20 p-2.5 text-xs text-[#a9adb3]">
+        <p className="mb-1 font-semibold text-[#f2f4f5]">{chosenComponent.name}</p>
         <p>{chosenComponent.done} of {chosenComponent.total} documented · {chosenComponent.statusLabel}</p>
         <p className="mt-0.5 truncate text-[#f2f4f5]">{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p>
         <Link className="mt-1.5 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>
@@ -167,7 +187,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
       <div className="expand" data-open={partsOpen}><div>
         <label className="relative mt-2 block"><Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[#6c7178]" /><input aria-label="Search model parts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parts" tabIndex={partsOpen ? 0 : -1}
           className="h-[30px] w-full rounded-lg border border-white/[0.06] bg-black/30 pl-8 pr-2 text-xs text-[#f2f4f5] outline-none transition-shadow focus:border-[#22d3ee]/45 focus:shadow-[0_0_0_4px_rgba(34,211,238,0.12)]" /></label>
-        <ul className="scroll-thin mt-1.5 max-h-40 overflow-y-auto">{shownParts.map((part) => <li key={part.key}><button type="button" tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
+        <ul ref={partList} className="scroll-thin mt-1.5 max-h-40 overflow-y-auto pb-32">{shownParts.map((part) => <li key={part.key} ref={(node) => { if (node) partRows.current.set(part.key, node); else partRows.current.delete(part.key); }}><button type="button" data-part-key={part.key} tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
           className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#22d3ee]/10 text-[#8be9f7]" : "text-[#6c7178] hover:bg-white/[0.04] hover:text-[#a9adb3]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
         {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6c7178]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
           <label className="block text-[11px] text-[#6c7178]">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>

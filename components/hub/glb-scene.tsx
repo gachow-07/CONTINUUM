@@ -1,6 +1,6 @@
 "use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, events, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Bounds, OrbitControls, GizmoHelper, GizmoViewport, useBounds } from "@react-three/drei";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
@@ -12,6 +12,7 @@ import { ModelGrid } from "./fading-grid";
 
 export type ImportedPart = { key: string; name: string };
 type Marker = { id: string; name: string; partKeys: string[] };
+const markerFirstEvents = (store: Parameters<typeof events>[0]) => ({ ...events(store), filter: (hits: import("three").Intersection[]) => [...hits].sort((a, b) => Number(Boolean(b.object.userData.continuumMarker)) - Number(Boolean(a.object.userData.continuumMarker))) });
 function Model({ scene, highlighted, isolate, onSelect, onParts }: { scene: Group; highlighted: string[]; isolate: boolean; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void }) {
   const parts = useMemo(() => importedParts(scene), [scene]);
   const highlightMaterial = useMemo(() => new MeshStandardMaterial({ color: "#22d3ee", emissive: "#0a5560", emissiveIntensity: 0.5, roughness: 0.5 }), []);
@@ -53,7 +54,7 @@ function Markers({ scene, markers, onMarker }: { scene: Group; markers: Marker[]
       return box.isEmpty() ? [] : [{ ...marker, position: box.getCenter(new Vector3()), radius }];
     });
   }, [scene, markers]);
-  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#14c3dd" depthTest={false} /></mesh>)}</>;
+  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} userData={{ continuumMarker: true }} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#14c3dd" depthTest={false} /></mesh>)}</>;
 }
 /** Shifts the rendered image so the model is centred in the open area between overlay panels, not the canvas centre. */
 function ViewOffset({ x, y }: { x: number; y: number }) {
@@ -109,5 +110,5 @@ export default function GlbScene({ path, localUrl, highlighted = [], onSelect, o
   }, [path, localUrl, upright]);
   if (error) return <div role="alert" className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">Couldn’t display this model: {error}</div>;
   if (!scene) return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading model…</div>;
-  return <Canvas camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
+  return <Canvas events={markerFirstEvents} camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
 }
