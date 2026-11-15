@@ -39,7 +39,7 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
             className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-[13.5px] font-medium transition-colors", "ai" in n
               ? (n.on ? "ai-gradient ai-glow" : "ai-ring [--ai-fill:var(--sidebar)] hover:[--ai-fill:var(--sidebar-hover)]")
               : n.on ? "bg-accent text-[#031317]" : "text-sidebar-foreground hover:bg-sidebar-hover hover:text-white")}>
-            <n.icon className={cn("h-4 w-4", "ai" in n && !n.on && "text-[#a5b4fc]")} />{"ai" in n && !n.on ? <span className="ai-text">{n.label}</span> : n.label}{n.label === "Inbox" && pendingInvites > 0 && <span aria-label={`${pendingInvites} pending invitations`} className="ml-auto rounded-full bg-accent px-1.5 text-[11px] text-[#031317]">{pendingInvites}</span>}
+            <n.icon className={cn("h-4 w-4", "ai" in n && !n.on && "text-[#7dd3fc]")} />{"ai" in n && !n.on ? <span className="ai-text">{n.label}</span> : n.label}{n.label === "Inbox" && pendingInvites > 0 && <span aria-label={`${pendingInvites} pending invitations`} className="ml-auto rounded-full bg-accent px-1.5 text-[11px] text-[#031317]">{pendingInvites}</span>}
           </Link>
         ))}
         {pid && <Link href="/projects" className="mt-3 block px-3 py-1.5 text-xs text-sidebar-foreground hover:text-white">← All projects</Link>}

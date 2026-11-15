@@ -1,7 +1,8 @@
 "use client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Archive, ArchiveRestore, FlaskConical, ImagePlus, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, Box, FlaskConical, ImagePlus, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
@@ -138,11 +139,13 @@ export function ProjectMenu({ project }: { project: Project }) {
   const [archive, setArchive] = useState(false);
   return (
     <div className="relative">
-      <Button variant="outline" size="icon" aria-label="Project actions" onClick={() => setOpen((o) => !o)}><MoreHorizontal className="h-4 w-4" /></Button>
+      <Button variant="outline" size="icon" className="h-10 w-10" aria-label="Project actions" aria-expanded={open} onClick={() => setOpen((o) => !o)}><MoreHorizontal className="h-4 w-4" /></Button>
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-1.5 w-48 overflow-hidden rounded-lg border border-border bg-surface p-1 shadow-[var(--shadow-pop)]" role="menu">
+            <Link role="menuitem" href={`/projects/${project.id}/workspace`} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => setOpen(false)}><Box className="h-4 w-4 text-muted-foreground" />Open 3D editor</Link>
+            <div className="my-1 h-px bg-border" />
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); setEdit(true); }}><Pencil className="h-4 w-4 text-muted-foreground" />Edit project</button>
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); if (project.archived) act(updateProject(project.id, { archived: false }), "Project restored").then(() => router.refresh()); else setArchive(true); }}>
               {project.archived ? <ArchiveRestore className="h-4 w-4 text-muted-foreground" /> : <Archive className="h-4 w-4 text-muted-foreground" />}{project.archived ? "Restore project" : "Archive project"}

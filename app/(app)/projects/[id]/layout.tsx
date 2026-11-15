@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Box } from "lucide-react";
 import { AskAiLink } from "@/components/ai/ask-ai-link";
 import { Badge, SampleBadge } from "@/components/ui/badge";
 import { ProjectMenu } from "@/components/projects/project-dialogs";
@@ -23,7 +22,6 @@ export default async function ProjectLayout({ children, params }: { children: Re
           {p.is_sample && <SampleBadge />}<Badge tone={st.tone} dot>{st.label}</Badge>{p.archived && <Badge>Archived</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/projects/${id}/workspace`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border-strong px-3 text-[13px] font-medium hover:bg-muted"><Box className="h-4 w-4" />3D editor</Link>
           <AskAiLink href={`/projects/${id}/assistant`} />
           <ProjectMenu project={p} />
         </div>

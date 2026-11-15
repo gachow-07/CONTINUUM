@@ -149,9 +149,9 @@ html:has([data-immersive-stage]) [data-shell="header"] {
   .expand, .ease-premium { transition-duration: 0.01ms; }
 }
 
-/* Ask AI: a slow drift from the brand cyan through sky blue to violet and back, so every AI entry point reads as one thing.
+/* Ask AI: a slow drift from the brand cyan through sky blue to a deeper blue and back (no violet or pink), so every AI entry point reads as one thing.
    Each half of the 200%-wide background is the same mirrored sweep, so sliding it by half its width loops seamlessly with no hard colour jumps. */
-:root { --ai-spectrum: linear-gradient(100deg, #22d3ee, #60a5fa, #a78bfa, #60a5fa, #22d3ee, #60a5fa, #a78bfa, #60a5fa, #22d3ee); }
+:root { --ai-spectrum: linear-gradient(100deg, #22d3ee, #38bdf8, #3b82f6, #38bdf8, #22d3ee, #38bdf8, #3b82f6, #38bdf8, #22d3ee); }
 .ai-gradient, .ai-text {
   background-image: var(--ai-spectrum);
   background-size: 200% 100%;
@@ -159,7 +159,7 @@ html:has([data-immersive-stage]) [data-shell="header"] {
 }
 .ai-gradient { color: #05070a; }
 .ai-text { -webkit-background-clip: text; background-clip: text; color: transparent; }
-.ai-glow { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 28px -12px rgba(139, 92, 246, 0.6), 0 8px 22px -12px rgba(34, 211, 238, 0.65); }
+.ai-glow { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 10px 28px -12px rgba(59, 130, 246, 0.65), 0 8px 22px -12px rgba(34, 211, 238, 0.65); }
 /* Gradient outline around a solid fill; set --ai-fill to the surface behind it. */
 .ai-ring {
   border: 1px solid transparent;

@@ -9,11 +9,11 @@ export function AskBar({ projectId, componentName, aiEnabled }: { projectId: str
   const router = useRouter();
   const [q, setQ] = useState("");
   return (
-    <form className="ai-ring flex items-center gap-2.5 rounded-xl py-2 pl-3.5 pr-2 shadow-[0_10px_30px_-18px_rgba(139,92,246,0.7)]" onSubmit={(e) => {
+    <form className="ai-ring flex items-center gap-2.5 rounded-xl py-2 pl-3.5 pr-2 shadow-[0_10px_30px_-18px_rgba(59,130,246,0.7)]" onSubmit={(e) => {
       e.preventDefault(); if (!q.trim() || !aiEnabled) return;
       router.push(`/projects/${projectId}/assistant?q=${encodeURIComponent(`About the ${componentName} component: ${q.trim()}`)}`);
     }}>
-      <Sparkles className="h-[18px] w-[18px] shrink-0 text-[#a5b4fc]" />
+      <Sparkles className="h-[18px] w-[18px] shrink-0 text-[#7dd3fc]" />
       <input value={q} onChange={(e) => setQ(e.target.value)} disabled={!aiEnabled} aria-label={`Ask about ${componentName}`} placeholder={aiEnabled ? `Ask this component… e.g. “Why did we choose this ${componentName.toLowerCase()} design?”` : "Ask this component… (AI assistant not configured)"}
         className="h-9 min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed" />
       {!aiEnabled && <Link href="/setup" className="shrink-0 text-xs text-warning underline">Set up OpenAI key</Link>}
