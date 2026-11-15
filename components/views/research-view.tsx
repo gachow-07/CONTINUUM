@@ -132,7 +132,7 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
       <Section title="Why this matters" action={<button className="text-xs text-accent hover:underline" onClick={() => setEdit(true)}>Edit</button>}>{r.why_important || <NotDocumented>The author hasn&apos;t said why this source matters</NotDocumented>}</Section>
       {r.description && <Section title="Description"><p className="whitespace-pre-wrap">{r.description}</p></Section>}
       <Section title="AI summary" action={aiEnabled && (r.content_text || r.description) ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{r.ai_summary ? "Regenerate" : "Summarize"}</button> : undefined}>
-        {r.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{r.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.{!r.content_text && !r.description && " There is no text to summarize."}</span> : <SetupNotice title="AI not configured">Add OPENAI_API_KEY to enable summaries.</SetupNotice>}
+        {r.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{r.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.{!r.content_text && !r.description && " There is no text to summarize."}</span> : <SetupNotice title="AI not configured">Add ANTHROPIC_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       {r.content_text && (
         <Section title={r.type === "pdf" ? "Extracted text" : "Content"}>

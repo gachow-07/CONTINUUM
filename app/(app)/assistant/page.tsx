@@ -4,7 +4,7 @@ import { ChatPanel } from "@/components/ai/chat-panel";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { LoadSampleButton, CreateProjectButton } from "@/components/projects/project-dialogs";
 import { loadLatestConversation } from "@/lib/conversation";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { requireSession } from "@/lib/session";
 import type { Project } from "@/lib/types";
 
@@ -26,7 +26,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
       <div className="mb-4 flex flex-wrap gap-1.5" role="tablist" aria-label="Project context">
         {projects.map((p) => <Link key={p.id} role="tab" aria-selected={p.id === current.id} href={`/assistant?project=${p.id}`} className={`rounded-md border px-3 py-1.5 text-[13px] font-medium ${p.id === current.id ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface text-foreground hover:bg-muted"}`}>{p.name}</Link>)}
       </div>
-      <ChatPanel key={current.id} projectId={current.id} projectName={current.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} />
+      <ChatPanel key={current.id} projectId={current.id} projectName={current.name} aiEnabled={anthropicConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} />
     </div>
   );
 }

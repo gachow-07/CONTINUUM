@@ -75,7 +75,7 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
         <Card>
           <CardHeader title="Generate documentation" description="Written by AI from the records you select — nothing else. Missing information is flagged, never filled in." />
           <div className="space-y-5 p-5">
-            {!aiEnabled && <SetupNotice title="AI documentation needs an OpenAI key">Set <code>OPENAI_API_KEY</code> in your environment and restart. Saved documents below stay available.</SetupNotice>}
+            {!aiEnabled && <SetupNotice title="AI documentation needs an Anthropic key">Set <code>ANTHROPIC_API_KEY</code> in your environment and restart. Saved documents below stay available.</SetupNotice>}
             <div className="grid gap-4 sm:grid-cols-2">
               {!projectId && <Field label="Project"><Select value={pid} onChange={(e) => { setPid(e.target.value); setSubIds([]); setPick({ decisions: [], research: [], revisions: [], reviews: [] }); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
               <Field label="Document type"><Select value={docType} onChange={(e) => setDocType(e.target.value)}>{Object.entries(DOC_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select></Field>
@@ -200,7 +200,7 @@ function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draf
                 <h3 className="text-[15px] font-semibold">{s.title}</h3><Badge tone={st.tone}><Icon className="h-3 w-3" />{st.label}</Badge>
                 <div className="ml-auto flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => setEditing(editing === s.key ? null : s.key)}><Pencil className="h-3.5 w-3.5" />{editing === s.key ? "Done" : "Edit"}</Button>
-                  <Button variant="ghost" size="sm" disabled={!aiEnabled || regen !== null} onClick={() => regenerate(s.key)} title={aiEnabled ? undefined : "OpenAI key not configured"}>{regen === s.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}Regenerate</Button>
+                  <Button variant="ghost" size="sm" disabled={!aiEnabled || regen !== null} onClick={() => regenerate(s.key)} title={aiEnabled ? undefined : "Anthropic key not configured"}>{regen === s.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}Regenerate</Button>
                 </div>
               </div>
               {editing === s.key ? <Textarea value={s.content} onChange={(e) => update(s.key, { content: e.target.value })} className="min-h-[160px] font-mono text-xs" /> : <RenderContent text={s.content} />}

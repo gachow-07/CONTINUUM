@@ -10,7 +10,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
 |---|---|
 | Frontend | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Radix primitives, Lucide icons (shadcn-style components in `components/ui`) |
 | Backend | Supabase — PostgreSQL, Auth, Storage, **row-level security** on every table and on the storage bucket |
-| AI | OpenAI Chat Completions with strict JSON-schema outputs; retrieval over the project's own records (see below) |
+| AI | Anthropic Claude Messages API with strict JSON-schema outputs; retrieval over the project's own records (see below) |
 | Deploy | Vercel |
 
 ## Setup
@@ -23,7 +23,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
    ```bash
    cp .env.example .env.local
    ```
-   Fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (safe in the browser — RLS protects the data) and `OPENAI_API_KEY` (server-side only; never prefixed `NEXT_PUBLIC_`). `OPENAI_MODEL` is optional (default `gpt-4o`; it must support structured outputs).
+   Fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (safe in the browser — RLS protects the data) and `ANTHROPIC_API_KEY` (server-side only; never prefixed `NEXT_PUBLIC_`). `ANTHROPIC_MODEL` is optional (default `claude-haiku-4-5`; it must support structured outputs). A Claude Pro/Max subscription covers Claude Code usage, but does not include API credits for this deployed app.
 3. **Run**
    ```bash
    npm install
@@ -31,7 +31,7 @@ Research, design revisions, decisions, peer reviews and documentation live in on
    ```
 4. Open `http://localhost:3000`: with no account (or no backend configured) it opens the **3D demo workspace** at `/demo`. Then sign up and click **Load sample project (RC Car Design)** on the dashboard.
 
-If Supabase isn't configured the app redirects to a `/setup` page that says exactly what's missing. If only OpenAI is missing, everything else works and each AI feature shows a clear "not configured" message — nothing is faked.
+If Supabase isn't configured the app redirects to a `/setup` page that says exactly what's missing. If only Anthropic is missing, everything else works and each AI feature shows a clear "not configured" message — nothing is faked.
 
 **Deploying to Vercel:** import the repo, set the same three environment variables, deploy. No other configuration is needed.
 
@@ -42,7 +42,7 @@ The current team deployment, verified behavior, remaining checks, and secret-saf
 Opening a project lands on its hub: persistent left navigation (Home, Research, Decisions, Reviews, Documentation), search (`Ctrl/⌘+K`, real queries over saved records), and three tabs.
 
 - **Overview:** the current assembly in a 3D viewer (orbit, pan, fit, isolate, markers on/off, plus a list that mirrors the markers for keyboard and screen-reader use), a *living design summary* built only from saved decisions, *documentation readiness* per component, and *needs attention* derived from incomplete documentation, open review comments and open issues.
-- **Components:** each component with its readiness, review state and record counts. Opening one shows its workspace (Summary, Research, Decisions, Revisions, Reviews), the readiness checklist, open issues and next step, and an *Ask this component* entry point to the AI assistant (disabled with a setup message when no OpenAI key is configured; no canned answers).
+- **Components:** each component with its readiness, review state and record counts. Opening one shows its workspace (Summary, Research, Decisions, Revisions, Reviews), the readiness checklist, open issues and next step, and an *Ask this component* entry point to the AI assistant (disabled with a setup message when no Anthropic key is configured; no canned answers).
 - **Design History:** chronological revisions with what changed, why, author, date, files and linked decisions.
 
 **Documentation readiness** is a six-item checklist computed in `lib/readiness.ts` from saved records only: design described (≥20 characters), choices explained (a decision records reasoning), alternatives recorded, sources attached (research tagged to the component or linked as decision evidence), latest revision explained (what *and* why), review completed (approved or resolved, no open comments). Uploading a file never satisfies a criterion. Readiness measures whether reasoning is written down; it is **not** engineering approval, which is tracked separately in Reviews.
@@ -88,7 +88,7 @@ app/
   api/research/metadata   URL metadata fetch (SSRF-guarded)
   api/storage        signed-URL redirect — only succeeds if storage RLS lets the user read the object
 components/          cad/ (3D workspace), ui/ primitives, shell/, projects/, views/ (one per feature), ai/chat-panel
-lib/                 supabase clients, data loading, ai/ (corpus, retrieval, prompts, OpenAI), sample/ (demo seed), pdf-export
+lib/                 supabase clients, data loading, ai/ (corpus, retrieval, prompts, Anthropic), sample/ (demo seed), pdf-export
 supabase/migrations  schema + RLS + storage policies
 proxy.ts             session refresh + auth gate (Next 16 "proxy", formerly middleware)
 ```

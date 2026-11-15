@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import { loadBundle } from "@/lib/bundle";
 import { loadLatestConversation } from "@/lib/conversation";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { DocTabs } from "@/components/hub/doc-tabs";
 import { requireSession } from "@/lib/session";
 
@@ -19,7 +19,7 @@ export default async function ProjectAssistant({ params, searchParams }: { param
     <div>
     <DocTabs projectId={id} />
     <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
-      <ChatPanel projectId={id} projectName={b.project.name} aiEnabled={openaiConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} initialQuestion={q?.slice(0, 500)} />
+      <ChatPanel projectId={id} projectName={b.project.name} aiEnabled={anthropicConfigured()} initialMessages={conv.messages} initialConversationId={conv.conversationId} initialQuestion={q?.slice(0, 500)} />
       <aside className="space-y-3 text-[13px]">
         <div className="rounded-lg border border-border bg-surface p-4 shadow-card">
           <h3 className="text-sm font-semibold">What the assistant can read</h3>

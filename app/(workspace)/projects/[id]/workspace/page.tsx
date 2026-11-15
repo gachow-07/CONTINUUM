@@ -4,7 +4,7 @@ import type { Knowledge } from "@/components/cad/panels";
 import { loadBundle } from "@/lib/bundle";
 import { loadModel } from "@/lib/cad/load";
 import { loadLatestConversation } from "@/lib/conversation";
-import { openaiConfigured } from "@/lib/env";
+import { anthropicConfigured } from "@/lib/env";
 import { requireSession } from "@/lib/session";
 
 export const metadata = { title: "3D Workspace" };
@@ -34,7 +34,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
       project={{ id, name: b.project.name, description: b.project.description, isSample: b.project.is_sample }}
       initialParts={parts.length || !b.project.is_sample ? parts : null}
       knowledge={knowledge}
-      aiEnabled={openaiConfigured()}
+      aiEnabled={anthropicConfigured()}
       chat={{ messages: conv.messages, conversationId: conv.conversationId }}
     />
   );
