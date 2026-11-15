@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const out = await callJson<{ summary: string }>({ system: SYSTEM, name: "summary", schema: SCHEMA, messages: [{ role: "user", content: text }] });
     const table = kind === "research" ? "research_sources" : "design_decisions";
     await supabase.from(table).update({ ai_summary: out.summary }).eq("id", id);
-    return Response.json({ summary: out.summary }, { headers: anonymousAiHeaders(quota.remaining) });
+    return Response.json({ summary: out.summary }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

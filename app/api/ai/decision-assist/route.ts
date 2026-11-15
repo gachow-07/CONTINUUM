@@ -63,7 +63,7 @@ ${recs.map((r, i) => `[S${i + 1}] ${r.line}`).join("\n") || "(none yet)"}`;
       .map((s) => ({ rec: idx.get(s.source), why: s.why }))
       .filter((s) => s.rec)
       .map((s) => ({ kind: s.rec!.kind, id: s.rec!.id, title: s.rec!.title, why: s.why }));
-    return Response.json({ ...out, suggested_evidence: suggested }, { headers: anonymousAiHeaders(quota.remaining) });
+    return Response.json({ ...out, suggested_evidence: suggested }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

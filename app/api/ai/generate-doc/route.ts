@@ -81,7 +81,7 @@ ${sources}`;
         sources: [...new Set((got?.sources ?? []).map((s) => idx.get(s)?.id).filter((x): x is string => Boolean(x)))],
       };
     });
-    return Response.json({ sections, title: `${b.project.name} — ${spec.label}` }, { headers: anonymousAiHeaders(quota.remaining) });
+    return Response.json({ sections, title: `${b.project.name} — ${spec.label}` }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

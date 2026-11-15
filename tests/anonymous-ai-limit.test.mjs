@@ -16,14 +16,24 @@ await db.exec(await readFile(migration, 'utf8'));
 async function as(user, anonymous = true) {
   await db.exec(`set role authenticated; select set_config('request.jwt.sub','${user}',false); select set_config('request.jwt.anonymous','${anonymous}',false);`);
 }
-async function consume() { return (await db.query('select public.consume_anonymous_ai_use() as remaining')).rows[0].remaining; }
+async function consume() { return (await db.query('select public.consume_anonymous_ai_use() as result')).rows[0].result; }
 await as(first);
-assert.deepEqual([await consume(), await consume(), await consume(), await consume()], [2, 1, 0, -1]);
+let firstUses = [await consume(), await consume(), await consume(), await consume()];
+assert.deepEqual(firstUses.map((x) => x.status), ['allowed', 'allowed', 'allowed', 'user_limit']);
+assert.deepEqual(firstUses.slice(0, 3).map((x) => x.user_remaining), [2, 1, 0]);
+assert.deepEqual(firstUses.slice(0, 3).map((x) => x.global_remaining), [99, 98, 97]);
 await assert.rejects(db.query('select * from public.anonymous_ai_usage'));
 await as(second);
 const simultaneous = await Promise.all([consume(), consume(), consume(), consume(), consume()]);
-assert.deepEqual(simultaneous.sort((a, b) => a - b), [-1, -1, 0, 1, 2]);
+assert.equal(simultaneous.filter((x) => x.status === 'allowed').length, 3);
+assert.equal(simultaneous.filter((x) => x.status === 'user_limit').length, 2);
+await db.exec("reset role; insert into auth.users values ('00000000-0000-0000-0000-000000000003'); update public.anonymous_ai_global_usage set used = 99 where singleton;");
+await as('00000000-0000-0000-0000-000000000003');
+const last = await Promise.all([consume(), consume(), consume()]);
+assert.equal(last.filter((x) => x.status === 'allowed' && x.global_remaining === 0).length, 1);
+assert.equal(last.filter((x) => x.status === 'global_limit').length, 2);
+await assert.rejects(db.query('select * from public.anonymous_ai_global_usage'));
 await as(first, false);
 await assert.rejects(consume());
 await db.close();
-console.log('PASS: three uses, blocking, independent users, concurrent requests, and direct table access');
+console.log('PASS: personal and global quotas, independent users, concurrent requests, and direct table access');

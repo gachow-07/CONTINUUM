@@ -96,5 +96,5 @@ export async function POST(req: Request) {
     .insert({ project_id: projectId, conversation_id: conversationId, role: "assistant", content: answerText, segments, citations: [...citations.values()] })
     .select("id,created_at").single();
 
-  return Response.json({ conversationId, followups, message: { id: saved?.id, role: "assistant", content: answerText, segments, citations: [...citations.values()], created_at: saved?.created_at } }, { headers: anonymousAiHeaders(quota.remaining) });
+  return Response.json({ conversationId, followups, message: { id: saved?.id, role: "assistant", content: answerText, segments, citations: [...citations.values()], created_at: saved?.created_at } }, { headers: anonymousAiHeaders(quota) });
 }
