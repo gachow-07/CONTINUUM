@@ -365,10 +365,11 @@ export async function deleteNote(id: string): Promise<ActionResult> {
 // ───────────── Reviews ─────────────
 export async function createReview(input: {
   project_id: string; title: string; description: string; subsystem_id?: string | null; decision_id?: string | null; revision_id?: string | null;
-  file_id?: string | null; reviewer_member_id?: string | null;
+  file_id?: string | null; reviewer_member_id?: string | null; component_id?: string | null; model_part_id?: string | null; glb_link_id?: string | null; component_name?: string | null;
 }): Promise<ActionResult<{ id: string }>> {
   try {
     if (!input.title.trim()) return fail("Review title is required");
+    if (input.component_name && input.component_name.length > 512) return fail("Component name is too long.");
     const c = await ctx();
     let reviewerName: string | null = null;
     if (input.reviewer_member_id) {
@@ -379,6 +380,7 @@ export async function createReview(input: {
       project_id: input.project_id, title: input.title.trim(), description: input.description.trim(),
       subsystem_id: input.subsystem_id ?? null, decision_id: input.decision_id ?? null, revision_id: input.revision_id ?? null, file_id: input.file_id ?? null,
       reviewer_member_id: input.reviewer_member_id ?? null, reviewer_name: reviewerName, requested_by: c.user.id, requester_name: c.actorName,
+      component_id: input.component_id ?? null, model_part_id: input.model_part_id ?? null, glb_link_id: input.glb_link_id ?? null, component_name: input.component_name ?? null,
     }).select("id").single();
     if (error) return fail(error.message);
     await logActivity(c, input.project_id, "review", `Requested review "${input.title.trim()}"${reviewerName ? ` from ${reviewerName}` : ""}`, "review", data.id);

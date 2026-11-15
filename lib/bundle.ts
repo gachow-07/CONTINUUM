@@ -1,12 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
-  Activity, Decision, Evidence, FileRow, GeneratedDoc, Member, Project, ProjectNote, Research, Review, ReviewComment, Revision, Subsystem,
+  Activity, Decision, Evidence, FileRow, GeneratedDoc, Member, Project, ProjectComponent, ProjectNote, Research, Review, ReviewComment, Revision, Subsystem,
 } from "./types";
 
 export interface ProjectBundle {
   project: Project;
   members: Member[];
   subsystems: Subsystem[];
+  components: ProjectComponent[];
   research: Research[];
   revisions: Revision[];
   files: FileRow[];
@@ -28,9 +29,10 @@ export async function loadBundle(supabase: SupabaseClient, projectId: string): P
     if (limit) query = query.limit(limit);
     return query.then((r) => (r.data ?? []) as T[]);
   };
-  const [members, subsystems, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs] = await Promise.all([
+  const [members, subsystems, components, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs] = await Promise.all([
     q<Member>("project_members", "created_at", true),
     q<Subsystem>("subsystems", "position", true),
+    q<ProjectComponent>("project_components"),
     q<Research>("research_sources"),
     q<Revision>("design_revisions", "occurred_on"),
     q<FileRow>("files"),
@@ -42,7 +44,7 @@ export async function loadBundle(supabase: SupabaseClient, projectId: string): P
     q<Activity>("project_activity", "created_at", false, 60),
     q<GeneratedDoc>("generated_documents", "updated_at"),
   ]);
-  return { project: project as Project, members, subsystems, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs };
+  return { project: project as Project, members, subsystems, components, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs };
 }
 
 /** Same as loadBundle but merged across every project the user can access (for the global pages). */
@@ -52,7 +54,7 @@ export async function loadAll(supabase: SupabaseClient, includeArchived = false)
   const { data: projects } = await pq;
   const ids = ((projects ?? []) as Project[]).map((p) => p.id);
   if (ids.length === 0) {
-    return { projects: [] as Project[], subsystems: [] as Subsystem[], research: [] as Research[], revisions: [] as Revision[], files: [] as FileRow[],
+    return { projects: [] as Project[], subsystems: [] as Subsystem[], components: [] as ProjectComponent[], research: [] as Research[], revisions: [] as Revision[], files: [] as FileRow[],
       decisions: [] as Decision[], evidence: [] as Evidence[], notes: [] as ProjectNote[], reviews: [] as Review[], comments: [] as ReviewComment[],
       activity: [] as Activity[], docs: [] as GeneratedDoc[], members: [] as Member[] };
   }
@@ -61,11 +63,11 @@ export async function loadAll(supabase: SupabaseClient, includeArchived = false)
     if (limit) query = query.limit(limit);
     return query.then((r) => (r.data ?? []) as T[]);
   };
-  const [subsystems, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs, members] = await Promise.all([
-    q<Subsystem>("subsystems", "position"), q<Research>("research_sources"), q<Revision>("design_revisions", "occurred_on"), q<FileRow>("files"),
+  const [subsystems, components, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs, members] = await Promise.all([
+    q<Subsystem>("subsystems", "position"), q<ProjectComponent>("project_components"), q<Research>("research_sources"), q<Revision>("design_revisions", "occurred_on"), q<FileRow>("files"),
     q<Decision>("design_decisions", "decided_on"), q<Evidence>("decision_evidence"), q<ProjectNote>("project_notes"), q<Review>("reviews"),
     q<ReviewComment>("review_comments"), q<Activity>("project_activity", "created_at", 40), q<GeneratedDoc>("generated_documents", "updated_at"),
     q<Member>("project_members"),
   ]);
-  return { projects: projects as Project[], subsystems, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs, members };
+  return { projects: projects as Project[], subsystems, components, research, revisions, files, decisions, evidence, notes, reviews, comments, activity, docs, members };
 }

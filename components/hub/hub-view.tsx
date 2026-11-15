@@ -17,7 +17,7 @@ import { scopeFromBundle } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 import { modelPartEntries } from "@/lib/cad/part-markers";
 
-const TABS = [["overview", "Overview"], ["components", "Components"], ["history", "Design History"]] as const;
+const TABS = [["overview", "Overview"], ["components", "Subteams"], ["history", "Design History"]] as const;
 
 export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string; modelLinks: { part_key: string; subsystem_id: string }[] }) {
   const id = b.project.id;
@@ -57,8 +57,8 @@ export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: Project
 
       {tab === "components" && (
         <div>
-          <div className="mb-4 flex items-center justify-between gap-3"><p className="text-[13px] text-muted-foreground">Each component is its own workspace for research, decisions, revisions and reviews.</p><AddComponentButton projectId={id} /></div>
-          {comps.length === 0 ? <EmptyState icon={<Layers className="h-5 w-5" />} title="No components yet" description="Break the project into components such as Suspension, Steering, Chassis and Drivetrain." action={<AddComponentButton projectId={id} />} /> : (
+          <div className="mb-4 flex items-center justify-between gap-3"><p className="text-[13px] text-muted-foreground">Each subteam has a workspace for its components, research, decisions, revisions and reviews.</p><AddComponentButton projectId={id} /></div>
+          {comps.length === 0 ? <EmptyState icon={<Layers className="h-5 w-5" />} title="No subteams yet" description="Organize the project into subteams such as Suspension, Steering, Chassis and Drivetrain." action={<AddComponentButton projectId={id} />} /> : (
             <div className="grid gap-4 md:grid-cols-2">
               {comps.map((c) => (
                 <Link key={c.subsystem.id} href={`/projects/${id}/components/${c.subsystem.id}`} className="group rounded-lg border border-border bg-surface p-5 shadow-card transition-colors hover:border-border-strong">

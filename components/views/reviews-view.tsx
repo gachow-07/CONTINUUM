@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ClipboardCheck, CornerDownRight, HelpCircle, Plus, Send, Trash2 } from "lucide-react";
 import { Badge, SampleBadge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DrawerContent } from "@/components/ui/dialog";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { ConfirmDialog, EmptyState } from "@/components/ui/misc";
 import { act, fileUrl } from "@/lib/client";
+import { getReviewModelTargets } from "@/app/actions/review-targets";
 import { addReviewComment, assignReviewer, createFileRecords, createReview, deleteReview, linkCommentToRevision, setCommentResolved, setReviewStatus } from "@/app/actions/knowledge";
 import { formatDate, initials, timeAgo } from "@/lib/utils";
 import type { Review, ReviewComment, ReviewStatus } from "@/lib/types";
@@ -49,7 +50,7 @@ export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; p
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2"><p className="text-[13px] font-semibold">{r.title}</p>{r.is_sample && <SampleBadge />}</div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                        {!projectId && <Badge>{pname(r.project_id)}</Badge>}<SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />
+                        {!projectId && <Badge>{pname(r.project_id)}</Badge>}<SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />{r.component_name && <Badge>{r.component_name}</Badge>}
                         <span>Reviewer: <span className="font-medium text-foreground">{r.reviewer_name ?? "unassigned"}</span></span><span>· Submitted {formatDate(r.created_at)}</span>
                       </div>
                     </div>
@@ -125,7 +126,7 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
     <DrawerContent title={r.title} description={`Requested by ${r.requester_name} · ${formatDate(r.created_at)}`}
       actions={<Button variant="danger-ghost" size="icon" aria-label="Delete review" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
       <div className="mb-5 flex flex-wrap items-center gap-1.5">
-        <Badge tone={REVIEW_STATUS[r.status].tone} dot>{REVIEW_STATUS[r.status].label}</Badge><SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />{r.is_sample && <SampleBadge />}
+        <Badge tone={REVIEW_STATUS[r.status].tone} dot>{REVIEW_STATUS[r.status].label}</Badge><SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />{r.component_name && <Badge>{r.component_name}</Badge>}{r.is_sample && <SampleBadge />}
       </div>
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
         <Field label="Status"><Select value={r.status} onChange={async (e) => { const x = await act(setReviewStatus(r.id, e.target.value as ReviewStatus), "Status updated"); if (x.ok) refresh(); }}>{Object.entries(REVIEW_STATUS).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}</Select></Field>
@@ -167,6 +168,49 @@ function ReviewDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope
   const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
   const [f, setF] = useState({ title: "", description: "", subsystem_id: subsystemId ?? "", decision_id: "", revision_id: "", file_id: "", reviewer: "" });
   const [items, setItems] = useState<PendingFile[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [nativeParts, setNativeParts] = useState<{ id: string; name: string; subsystem_id: string | null }[]>([]);
+  const [glbParts, setGlbParts] = useState<{ id: string; name: string; subsystem_id: string }[]>([]);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelError, setModelError] = useState("");
+  useEffect(() => {
+    let cancelled = false; const controller = new AbortController();
+    async function load() {
+      setNativeParts([]); setGlbParts([]); setModelLoading(true); setModelError("");
+      let result;
+      try { result = await getReviewModelTargets(pid); }
+      catch { if (!cancelled) { setModelError("Could not load model parts. Please try again."); setModelLoading(false); } return; }
+      if (cancelled) return;
+      if (!result.ok) { setModelError(result.error); setModelLoading(false); return; }
+      setNativeParts(result.parts);
+      if (result.model && result.model.links.length) {
+        try {
+          const [{ GLTFLoader }, { DRACOLoader }, { LoadingManager }, { importedParts }, { validateGlb }] = await Promise.all([
+            import("three/examples/jsm/loaders/GLTFLoader.js"), import("three/examples/jsm/loaders/DRACOLoader.js"), import("three"), import("@/lib/cad/imported-parts.mjs"), import("@/lib/cad/validate-glb.mjs"),
+          ]);
+          const response = await fetch(fileUrl(result.model.path), { signal: controller.signal });
+          if (!response.ok) throw new Error("Could not open the uploaded model.");
+          const data = await response.arrayBuffer(); validateGlb(data);
+          const manager = new LoadingManager(); manager.setURLModifier((url) => { if (url.startsWith("blob:") || url.startsWith("data:")) return url; throw new Error("External model resources are not supported."); });
+          const draco = new DRACOLoader(); draco.setDecoderPath("/draco/");
+          try {
+            const scene = await new GLTFLoader(manager).setDRACOLoader(draco).parseAsync(data, "");
+            const parts = importedParts(scene.scene);
+            if (!cancelled) setGlbParts(result.model.links.flatMap((link) => { const part = parts.find((p) => p.key === link.part_key); return part ? [{ id: link.id, name: part.name, subsystem_id: link.subsystem_id }] : []; }));
+          } finally { draco.dispose(); }
+        } catch (e) { if (!cancelled) setModelError(e instanceof Error ? e.message : "Could not load model parts."); }
+      }
+      if (!cancelled) setModelLoading(false);
+    }
+    if (pid) void load();
+    return () => { cancelled = true; controller.abort(); };
+  }, [pid]);
+  const targets = useMemo(() => [
+    ...scope.components.filter((item) => item.project_id === pid && item.subsystem_id === f.subsystem_id).map((item) => ({ key: `component:${item.id}`, id: item.id, name: item.name, kind: "component" as const })),
+    ...nativeParts.filter((item) => item.subsystem_id === f.subsystem_id && f.subsystem_id).map((item) => ({ key: `part:${item.id}`, id: item.id, name: item.name, kind: "part" as const })),
+    ...glbParts.filter((item) => item.subsystem_id === f.subsystem_id && f.subsystem_id).map((item) => ({ key: `glb:${item.id}`, id: item.id, name: item.name, kind: "glb" as const })),
+  ], [scope.components, pid, f.subsystem_id, nativeParts, glbParts]);
+  const target = targets.find((item) => item.key === selectedTarget);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -177,13 +221,14 @@ function ReviewDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope
         <div className="space-y-4">
           <Field label="Title" required><Input value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Review: steering linkage geometry" autoFocus /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); setF({ ...f, subsystem_id: "", decision_id: "", revision_id: "", file_id: "", reviewer: "" }); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
+            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); setSelectedTarget(""); setF({ ...f, subsystem_id: "", decision_id: "", revision_id: "", file_id: "", reviewer: "" }); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
             <Field label="Reviewer"><Select value={f.reviewer} onChange={(e) => set("reviewer", e.target.value)}><option value="">Assign later</option>{members.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}</Select></Field>
-            <Field label="Subsystem"><Select value={f.subsystem_id} onChange={(e) => set("subsystem_id", e.target.value)}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === pid).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
+            <Field label="Subteam"><Select value={f.subsystem_id} onChange={(e) => { set("subsystem_id", e.target.value); setSelectedTarget(""); }}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === pid).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
+            <Field label="Component" hint={!f.subsystem_id ? "Choose a subteam first." : modelLoading ? "Loading model parts…" : "Choose a created component or a model part assigned to this subteam."}><Select value={selectedTarget} disabled={!f.subsystem_id} onChange={(e) => setSelectedTarget(e.target.value)}><option value="">None</option>{targets.some((t) => t.kind === "component") && <optgroup label="Created components">{targets.filter((t) => t.kind === "component").map((t) => <option key={t.key} value={t.key}>{t.name}</option>)}</optgroup>}{targets.some((t) => t.kind !== "component") && <optgroup label="3D model parts">{targets.filter((t) => t.kind !== "component").map((t) => <option key={t.key} value={t.key}>{t.name}</option>)}</optgroup>}</Select></Field>
             <Field label="Design decision under review"><Select value={f.decision_id} onChange={(e) => set("decision_id", e.target.value)}><option value="">None</option>{scope.decisions.filter((d) => d.project_id === pid).map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</Select></Field>
             <Field label="Revision under review"><Select value={f.revision_id} onChange={(e) => set("revision_id", e.target.value)}><option value="">None</option>{scope.revisions.filter((d) => d.project_id === pid).map((d) => <option key={d.id} value={d.id}>{d.rev_label} — {d.title}</option>)}</Select></Field>
-            <Field label="Attach an existing file"><Select value={f.file_id} onChange={(e) => set("file_id", e.target.value)}><option value="">None</option>{scope.files.filter((d) => d.project_id === pid).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
           </div>
+          {modelError && <p role="status" className="text-xs text-warning">Model parts unavailable: {modelError} Created components are still available.</p>}
           <Field label="What should the reviewer look at?"><Textarea value={f.description} onChange={(e) => set("description", e.target.value)} placeholder="Explain what you'd like feedback on." /></Field>
           <Field label="Or upload a new CAD image / document"><UploadRows items={items} onChange={setItems} /></Field>
           {error && <p role="alert" className="rounded-md bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
@@ -191,11 +236,12 @@ function ReviewDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope
             <div className="flex gap-2"><Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
               <Button variant="accent" loading={busy} onClick={async () => {
                 if (!f.title.trim()) return setError("Give the review a title.");
+                if (selectedTarget && !target) return setError("Please choose a valid component again.");
                 setBusy(true); setError("");
                 try {
                   let fileId = f.file_id || null;
                   if (items.length) { const files = await upload(pid, items); const up = await createFileRecords(pid, f.subsystem_id || null, files); if (!up.ok) { setError(up.error); setBusy(false); return; } fileId = up.ids[0]; }
-                  const r = await act(createReview({ project_id: pid, title: f.title, description: f.description, subsystem_id: f.subsystem_id || null, decision_id: f.decision_id || null, revision_id: f.revision_id || null, file_id: fileId, reviewer_member_id: f.reviewer || null }), "Review requested");
+                  const r = await act(createReview({ project_id: pid, title: f.title, description: f.description, subsystem_id: f.subsystem_id || null, decision_id: f.decision_id || null, revision_id: f.revision_id || null, file_id: fileId, reviewer_member_id: f.reviewer || null, component_id: target?.kind === "component" ? target.id : null, model_part_id: target?.kind === "part" ? target.id : null, glb_link_id: target?.kind === "glb" ? target.id : null, component_name: target?.name || null }), "Review requested");
                   if (r.ok) { onClose(); router.refresh(); } else setError(r.error);
                 } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
               }}>Submit review request</Button></div></div>
