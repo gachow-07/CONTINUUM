@@ -15,7 +15,7 @@ import { linkGlbComponent, setViewerModel } from "@/app/actions/model";
 import { uploadToProject } from "@/lib/client";
 import { createClient } from "@/lib/supabase/client";
 import type { FileRow } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
 
 const Scene = dynamic(() => import("./glb-scene"), { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading 3D viewer…</div> });
@@ -25,7 +25,9 @@ const LIMIT = 50 * 1024 * 1024;
  * The project's uploaded GLB model. With a model, the live 3D canvas becomes the backdrop of the whole page and the
  * viewer controls, component list and `aside` (documentation readiness) float over it as glass panels.
  */
-export function ProjectModel({ projectId, model, components, modelLinks, aside }: { projectId: string; model: FileRow | null; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
+export type UploadedModel = { id: string; name: string; uploadedAt: string; links: number };
+
+export function ProjectModel({ projectId, model, models = [], components, modelLinks, aside }: { projectId: string; model: FileRow | null; models?: UploadedModel[]; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -83,25 +85,36 @@ export function ProjectModel({ projectId, model, components, modelLinks, aside }
       recorded = true;
       const selected = await setViewerModel(projectId, saved.ids[0]);
       if (!selected.ok) throw new Error(`${selected.error} The upload is available under Files.`);
-      toast.success("3D model uploaded");
+      toast.success(model ? "New model uploaded. Part links from the previous upload stay with it: switch back any time under Model." : "3D model uploaded");
       router.refresh();
     } catch (e) {
       if (path && !recorded) await createClient().storage.from("project-files").remove([path]);
       setError(e instanceof Error ? e.message : "Could not upload the model.");
     } finally { setBusy(false); }
   }
-  async function clear() {
+  async function switchModel(fileId: string) {
+    if (!fileId || fileId === model?.id) return;
     setBusy(true); setError("");
-    const result = await setViewerModel(projectId, null);
-    if (!result.ok) setError(result.error); else { toast.success("Showing the built-in assembly"); router.refresh(); }
-    setBusy(false);
+    const result = await setViewerModel(projectId, fileId);
+    if (!result.ok) { setError(result.error); setBusy(false); return; }
+    toast.success("Switched model. Its linked parts are back.");
+    router.refresh();
   }
+  const switcher = (variant: "glass" | "plain") => models.length > (model ? 1 : 0) && <label className={cn("flex items-center gap-2 text-xs", variant === "glass" ? "mt-3 text-[#6b7689]" : "text-muted-foreground")}>
+    {model ? "Model" : "Use an earlier upload"}
+    <select aria-label="Choose which uploaded model to show" disabled={busy} value={model?.id ?? ""} onChange={(e) => void switchModel(e.target.value)}
+      className={cn("h-8 min-w-0 max-w-[220px] flex-1 truncate rounded-lg border px-2 text-xs", variant === "glass" ? "border-white/[0.08] bg-[#0d1119]/80 text-[#eef2f8]" : "border-border bg-surface text-foreground")}>
+      {!model && <option value="">Choose a model…</option>}
+      {models.map((m) => <option key={m.id} value={m.id}>{m.name} · {formatDate(m.uploadedAt)} · {m.links} linked</option>)}
+    </select>
+  </label>;
   const uploadInput = <input ref={input} type="file" accept=".glb,model/gltf-binary" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = ""; }} />;
   if (!model) return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-2">
       {uploadInput}
       <Button variant="outline" size="sm" loading={busy} onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Upload GLB model</Button>
       <span className="text-xs text-muted-foreground">Self-contained .glb · up to 50 MB</span>
+      {switcher("plain")}
     </div>
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
   </div>;
@@ -117,7 +130,7 @@ export function ProjectModel({ projectId, model, components, modelLinks, aside }
       eventSource={stage.eventSource} viewOffset={stage.viewOffset} fitMargin={stage.fitMargin} gizmo={stage.gizmo} />}
     title={<>
       <p className="eyebrow">Current assembly</p>
-      <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#b9c6da] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 16 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
+      <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#b9c6da] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 12 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
       <p className="mt-1 font-mono text-[11.5px] text-[#6b7689]">.glb · self-contained · up to 50 MB</p>
       <p className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-[#a6b0c0]">
         <span><b className="font-semibold tabular-nums text-[#eef2f8]">{parts.length}</b> parts</span>
@@ -127,8 +140,8 @@ export function ProjectModel({ projectId, model, components, modelLinks, aside }
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {uploadInput}
         <GlassButton disabled={busy} onClick={() => input.current?.click()}><Upload className="h-3.5 w-3.5" />{busy ? "Working…" : "Replace model"}</GlassButton>
-        <button type="button" disabled={busy} onClick={() => void clear()} title="Show the built-in assembly instead of this model" className="h-8 rounded-[9px] px-3 text-[12.5px] font-medium text-[#a6b0c0] transition-colors hover:bg-white/5 hover:text-[#eef2f8] disabled:opacity-50">Use built-in</button>
       </div>
+      {switcher("glass")}
       {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
     </>}
     panel={listOpen ? <aside aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#eef2f8]">
@@ -233,12 +246,15 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
       const left = wide && leftCol.current ? leftCol.current.getBoundingClientRect().right : box.left;
       const right = wide && rightCol.current ? rightCol.current.getBoundingClientRect().left : box.right;
       const v = view.getBoundingClientRect();
+      // On wide screens, centre vertically in the visible window (between the top bar and the dock), not just the hero.
+      const barBottom = document.querySelector('[data-shell="header"]')?.getBoundingClientRect().bottom ?? 56;
+      const dockTop = top + height - 74;
       const openW = Math.max(240, right - left - 32);
-      const openH = wide ? height - 120 : v.height - 70;
+      const openH = wide ? dockTop - barBottom - 40 : v.height - 70;
       const cx = (left + right) / 2;
-      const cy = wide ? top + (height - 70) / 2 : v.top + window.scrollY + (v.height - 60) / 2;
+      const cy = wide ? (barBottom + dockTop) / 2 : v.top + window.scrollY + (v.height - 60) / 2;
       setLayout({ height, wide, offset: [Math.round(cx - vw / 2), Math.round(cy - vh / 2)], // The fit is limited by the canvas's shorter side, so size against that.
-      fitMargin: Math.max(1.3, Math.min(vw, vh) / (0.82 * Math.min(openW, openH))), dockX: Math.round(cx - box.left), gizmoX: Math.round(left + 60) });
+      fitMargin: Math.max(1.2, Math.min(vw, vh) / (0.92 * Math.min(openW, openH))), dockX: Math.round(cx - box.left), gizmoX: Math.round(left + 60) });
     };
     measure();
     const observer = new ResizeObserver(measure);
