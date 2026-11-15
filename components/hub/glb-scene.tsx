@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { Canvas, events, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Bounds, OrbitControls, GizmoHelper, GizmoViewport, useBounds } from "@react-three/drei";
+import { Bounds, OrbitControls, GizmoHelper, GizmoViewport, useBounds, useGizmoContext } from "@react-three/drei";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { Box3, Color, LoadingManager, MeshStandardMaterial, MOUSE, Vector3, type Group, type PerspectiveCamera } from "three";
@@ -73,6 +73,24 @@ function ViewOffset({ x, y }: { x: number; y: number }) {
   }, [camera, width, height, x, y, invalidate]);
   return null;
 }
+// The HUD uses its own event layer. Compute its ray from the full canvas rather
+// than the page overlay that forwards model pointer events.
+function GizmoPointerEvents() {
+  const setEvents = useThree((state) => state.setEvents);
+  useEffect(() => {
+    setEvents({ compute: (event, state) => {
+      const bounds = state.gl.domElement.getBoundingClientRect();
+      state.pointer.set(((event.clientX - bounds.left) / bounds.width) * 2 - 1, -((event.clientY - bounds.top) / bounds.height) * 2 + 1);
+      state.raycaster.setFromCamera(state.pointer, state.camera);
+    } });
+  }, [setEvents]);
+  return null;
+}
+const ISO_DIRECTIONS = [-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => [x, y, z] as const)));
+function IsometricDots() {
+  const { tweenCamera } = useGizmoContext();
+  return <>{ISO_DIRECTIONS.map(([x, y, z]) => <mesh key={`${x},${y},${z}`} position={[x * 26, y * 26, z * 26]} onPointerDown={(event) => { event.stopPropagation(); tweenCamera(new Vector3(x, y, z).normalize()); }}><sphereGeometry args={[3.5, 12, 12]} /><meshBasicMaterial color="#c6d0d5" /></mesh>)}</>;
+}
 export type GizmoPlacement = { alignment: "bottom-left" | "bottom-right"; margin: [number, number] };
 export default function GlbScene({ path, localUrl, highlighted = [], highlightColor = DEFAULT_ACCENT, onSelect, onParts, pan = false, isolate = false, fitRequest = 0, markers = [], onMarker, upright = false, showGrid = true, eventSource, viewOffset = [0, 0], fitMargin = 1.3, gizmo = { alignment: "bottom-right", margin: [50, 50] } }: {
   path?: string; localUrl?: string; highlighted?: string[]; highlightColor?: string; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void; pan?: boolean; isolate?: boolean; fitRequest?: number; markers?: Marker[]; onMarker?: (id: string) => void; upright?: boolean; showGrid?: boolean;
@@ -113,5 +131,5 @@ export default function GlbScene({ path, localUrl, highlighted = [], highlightCo
   }, [path, localUrl, upright]);
   if (error) return <div role="alert" className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">Couldn’t display this model: {error}</div>;
   if (!scene) return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading model…</div>;
-  return <Canvas events={markerFirstEvents} camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} highlightColor={highlightColor} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
+  return <Canvas events={markerFirstEvents} camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} highlightColor={highlightColor} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoPointerEvents /><GizmoViewport /><IsometricDots /></GizmoHelper>}</Canvas>;
 }
