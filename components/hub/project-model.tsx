@@ -256,7 +256,7 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
   const [hit, setHit] = useState<HTMLDivElement | null>(null);
   // True only in the browser, after hydration: the portal needs document.body.
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
-  const [layout, setLayout] = useState({ height: 0, offset: [0, 0] as [number, number], fitMargin: 1.6, dockX: 0, gizmoX: 56, wide: true });
+  const [layout, setLayout] = useState({ height: 0, offset: [0, 0] as [number, number], fitMargin: 1.6, dockX: 0, gizmoX: 56, gizmoY: 150, wide: true });
   const [hints, setHints] = useState(true);
   const [scrolled, setScrolled] = useState(false);
 
@@ -283,13 +283,14 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
       const cx = (left + right) / 2;
       const cy = wide ? (barBottom + dockTop) / 2 : v.top + window.scrollY + (v.height - 60) / 2;
       setLayout({ height, wide, offset: [Math.round(cx - vw / 2), Math.round(cy - vh / 2)], // The fit is limited by the canvas's shorter side, so size against that.
-      fitMargin: Math.max(1.2, Math.min(vw, vh) / (0.92 * Math.min(openW, openH))), dockX: Math.round(cx - box.left), gizmoX: Math.round(left + 60) });
+      fitMargin: Math.max(1.2, Math.min(vw, vh) / (0.92 * Math.min(openW, openH))), dockX: Math.round(cx - box.left), gizmoX: Math.round(wide ? left + 60 : v.left + 56), gizmoY: Math.round(wide ? 150 : vh - v.bottom + 82) });
     };
     measure();
     const observer = new ResizeObserver(measure);
     [hero.current, leftCol.current, rightCol.current].forEach((node) => node && observer.observe(node));
     window.addEventListener("resize", measure);
-    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
+    window.addEventListener("scroll", measure, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure); };
   }, []);
 
   // As the page scrolls, the scene dims behind the content rising over it.
@@ -308,7 +309,7 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
 
   const stage = mounted ? createPortal(
     <div data-immersive-stage aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(1200px_700px_at_55%_58%,#17191c_0%,#0e0f11_55%,#09090b_100%)]">
-      <div className="animate-rise-in absolute inset-0">{scene({ eventSource: hit, viewOffset: layout.offset, fitMargin: layout.fitMargin, gizmo: scrolled || !layout.wide ? null : { alignment: "bottom-left", margin: [layout.gizmoX, 150] } })}</div>
+      <div className="animate-rise-in absolute inset-0">{scene({ eventSource: hit, viewOffset: layout.offset, fitMargin: layout.fitMargin, gizmo: scrolled && layout.wide ? null : { alignment: "bottom-left", margin: [layout.gizmoX, layout.gizmoY] } })}</div>
       <div className="absolute inset-0 bg-[radial-gradient(130%_100%_at_55%_55%,transparent_50%,rgba(6,7,8,0.7)),linear-gradient(180deg,rgba(6,7,8,0.45),transparent_22%)]" />
       <div ref={dim} className="absolute inset-0 bg-[#06090e] opacity-0" />
     </div>, document.body) : null;
