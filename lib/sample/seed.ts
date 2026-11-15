@@ -34,6 +34,8 @@ export async function buildSampleProject(supabase: SupabaseClient, user: { id: s
   });
   const pid = project.id;
 
+  try {
+
   // ── Storage assets (SVG placeholders) ──
   const up = async (path: string, body: string, contentType: string) => {
     const { error } = await supabase.storage.from(BUCKET).upload(`${pid}/${path}`, Buffer.from(body), { contentType, upsert: true });
@@ -237,4 +239,10 @@ export async function buildSampleProject(supabase: SupabaseClient, user: { id: s
   ], "id");
 
   return pid;
+  } catch (error) {
+    // Remove only this newly created, incomplete sample so a later retry can start cleanly.
+    await supabase.storage.from(BUCKET).remove(["cover.svg", "suspension-rev-a.svg", "suspension-rev-b.svg", "chassis-plate-fea-placeholder.svg", "roll-stiffness-worksheet.txt"].map((name) => `${pid}/sample/${name}`));
+    await supabase.from("projects").delete().eq("id", pid).eq("owner_id", user.id).eq("is_sample", true);
+    throw error;
+  }
 }

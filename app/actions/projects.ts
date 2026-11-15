@@ -118,7 +118,8 @@ export async function removeMember(memberId: string): Promise<ActionResult> {
 export async function createSampleProject(): Promise<ActionResult<{ id: string }>> {
   try {
     const c = await ctx();
-    const { data: existing } = await c.supabase.from("projects").select("id").eq("is_sample", true).eq("owner_id", c.user.id).limit(1);
+    const { data: existing, error } = await c.supabase.from("projects").select("id").eq("is_sample", true).eq("owner_id", c.user.id).limit(1);
+    if (error) return fail(error.message);
     if (existing?.length) return { ok: true, id: existing[0].id as string };
     const id = await buildSampleProject(c.supabase, { id: c.user.id, name: c.actorName, orgId: c.profile.org_id });
     refresh();
@@ -126,6 +127,20 @@ export async function createSampleProject(): Promise<ActionResult<{ id: string }
   } catch (e) {
     return fail(e);
   }
+}
+
+/** New accounts get the sample once, after they have an authenticated session. */
+export async function initializeSampleProject(): Promise<ActionResult> {
+  try {
+    const c = await ctx();
+    if (c.user.user_metadata?.continuum_sample_pending !== true) return { ok: true };
+    const result = await createSampleProject();
+    if (!result.ok) return result;
+    const { error } = await c.supabase.auth.updateUser({ data: { continuum_sample_pending: false } });
+    if (error) return fail(error.message);
+    refresh();
+    return { ok: true };
+  } catch (error) { return fail(error); }
 }
 
 export async function updateProfile(input: { full_name: string; role_title: string }): Promise<ActionResult> {

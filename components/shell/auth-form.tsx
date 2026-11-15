@@ -31,7 +31,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       router.replace(params.get("next") || "/dashboard");
       router.refresh();
     } else {
-      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name }, emailRedirectTo: `${location.origin}/auth/callback` } });
+      const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, continuum_sample_pending: true }, emailRedirectTo: `${location.origin}/auth/callback` } });
       if (error) { setBusy(false); return setError(error.message); }
       if (!data.session) { setBusy(false); return setInfo("Account created. Check your email to confirm your address, then sign in."); }
       router.replace("/dashboard");
