@@ -1,11 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Box, Upload, Search, ArrowRight, Grid3x3, Hand, List, MapPin, Move3d, Orbit, Scan, ScanSearch } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight, Grid3x3, Hand, MapPin, Move3d, Orbit, PanelLeft, Scan, ScanSearch, Search, Upload } from "lucide-react";
 import Link from "next/link";
 import type { HubComponent } from "./assembly-viewer";
 import type { ImportedPart } from "./glb-scene";
+import { componentColor } from "./palette";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createFileRecords } from "@/app/actions/knowledge";
@@ -13,12 +15,17 @@ import { linkGlbComponent, setViewerModel } from "@/app/actions/model";
 import { uploadToProject } from "@/lib/client";
 import { createClient } from "@/lib/supabase/client";
 import type { FileRow } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
 
-const Scene = dynamic(() => import("./glb-scene"), { ssr: false, loading: () => <div className="p-8 text-sm text-muted-foreground">Loading 3D viewer…</div> });
+const Scene = dynamic(() => import("./glb-scene"), { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading 3D viewer…</div> });
 const LIMIT = 50 * 1024 * 1024;
 
-export function ProjectModel({ projectId, model, components, modelLinks }: { projectId: string; model: FileRow | null; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[] }) {
+/**
+ * The project's uploaded GLB model. With a model, the live 3D canvas becomes the backdrop of the whole page and the
+ * viewer controls, component list and `aside` (documentation readiness) float over it as glass panels.
+ */
+export function ProjectModel({ projectId, model, components, modelLinks, aside }: { projectId: string; model: FileRow | null; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -35,6 +42,7 @@ export function ProjectModel({ projectId, model, components, modelLinks }: { pro
   const [markersOn, setMarkersOn] = useState(true);
   const [partMode, setPartMode] = useState(false);
   const [listOpen, setListOpen] = useState(true);
+  const [partsOpen, setPartsOpen] = useState(false);
   const [showGrid, setShowGrid] = useState(true);
   const receiveParts = useCallback((next: ImportedPart[]) => { setParts(next); setSelected(null); setComponentFilter(null); }, []);
   const highlighted = useMemo(() => componentFilter ? links.filter((l) => l.subsystem_id === componentFilter).map((l) => l.part_key) : selected ? [selected] : [], [componentFilter, links, selected]);
@@ -88,41 +96,203 @@ export function ProjectModel({ projectId, model, components, modelLinks }: { pro
     if (!result.ok) setError(result.error); else { toast.success("Showing the built-in assembly"); router.refresh(); }
     setBusy(false);
   }
-  return <div className="space-y-3">
+  const uploadInput = <input ref={input} type="file" accept=".glb,model/gltf-binary" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = ""; }} />;
+  if (!model) return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-2">
-      <input ref={input} type="file" accept=".glb,model/gltf-binary" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = ""; }} />
-      <Button variant="outline" size="sm" loading={busy} onClick={() => input.current?.click()}><Upload className="h-4 w-4" />{model ? "Replace GLB model" : "Upload GLB model"}</Button>
-      {model && <Button variant="ghost" size="sm" disabled={busy} onClick={() => void clear()}>Show built-in assembly</Button>}
+      {uploadInput}
+      <Button variant="outline" size="sm" loading={busy} onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Upload GLB model</Button>
       <span className="text-xs text-muted-foreground">Self-contained .glb · up to 50 MB</span>
     </div>
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-    {model && <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5 text-sm"><div className="flex flex-wrap items-center gap-2"><Box className="h-4 w-4 text-accent" /><span className="font-semibold">Current assembly</span><span className="truncate text-muted-foreground">{model.name}</span></div>
-        <div className="flex flex-wrap items-center gap-0.5" role="toolbar" aria-label="Viewer controls">
-          <ViewerButton active={!pan} onClick={() => setPan(false)} label="Orbit"><Orbit /></ViewerButton>
-          <ViewerButton active={pan} onClick={() => setPan(true)} label="Pan"><Hand /></ViewerButton>
-          <ViewerButton active={isolate} disabled={highlighted.length === 0 && !isolate} onClick={() => setIsolate((value) => !value)} label="Isolate"><ScanSearch /></ViewerButton>
-          <ViewerButton onClick={() => setFitRequest((value) => value + 1)} label="Fit"><Scan /></ViewerButton>
-          <ViewerButton active={showGrid} onClick={() => setShowGrid((value) => !value)} label="Grid"><Grid3x3 /></ViewerButton>
-          <ViewerButton active={markersOn} onClick={() => setMarkersOn((value) => !value)} label="Markers"><MapPin /></ViewerButton>
-          <ViewerButton active={listOpen} onClick={() => setListOpen((value) => !value)} label="List"><List /></ViewerButton>
-          <ViewerButton active={partMode} onClick={() => { setPartMode((value) => !value); setMarkersOn(true); }} label={partMode ? "Parts on" : "Show parts"}><Move3d /></ViewerButton>
-        </div>
-      </div>
-      <div className={listOpen ? "grid lg:grid-cols-[minmax(0,1fr)_260px]" : "grid"}>
-        <div className="relative min-w-0"><div className="h-[340px] bg-[#10151d] sm:h-[460px]"><Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts} onSelect={(key) => { setSelected(key); setComponentFilter(null); setIsolate(false); }} onMarker={(id) => { if (partMode) { setSelected(id); setComponentFilter(null); } else { setComponentFilter(id); setSelected(null); } setIsolate(false); }} /></div><p className="border-t border-border px-4 py-2 text-xs text-muted-foreground">{pan ? "Drag to pan · right-drag to orbit" : "Drag to orbit · right-drag to pan"} · scroll to zoom · click a part to select</p></div>
-        {listOpen && <aside className="border-t border-border p-4 lg:border-l lg:border-t-0" aria-label="Model parts and components">
-          <h3 className="text-sm font-semibold">Components</h3><p className="mt-1 text-xs text-muted-foreground">Select a component to highlight its linked parts.</p>
-          <div className="mt-3 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto">{components.map((c) => { const count = links.filter((l) => l.subsystem_id === c.id).length; return <button key={c.id} type="button" onClick={() => { setComponentFilter(componentFilter === c.id ? null : c.id); setSelected(null); }} aria-pressed={componentFilter === c.id} className={`rounded-md border px-2 py-1 text-xs ${componentFilter === c.id ? "border-accent bg-accent-soft text-accent" : "border-border text-muted-foreground hover:text-foreground"}`}>{c.name} · {count}</button>; })}{components.length === 0 && <p className="text-xs text-muted-foreground">Add components to your project first.</p>}</div>
-          <div className="mt-4 border-t border-border pt-4"><h3 className="text-sm font-semibold">Model parts <span className="font-normal text-muted-foreground">({parts.length})</span></h3><label className="relative mt-2 block"><Search className="pointer-events-none absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" /><input aria-label="Search model parts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parts" className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-2 text-xs" /></label>
-          <ul className="mt-2 max-h-36 overflow-y-auto">{shownParts.map((part) => <li key={part.key}><button type="button" onClick={() => { setSelected(part.key); setComponentFilter(null); }} aria-pressed={selected === part.key} className={`w-full truncate rounded-md px-2 py-1.5 text-left text-xs ${selected === part.key ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted"}`}>{part.name}</button></li>)}</ul></div>
-          {(chosenPart || chosenComponent) && <div className="mt-4 space-y-2 border-t border-border pt-4"><p className="text-xs text-muted-foreground">{chosenPart ? "Selected part" : "Selected component"}</p><p className="break-words text-sm font-semibold">{chosenPart?.name ?? chosenComponent?.name}</p>{chosenPart && <label className="block text-xs text-muted-foreground">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-xs text-foreground"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}{chosenComponent && <div className="space-y-1 text-xs text-muted-foreground"><p>{chosenComponent.done} of {chosenComponent.total} documented · {chosenComponent.statusLabel}</p><p>{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p><Link className="inline-flex items-center gap-1 text-accent hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link></div>}</div>}
-        </aside>}
-      </div>
-    </div>}
   </div>;
+
+  const highlightIndex = componentFilter ? components.findIndex((c) => c.id === componentFilter) : -1;
+  const title = model.name.replace(/\.glb$/i, "");
+  return <ImmersiveStage
+    sceneLabel={`3D view of ${title}. Drag to ${pan ? "pan" : "orbit"}, right-drag to ${pan ? "orbit" : "pan"}, scroll to zoom, click a part to select it.`}
+    pan={pan}
+    scene={(stage) => <Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts}
+      onSelect={(key) => { setSelected(key); setComponentFilter(null); setIsolate(false); setPartsOpen(true); }}
+      onMarker={(id) => { if (partMode) { setSelected(id); setComponentFilter(null); setPartsOpen(true); } else { setComponentFilter(id); setSelected(null); } setIsolate(false); }}
+      eventSource={stage.eventSource} viewOffset={stage.viewOffset} fitMargin={stage.fitMargin} gizmo={stage.gizmo} />}
+    title={<>
+      <p className="eyebrow">Current assembly</p>
+      <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#b9c6da] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 16 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
+      <p className="mt-1 font-mono text-[11.5px] text-[#6b7689]">.glb · self-contained · up to 50 MB</p>
+      <p className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-[#a6b0c0]">
+        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{parts.length}</b> parts</span>
+        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{components.length}</b> components</span>
+        <span><b className="font-semibold tabular-nums text-[#eef2f8]">{links.length}</b> linked</span>
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {uploadInput}
+        <GlassButton disabled={busy} onClick={() => input.current?.click()}><Upload className="h-3.5 w-3.5" />{busy ? "Working…" : "Replace model"}</GlassButton>
+        <button type="button" disabled={busy} onClick={() => void clear()} title="Show the built-in assembly instead of this model" className="h-8 rounded-[9px] px-3 text-[12.5px] font-medium text-[#a6b0c0] transition-colors hover:bg-white/5 hover:text-[#eef2f8] disabled:opacity-50">Use built-in</button>
+      </div>
+      {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
+    </>}
+    panel={listOpen ? <aside aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#eef2f8]">
+      <h3 className="flex items-baseline justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#6b7689]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
+      {components.length === 0 ? <p className="mt-2 text-xs text-[#a6b0c0]">Add components to your project first.</p> : (
+        <div className="relative mt-2 grid gap-0.5">
+          <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border border-[#4d94ff]/30 bg-linear-to-b from-[#4d94ff]/18 to-[#4d94ff]/8 transition-[transform,opacity] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)` }} />
+          {components.map((c, i) => { const count = links.filter((l) => l.subsystem_id === c.id).length; const on = componentFilter === c.id; return (
+            <button key={c.id} type="button" aria-pressed={on} onClick={() => { setComponentFilter(on ? null : c.id); setSelected(null); if (on) setIsolate(false); }}
+              className={cn("relative flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-left text-xs font-medium transition-colors", on ? "text-[#eef2f8]" : "text-[#a6b0c0] hover:text-[#eef2f8]")}>
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: componentColor(i) }} /><span className="min-w-0 flex-1 truncate">{c.name}</span><span className="text-[11px] tabular-nums text-[#6b7689]">{count}</span>
+            </button>); })}
+        </div>
+      )}
+      {chosenComponent && !chosenPart && <div className="mt-2 rounded-xl border border-white/[0.06] bg-black/20 p-2.5 text-xs text-[#a6b0c0]">
+        <p>{chosenComponent.done} of {chosenComponent.total} documented · {chosenComponent.statusLabel}</p>
+        <p className="mt-0.5 truncate text-[#eef2f8]">{chosenComponent.latestDecision?.title ?? "No decision recorded yet"}</p>
+        <Link className="mt-1.5 inline-flex items-center gap-1 font-medium text-[#8fc3ff] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>
+      </div>}
+      <button type="button" aria-expanded={partsOpen} onClick={() => setPartsOpen((value) => !value)} className="mt-3 flex w-full items-center justify-between border-t border-white/[0.07] pt-3 text-[10px] font-medium uppercase tracking-[0.14em] text-[#6b7689] hover:text-[#a6b0c0]">
+        Model parts <span className="flex items-center gap-1.5 tracking-normal tabular-nums">{parts.length}<ChevronRight className={cn("ease-premium h-3 w-3 transition-transform duration-500", partsOpen && "rotate-90")} /></span>
+      </button>
+      <div className="expand" data-open={partsOpen}><div>
+        <label className="relative mt-2 block"><Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[#6b7689]" /><input aria-label="Search model parts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search parts" tabIndex={partsOpen ? 0 : -1}
+          className="h-[30px] w-full rounded-lg border border-white/[0.06] bg-black/30 pl-8 pr-2 text-xs text-[#eef2f8] outline-none transition-shadow focus:border-[#4d94ff]/45 focus:shadow-[0_0_0_4px_rgba(77,148,255,0.12)]" /></label>
+        <ul className="scroll-thin mt-1.5 max-h-40 overflow-y-auto">{shownParts.map((part) => <li key={part.key}><button type="button" tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
+          className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#4d94ff]/10 text-[#8fc3ff]" : "text-[#6b7689] hover:bg-white/[0.04] hover:text-[#a6b0c0]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
+        {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6b7689]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
+          <label className="block text-[11px] text-[#6b7689]">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#0d1119] px-2 text-xs text-[#eef2f8]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          {chosenComponent && <Link className="inline-flex items-center gap-1 text-xs font-medium text-[#8fc3ff] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>}</div>}
+      </div></div>
+    </aside> : null}
+    aside={aside}
+    dock={<>
+      <div role="radiogroup" aria-label="Left-drag action" className="relative flex rounded-[11px] bg-black/30 p-[3px]">
+        <span aria-hidden className="ease-premium absolute inset-y-[3px] left-[3px] w-[calc(50%-3px)] rounded-lg bg-linear-to-b from-white/14 to-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_4px_14px_-4px_rgba(0,0,0,0.6)] transition-transform duration-500" style={{ transform: pan ? "translateX(100%)" : "none" }} />
+        <SegmentButton on={!pan} onClick={() => setPan(false)}><Orbit />Orbit</SegmentButton>
+        <SegmentButton on={pan} onClick={() => setPan(true)}><Hand />Pan</SegmentButton>
+      </div>
+      <span className="mx-1 h-5 w-px bg-white/10" aria-hidden />
+      <DockButton active={isolate} disabled={highlighted.length === 0 && !isolate} onClick={() => setIsolate((value) => !value)} label="Isolate selection"><ScanSearch /></DockButton>
+      <DockButton onClick={() => setFitRequest((value) => value + 1)} label="Fit to view"><Scan /></DockButton>
+      <span className="mx-1 h-5 w-px bg-white/10" aria-hidden />
+      <DockButton active={showGrid} onClick={() => setShowGrid((value) => !value)} label="Grid"><Grid3x3 /></DockButton>
+      <DockButton active={markersOn} onClick={() => setMarkersOn((value) => !value)} label="Markers"><MapPin /></DockButton>
+      <DockButton active={partMode} onClick={() => { setPartMode((value) => !value); setMarkersOn(true); }} label={partMode ? "Part markers on" : "Show part markers"}><Move3d /></DockButton>
+      <DockButton active={listOpen} onClick={() => setListOpen((value) => !value)} label="Components panel"><PanelLeft /></DockButton>
+    </>}
+  />;
 }
 
-function ViewerButton({ active, disabled, label, onClick, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" aria-pressed={active} disabled={disabled} onClick={onClick} className={`flex min-h-10 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-40 [&_svg]:h-3.5 [&_svg]:w-3.5 ${active ? "bg-accent-soft text-accent" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>{children}<span>{label}</span></button>;
+function GlassButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type="button" {...props} className="ease-premium inline-flex h-8 items-center gap-1.5 rounded-[9px] border border-white/10 bg-linear-to-b from-white/10 to-white/4 px-3 text-[12.5px] font-medium text-[#eef2f8] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_16px_-8px_rgba(0,0,0,0.8)] backdrop-blur-md transition-[transform,border-color] duration-300 hover:-translate-y-px hover:border-white/20 disabled:pointer-events-none disabled:opacity-50">{children}</button>;
+}
+
+function SegmentButton({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" role="radio" aria-checked={on} onClick={onClick} className={cn("relative z-10 flex w-[76px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors duration-300 [&_svg]:h-3.5 [&_svg]:w-3.5", on ? "text-[#eef2f8]" : "text-[#6b7689] hover:text-[#a6b0c0]")}>{children}</button>;
+}
+
+function DockButton({ active, disabled, label, onClick, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" aria-pressed={active} aria-label={label} disabled={disabled} onClick={onClick}
+    className={cn("group ease-premium relative grid h-[34px] w-9 place-items-center rounded-[10px] transition-[color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:bg-white/[0.07] hover:text-[#eef2f8] active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:h-4 [&_svg]:w-4", active ? "text-[#eef2f8]" : "text-[#6b7689]")}>
+    {children}
+    {active && <span aria-hidden className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#4d94ff] shadow-[0_0_8px_#4d94ff]" />}
+    <span aria-hidden className="ease-premium pointer-events-none absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 translate-y-1 whitespace-nowrap rounded-md border border-white/10 bg-[#0a0d13]/95 px-2 py-1 text-[11px] font-medium text-[#eef2f8] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100">{label}</span>
+  </button>;
+}
+
+const noopSubscribe = () => () => {};
+
+type StageProps = { eventSource: HTMLElement | null; viewOffset: [number, number]; fitMargin: number; gizmo: { alignment: "bottom-left"; margin: [number, number] } | null };
+
+/**
+ * Lays out the immersive Overview. The canvas is portalled into <body> as a fixed backdrop (so no transformed ancestor can
+ * trap it); pointer input comes from a transparent layer inside the page so the model stays interactive between panels.
+ */
+function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: { scene: (stage: StageProps) => React.ReactNode; sceneLabel: string; pan: boolean; title: React.ReactNode; panel: React.ReactNode; aside: React.ReactNode; dock: React.ReactNode }) {
+  const hero = useRef<HTMLElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  const leftCol = useRef<HTMLDivElement>(null);
+  const rightCol = useRef<HTMLDivElement>(null);
+  const dim = useRef<HTMLDivElement>(null);
+  const [hit, setHit] = useState<HTMLDivElement | null>(null);
+  // True only in the browser, after hydration: the portal needs document.body.
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const [layout, setLayout] = useState({ height: 0, offset: [0, 0] as [number, number], fitMargin: 1.6, dockX: 0, gizmoX: 56, wide: true });
+  const [hints, setHints] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => { const timer = setTimeout(() => setHints(false), 5000); return () => clearTimeout(timer); }, []);
+
+  // Centre the model in the open space between the panels and size it to fit there.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = hero.current, view = viewport.current;
+      if (!el || !view) return;
+      const wide = window.matchMedia("(min-width: 1024px)").matches;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      const height = wide ? Math.max(560, Math.round(vh - top - 8)) : 0;
+      const box = el.getBoundingClientRect();
+      const left = wide && leftCol.current ? leftCol.current.getBoundingClientRect().right : box.left;
+      const right = wide && rightCol.current ? rightCol.current.getBoundingClientRect().left : box.right;
+      const v = view.getBoundingClientRect();
+      const openW = Math.max(240, right - left - 32);
+      const openH = wide ? height - 120 : v.height - 70;
+      const cx = (left + right) / 2;
+      const cy = wide ? top + (height - 70) / 2 : v.top + window.scrollY + (v.height - 60) / 2;
+      setLayout({ height, wide, offset: [Math.round(cx - vw / 2), Math.round(cy - vh / 2)], // The fit is limited by the canvas's shorter side, so size against that.
+      fitMargin: Math.max(1.3, Math.min(vw, vh) / (0.82 * Math.min(openW, openH))), dockX: Math.round(cx - box.left), gizmoX: Math.round(left + 60) });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    [hero.current, leftCol.current, rightCol.current].forEach((node) => node && observer.observe(node));
+    window.addEventListener("resize", measure);
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
+  }, []);
+
+  // As the page scrolls, the scene dims behind the content rising over it.
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => {
+      const span = Math.max(320, (layout.height || window.innerHeight) * 0.6);
+      const t = Math.min(1, window.scrollY / span);
+      if (dim.current) dim.current.style.opacity = String(t * 0.6);
+      setScrolled(t > 0.45);
+    }); };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); };
+  }, [layout.height]);
+
+  const stage = mounted ? createPortal(
+    <div data-immersive-stage aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[radial-gradient(1200px_700px_at_55%_58%,#121a26_0%,#0b1017_55%,#080b11_100%)]">
+      <div className="animate-rise-in absolute inset-0">{scene({ eventSource: hit, viewOffset: layout.offset, fitMargin: layout.fitMargin, gizmo: scrolled || !layout.wide ? null : { alignment: "bottom-left", margin: [layout.gizmoX, 150] } })}</div>
+      <div className="absolute inset-0 bg-[radial-gradient(130%_100%_at_55%_55%,transparent_50%,rgba(4,6,9,0.7)),linear-gradient(180deg,rgba(4,6,9,0.45),transparent_22%)]" />
+      <div ref={dim} className="absolute inset-0 bg-[#06090e] opacity-0" />
+    </div>, document.body) : null;
+
+  return <>
+    {stage}
+    <section ref={hero} aria-label="Current assembly" className="relative flex flex-col lg:block lg:pointer-events-none" style={layout.wide && layout.height ? { height: layout.height } : undefined}>
+      {/* Transparent layer that drives the 3D scene (orbit, pan, zoom, select). */}
+      <div ref={setHit} role="img" aria-label={sceneLabel} className={cn("absolute inset-0 hidden touch-none lg:pointer-events-auto lg:block", pan ? "cursor-move" : "cursor-grab active:cursor-grabbing")} />
+      <div ref={leftCol} className="contents lg:pointer-events-none lg:absolute lg:bottom-6 lg:left-0 lg:top-2 lg:z-10 lg:flex lg:w-[256px] lg:flex-col lg:gap-4 lg:[&>*]:pointer-events-auto">
+        <div className="animate-rise-in relative z-10 order-1 shrink-0 [--rise-delay:150ms]">{title}</div>
+        {panel && <div className="animate-rise-in relative z-10 order-3 mt-4 flex min-h-0 flex-col [--rise-delay:300ms] lg:mt-0">{panel}</div>}
+      </div>
+      {/* On small screens the model shows through this window between the title and the panels below. */}
+      <div ref={viewport} className="relative order-2 h-[52svh] min-h-[300px] lg:pointer-events-none lg:absolute lg:inset-0 lg:h-auto">
+        <div className="absolute inset-0 touch-none lg:hidden" ref={(node) => { if (node && !window.matchMedia("(min-width: 1024px)").matches) setHit(node); }} />
+        <p className={cn("pointer-events-none absolute bottom-[78px] hidden -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full border border-white/[0.06] bg-[#0a0d13]/55 px-3 py-1.5 text-[11px] text-[#6b7689] backdrop-blur-md transition-opacity duration-1000 lg:flex", hints ? "opacity-100" : "opacity-0")} style={{ left: layout.dockX }}>
+          <Hint k="Drag">{pan ? "pan" : "orbit"}</Hint><Hint k="Right-drag">{pan ? "orbit" : "pan"}</Hint><Hint k="Scroll">zoom</Hint><Hint k="Click">select</Hint>
+        </p>
+        <div role="toolbar" aria-label="Viewer controls" className="glass animate-dock-in absolute bottom-3 left-1/2 flex max-w-[calc(100%-16px)] items-center gap-0.5 overflow-x-auto rounded-2xl p-1.5 lg:pointer-events-auto lg:bottom-5 lg:overflow-visible" style={layout.wide ? { left: layout.dockX } : undefined}>{dock}</div>
+      </div>
+      {aside && <div ref={rightCol} className="animate-rise-in relative z-10 order-4 mt-4 [--rise-delay:220ms] lg:pointer-events-auto lg:absolute lg:right-0 lg:top-0 lg:mt-0 lg:max-h-[calc(100%-8px)] lg:w-[360px] lg:overflow-y-auto lg:rounded-2xl lg:[scrollbar-width:none]">{aside}</div>}
+      <button type="button" onClick={() => document.getElementById("overview-details")?.scrollIntoView({ behavior: "smooth" })} className="pointer-events-auto absolute bottom-7 right-0 hidden items-center gap-1.5 text-[11px] text-[#6b7689] transition-colors hover:text-[#a6b0c0] lg:flex">
+        More below <ChevronDown className="h-3.5 w-3.5 motion-safe:animate-bounce" />
+      </button>
+    </section>
+  </>;
+}
+
+function Hint({ k, children }: { k: string; children: React.ReactNode }) {
+  return <span className="flex items-center gap-1.5"><kbd className="rounded-md border border-white/[0.09] bg-white/[0.07] px-1.5 py-0.5 font-sans text-[10px] font-medium text-[#a6b0c0]">{k}</kbd>{children}</span>;
 }

@@ -58,10 +58,10 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
 
   return (
     <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[216px] border-r border-sidebar-border lg:block">{sidebar}</aside>
+      <aside data-shell="sidebar" className="fixed inset-y-0 left-0 z-30 hidden w-[216px] border-r border-sidebar-border transition-colors lg:block">{sidebar}</aside>
       {open && <div className="fixed inset-0 z-40 lg:hidden"><div className="absolute inset-0 bg-black/60" onClick={() => setOpen(false)} /><div className="absolute inset-y-0 left-0 w-[250px]">{sidebar}</div></div>}
       <div className="lg:pl-[216px]">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-8">
+        <header data-shell="header" className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-8">
           <button onClick={() => setOpen(true)} aria-label="Open menu" className="rounded p-1.5 hover:bg-muted lg:hidden"><Menu className="h-5 w-5" /></button>
           <div className="flex flex-1 justify-center lg:justify-start"><SearchPalette /></div>
           <Link href="/team" className="flex h-8 items-center gap-1.5 rounded-md bg-accent px-3 text-[13px] font-medium text-white hover:bg-accent/85"><Users className="h-3.5 w-3.5" />Share</Link>

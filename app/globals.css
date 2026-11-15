@@ -103,3 +103,48 @@ body {
 }
 [data-tip].tip-up:hover::after { top: auto; bottom: calc(100% + 7px); }
 [data-tip].tip-right:hover::after { top: 50%; left: calc(100% + 7px); transform: translateY(-50%); }
+
+/* ───────── Premium surfaces (project Overview) ───────── */
+.surface-premium {
+  position: relative; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012) 40%), #0c1018;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.4), 0 30px 70px -30px rgba(0, 0, 0, 0.85);
+}
+.glass {
+  background: rgba(13, 17, 25, 0.58); border: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 24px 60px -24px rgba(0, 0, 0, 0.85);
+}
+.eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; color: #6b7689; }
+.ease-premium { transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes ring-draw { from { stroke-dashoffset: var(--ring-c); } to { stroke-dashoffset: var(--ring-to); } }
+@keyframes bar-fill { from { width: 0; } to { width: var(--bar-w); } }
+@keyframes soft-pulse { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes dock-in { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translateX(-50%); } }
+.animate-ring-draw { stroke-dasharray: var(--ring-c); animation: ring-draw 1.6s 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-bar-fill { animation: bar-fill 1.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-soft-pulse { animation: soft-pulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+.animate-rise-in { animation: rise-in 0.9s var(--rise-delay, 0s) cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-dock-in { animation: dock-in 1s 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Smoothly expanding rows: the grid track animates from 0fr to 1fr. */
+.expand { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+.expand[data-open="true"] { grid-template-rows: 1fr; }
+.expand > * { overflow: hidden; min-height: 0; }
+
+/* When the immersive 3D stage is on screen, the app chrome turns to glass over it. */
+html:has([data-immersive-stage]) [data-shell="sidebar"] {
+  background: rgba(8, 11, 17, 0.55); -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html:has([data-immersive-stage]) [data-shell="sidebar"] > div { background: transparent; }
+html:has([data-immersive-stage]) [data-shell="header"] {
+  background: linear-gradient(180deg, rgba(8, 11, 17, 0.6), rgba(8, 11, 17, 0.25)); border-color: rgba(255, 255, 255, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ring-draw, .animate-bar-fill, .animate-soft-pulse, .animate-rise-in, .animate-dock-in { animation-duration: 0.01ms; animation-delay: 0s; }
+  .expand, .ease-premium { transition-duration: 0.01ms; }
+}

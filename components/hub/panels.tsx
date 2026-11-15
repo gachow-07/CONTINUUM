@@ -1,50 +1,20 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, ChevronRight, CircleHelp, Info, MessageSquare, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight, ChevronRight, MessageSquare, Plus } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
-import { CRITERIA, componentsNeedingAttention, reviewStateLabel, type AttentionItem, type ComponentModel } from "@/lib/readiness";
+import { CRITERIA, reviewStateLabel, type AttentionItem, type ComponentModel } from "@/lib/readiness";
 import type { ProjectBundle } from "@/lib/bundle";
 import { formatDate } from "@/lib/utils";
 import { ComponentIcon } from "./icons";
+import { ReadinessCard, type ReadinessRow } from "./readiness-card";
 
 export const reviewTone = (s: ComponentModel["reviewState"]) => (s === "approved" ? "success" : s === "changes_requested" ? "warning" : s === "none" ? "neutral" : "accent") as "success" | "warning" | "neutral" | "accent";
 
-export function ReadinessPanel({ projectId, comps }: { projectId: string; comps: ComponentModel[] }) {
-  const need = componentsNeedingAttention(comps);
-  return (
-    <Card>
-      <CardHeader title="Documentation readiness" />
-      <div className="space-y-3 p-4">
-        {comps.length === 0 ? <p className="text-[13px] text-muted-foreground">No components yet. Add components to track how well each one is documented.</p> : (
-          <>
-            <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-[12.5px] ${need ? "border-accent/30 bg-accent-soft text-accent" : "border-success/30 bg-success-soft text-success"}`}>
-              {need ? <AlertTriangle className="h-4 w-4" /> : <Info className="h-4 w-4" />}{need ? `${need} of ${comps.length} components need attention` : "All components are fully documented"}
-            </div>
-            <ul className="space-y-2.5">
-              {comps.map((c) => (
-                <li key={c.subsystem.id}>
-                  <Link href={`/projects/${projectId}/components/${c.subsystem.id}`} className="group block rounded-md p-1.5 -m-1.5 hover:bg-muted/60">
-                    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5">
-                      <span className="text-[13px] font-semibold">{c.subsystem.name}</span>
-                      <Badge tone={c.status.tone}>{c.status.label}</Badge>
-                      <div className="flex items-center gap-2"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(c.done / c.total) * 100}%` }} /></div></div>
-                      <span className="text-right text-[11.5px] tabular-nums text-muted-foreground">{c.done} / {c.total} complete</span>
-                    </div>
-                    {c.missing.length > 0 && <p className="mt-1 text-[11.5px] text-muted-foreground">Missing: {c.missing.map((m) => m.label.toLowerCase()).join(", ")}</p>}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <p className="flex items-start gap-1.5 border-t border-border pt-3 text-[11.5px] text-muted-foreground"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />Documentation status measures whether reasoning is written down. Engineering approval is tracked separately, in Reviews.</p>
-            <details className="text-[12px] text-muted-foreground">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 hover:text-foreground"><CircleHelp className="h-3.5 w-3.5" />How readiness is calculated</summary>
-              <ul className="mt-2 space-y-1.5 pl-5">{CRITERIA.map((c) => <li key={c.key} className="list-disc"><span className="text-foreground">{c.label}.</span> {c.rule}</li>)}</ul>
-            </details>
-          </>
-        )}
-      </div>
-    </Card>
-  );
+export function ReadinessPanel({ projectId, comps, className }: { projectId: string; comps: ComponentModel[]; className?: string }) {
+  const rows: ReadinessRow[] = comps.map((c) => ({
+    id: c.subsystem.id, name: c.subsystem.name, href: `/projects/${projectId}/components/${c.subsystem.id}`, done: c.done, total: c.total,
+    status: c.status, items: c.items.map(({ key, label, ok, detail }) => ({ key, label, ok, detail })),
+  }));
+  return <ReadinessCard rows={rows} criteria={CRITERIA.map(({ key, label, rule }) => ({ key, label, rule }))} className={className} />;
 }
 
 export function NeedsAttention({ items }: { items: AttentionItem[] }) {
