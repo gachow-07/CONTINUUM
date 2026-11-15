@@ -1,10 +1,10 @@
 "use client";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Bounds, OrbitControls, GizmoHelper, GizmoViewport, useBounds } from "@react-three/drei";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { Box3, LoadingManager, MeshStandardMaterial, MOUSE, Vector3, type Group } from "three";
+import { Box3, LoadingManager, MeshStandardMaterial, MOUSE, Vector3, type Group, type PerspectiveCamera } from "three";
 import { fileUrl } from "@/lib/client";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
 import { importedParts } from "@/lib/cad/imported-parts.mjs";
@@ -55,7 +55,30 @@ function Markers({ scene, markers, onMarker }: { scene: Group; markers: Marker[]
   }, [scene, markers]);
   return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#3d8bff" depthTest={false} /></mesh>)}</>;
 }
-export default function GlbScene({ path, localUrl, highlighted = [], onSelect, onParts, pan = false, isolate = false, fitRequest = 0, markers = [], onMarker, upright = false, showGrid = true }: { path?: string; localUrl?: string; highlighted?: string[]; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void; pan?: boolean; isolate?: boolean; fitRequest?: number; markers?: Marker[]; onMarker?: (id: string) => void; upright?: boolean; showGrid?: boolean }) {
+/** Shifts the rendered image so the model is centred in the open area between overlay panels, not the canvas centre. */
+function ViewOffset({ x, y }: { x: number; y: number }) {
+  const camera = useThree((state) => state.camera) as PerspectiveCamera;
+  const width = useThree((state) => state.size.width);
+  const height = useThree((state) => state.size.height);
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    if (!x && !y) return;
+    camera.setViewOffset(width, height, -x, -y, width, height);
+    invalidate();
+    return () => { camera.clearViewOffset(); invalidate(); };
+  }, [camera, width, height, x, y, invalidate]);
+  return null;
+}
+export type GizmoPlacement = { alignment: "bottom-left" | "bottom-right"; margin: [number, number] };
+export default function GlbScene({ path, localUrl, highlighted = [], onSelect, onParts, pan = false, isolate = false, fitRequest = 0, markers = [], onMarker, upright = false, showGrid = true, eventSource, viewOffset = [0, 0], fitMargin = 1.3, gizmo = { alignment: "bottom-right", margin: [50, 50] } }: {
+  path?: string; localUrl?: string; highlighted?: string[]; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void; pan?: boolean; isolate?: boolean; fitRequest?: number; markers?: Marker[]; onMarker?: (id: string) => void; upright?: boolean; showGrid?: boolean;
+  /** Element that receives pointer input instead of the canvas (used when the canvas sits behind page content). */
+  eventSource?: HTMLElement | null;
+  /** Pixel offset of the model from the canvas centre. */
+  viewOffset?: [number, number];
+  fitMargin?: number;
+  gizmo?: GizmoPlacement | null;
+}) {
   const [scene, setScene] = useState<Group | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -86,5 +109,5 @@ export default function GlbScene({ path, localUrl, highlighted = [], onSelect, o
   }, [path, localUrl, upright]);
   if (error) return <div role="alert" className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">Couldn’t display this model: {error}</div>;
   if (!scene) return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading model…</div>;
-  return <Canvas camera={{ position: [3, 2, 3], fov: 45 }}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><Suspense fallback={null}><Bounds fit clip observe margin={1.3}><Model scene={scene} highlighted={highlighted} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} /><GizmoHelper alignment="bottom-right" margin={[50, 50]}><GizmoViewport /></GizmoHelper></Canvas>;
+  return <Canvas camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
 }
