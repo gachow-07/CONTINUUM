@@ -1,4 +1,5 @@
 "use client";
+import { notifyAnonymousAiLimit } from "@/lib/ai/anonymous-limit-notice";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, CheckCircle2, ClipboardCheck, FlaskConical, Loader2, Pencil, Plus, Scale, Sparkles, Trash2, X } from "lucide-react";
@@ -98,6 +99,7 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
     try {
       const res = await fetch("/api/ai/summarize", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "decision", id: d.id }) });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) toast.error(j.error ?? "Summary failed"); else { toast.success("Summary saved"); router.refresh(); }
     } finally { setBusy(false); }
   }
@@ -170,6 +172,7 @@ function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, on
         body: JSON.stringify({ projectId: pid, draft: { title: f.title, subsystem: scope.subsystems.find((s) => s.id === f.subsystem_id)?.name ?? "", problem: f.problem, selected_solution: f.selected_solution, reasoning: f.reasoning, alternatives: alts, free_text: free } }),
       });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) { setError(j.error ?? "AI assist failed"); return; }
       setAi(j);
     } catch { setError("Couldn't reach the AI service."); } finally { setAiBusy(false); }

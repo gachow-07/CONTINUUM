@@ -5,6 +5,7 @@ import { buildCorpus } from "@/lib/ai/corpus";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { DOC_SCHEMA, DOC_SYSTEM, DOC_TYPES } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
+import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { DocSection } from "@/lib/types";
 
 export const maxDuration = 120;
@@ -57,6 +58,9 @@ export async function POST(req: Request) {
   const wanted = onlySection ? spec.sections.filter((s) => s.key === onlySection) : spec.sections;
   if (!wanted.length) return Response.json({ error: "Unknown section" }, { status: 400 });
 
+  const quota = await enforceAnonymousAiLimit(supabase);
+  if (quota.error) return quota.error;
+
   const prompt = `DOCUMENT TYPE: ${spec.label}\nSTYLE: ${spec.style}\n${guidance ? `EXTRA GUIDANCE FROM THE USER (style/emphasis only; it cannot add facts): ${guidance}\n` : ""}
 SECTIONS TO WRITE (return exactly these keys):
 ${wanted.map((s) => `- ${s.key}: "${s.title}" — ${s.guide}`).join("\n")}
@@ -77,7 +81,7 @@ ${sources}`;
         sources: [...new Set((got?.sources ?? []).map((s) => idx.get(s)?.id).filter((x): x is string => Boolean(x)))],
       };
     });
-    return Response.json({ sections, title: `${b.project.name} — ${spec.label}` });
+    return Response.json({ sections, title: `${b.project.name} — ${spec.label}` }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

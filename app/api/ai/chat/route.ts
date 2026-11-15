@@ -6,6 +6,7 @@ import { nothingRelevant, retrieve } from "@/lib/ai/retrieve";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { CHAT_SCHEMA, GAP_SENTENCE, GROUNDING_RULES } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
+import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { AnswerSegment, Citation } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -24,6 +25,9 @@ export async function POST(req: Request) {
 
   const bundle = await loadBundle(supabase, projectId);
   if (!bundle) return Response.json({ error: "Project not found or you don't have access." }, { status: 404 });
+
+  const quota = await enforceAnonymousAiLimit(supabase);
+  if (quota.error) return quota.error;
 
   // Conversation + prior turns
   let conversationId = parsed.data.conversationId ?? null;
@@ -92,5 +96,5 @@ export async function POST(req: Request) {
     .insert({ project_id: projectId, conversation_id: conversationId, role: "assistant", content: answerText, segments, citations: [...citations.values()] })
     .select("id,created_at").single();
 
-  return Response.json({ conversationId, followups, message: { id: saved?.id, role: "assistant", content: answerText, segments, citations: [...citations.values()], created_at: saved?.created_at } });
+  return Response.json({ conversationId, followups, message: { id: saved?.id, role: "assistant", content: answerText, segments, citations: [...citations.values()], created_at: saved?.created_at } }, { headers: anonymousAiHeaders(quota) });
 }

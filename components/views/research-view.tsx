@@ -1,4 +1,5 @@
 "use client";
+import { notifyAnonymousAiLimit } from "@/lib/ai/anonymous-limit-notice";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookOpen, ExternalLink, FileText, Link2, Loader2, Plus, Sparkles, StickyNote, Trash2, Wand2 } from "lucide-react";
@@ -117,6 +118,7 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
     try {
       const res = await fetch("/api/ai/summarize", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: "research", id: r.id }) });
       const j = await res.json();
+      notifyAnonymousAiLimit(res);
       if (!res.ok) toast.error(j.error ?? "Summary failed"); else { toast.success("Summary saved"); router.refresh(); }
     } finally { setBusy(false); }
   }

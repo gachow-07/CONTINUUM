@@ -59,6 +59,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <Button type="submit" variant="accent" size="lg" className="w-full" loading={busy}>{mode === "login" ? "Sign in" : "Create account"}</Button>
           </form>
         </div>
+        {mode === "login" && process.env.NEXT_PUBLIC_JUDGE_DEMO_ENABLED === "true" && <div className="mt-4 rounded-xl border border-border bg-surface p-4 text-center"><p className="text-sm font-medium">Here for the presentation?</p><p className="mt-1 text-xs text-muted-foreground">Explore an editable demo without creating an account.</p><Link href="/judge-demo" className="mt-3 inline-flex h-9 items-center justify-center rounded-md border border-border-strong px-4 text-sm font-medium hover:bg-muted">Open judge demo</Link></div>}
         <p className="mt-4 text-center text-[13px] text-muted-foreground">
           {mode === "login" ? <>New here? <Link href="/signup" className="font-medium text-accent hover:underline">Create an account</Link></>
             : <>Already have an account? <Link href="/login" className="font-medium text-accent hover:underline">Sign in</Link></>}

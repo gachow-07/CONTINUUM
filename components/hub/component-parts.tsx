@@ -47,7 +47,7 @@ export function ComponentParts({ projectId, componentId, initialPart, model, lin
     return () => { live = false; };
   }, [model.path, keys, loadError]);
   const part = parts.find((item) => item.key === selected);
-  const demo = model.name.toLowerCase() === "f26-aer-0000-501.glb" && projectId === "f2110fcf-2834-4f9a-85a8-81f3b18386a6";
+  const demo = model.name.toLowerCase() === "f26-aer-0000-501.glb" && (projectId === "f2110fcf-2834-4f9a-85a8-81f3b18386a6" || model.path === `${projectId}/judge-demo/aero.glb`);
   const description = part && demo ? demoDescription(part.name) : null;
   const base = `/projects/${projectId}`;
   return <section className="rounded-lg border border-border bg-surface p-5 shadow-card" aria-label="Selected model part">

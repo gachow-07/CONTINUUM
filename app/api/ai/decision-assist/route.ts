@@ -4,6 +4,7 @@ import { loadBundle } from "@/lib/bundle";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { DECISION_SCHEMA, DECISION_SYSTEM } from "@/lib/ai/prompts";
 import { openaiConfigured } from "@/lib/env";
+import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import { formatDate } from "@/lib/utils";
 
 export const maxDuration = 60;
@@ -30,6 +31,9 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const bundle = await loadBundle(supabase, projectId);
   if (!bundle) return Response.json({ error: "Project not found" }, { status: 404 });
+
+  const quota = await enforceAnonymousAiLimit(supabase);
+  if (quota.error) return quota.error;
 
   const recs: { id: string; kind: "research" | "revision" | "file"; title: string; line: string }[] = [
     ...bundle.research.map((r) => ({ id: r.id, kind: "research" as const, title: r.title, line: `Research "${r.title}" — ${r.why_important || r.description || "no notes"}` })),
@@ -59,7 +63,7 @@ ${recs.map((r, i) => `[S${i + 1}] ${r.line}`).join("\n") || "(none yet)"}`;
       .map((s) => ({ rec: idx.get(s.source), why: s.why }))
       .filter((s) => s.rec)
       .map((s) => ({ kind: s.rec!.kind, id: s.rec!.id, title: s.rec!.title, why: s.why }));
-    return Response.json({ ...out, suggested_evidence: suggested });
+    return Response.json({ ...out, suggested_evidence: suggested }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/openai";
 import { openaiConfigured } from "@/lib/env";
+import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 
 export const maxDuration = 60;
 const body = z.object({ kind: z.enum(["research", "decision"]), id: z.string().uuid() });
@@ -25,11 +26,14 @@ export async function POST(req: Request) {
     if (!data) return Response.json({ error: "Not found" }, { status: 404 });
     text = `Decision: ${data.title}\nProblem: ${data.problem}\nSelected: ${data.selected_solution}\nAlternatives: ${JSON.stringify(data.alternatives)}\nReasoning: ${data.reasoning || "(none documented)"}`;
   }
+  const quota = await enforceAnonymousAiLimit(supabase);
+  if (quota.error) return quota.error;
+
   try {
     const out = await callJson<{ summary: string }>({ system: SYSTEM, name: "summary", schema: SCHEMA, messages: [{ role: "user", content: text }] });
     const table = kind === "research" ? "research_sources" : "design_decisions";
     await supabase.from(table).update({ ai_summary: out.summary }).eq("id", id);
-    return Response.json({ summary: out.summary });
+    return Response.json({ summary: out.summary }, { headers: anonymousAiHeaders(quota) });
   } catch (e) {
     return aiErrorResponse(e);
   }

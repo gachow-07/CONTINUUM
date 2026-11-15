@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: projects } = await supabase.from("projects").select("id,name").eq("archived", false).order("updated_at", { ascending: false }).limit(50);
   const { count } = await supabase.from("project_invitations").select("id", { count: "exact", head: true }).eq("invitee_id", user.id).eq("status", "pending");
   return (
-    <AppShell pendingInvites={count ?? 0} projects={projects ?? []} aiEnabled={openaiConfigured()} user={{ name: profile.full_name || user.email || "You", email: user.email ?? "", role: profile.role_title, workspace: org?.name ?? "Workspace" }}>
+    <AppShell pendingInvites={count ?? 0} projects={projects ?? []} aiEnabled={openaiConfigured()} user={{ name: profile.full_name || user.email || "You", email: user.email ?? "", role: profile.role_title, workspace: org?.name ?? "Workspace", isGuest: user.is_anonymous === true }}>
       <SampleOnboarding pending={user.user_metadata?.continuum_sample_pending === true} />
       {children}
     </AppShell>
