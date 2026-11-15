@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AskAiLink } from "@/components/ai/ask-ai-link";
+import { AskAiDropdown } from "@/components/ai/ask-ai-dropdown";
+import { openaiConfigured } from "@/lib/env";
 import { Badge, SampleBadge } from "@/components/ui/badge";
 import { ProjectMenu } from "@/components/projects/project-dialogs";
 import { STATUS_META } from "@/components/projects/project-card";
@@ -22,7 +23,7 @@ export default async function ProjectLayout({ children, params }: { children: Re
           {p.is_sample && <SampleBadge />}<Badge tone={st.tone} dot>{st.label}</Badge>{p.archived && <Badge>Archived</Badge>}
         </div>
         <div className="flex items-center gap-2">
-          <AskAiLink href={`/projects/${id}/assistant`} />
+          <AskAiDropdown project={{ id, name: p.name }} aiEnabled={openaiConfigured()} />
           <ProjectMenu project={p} />
         </div>
       </div>
