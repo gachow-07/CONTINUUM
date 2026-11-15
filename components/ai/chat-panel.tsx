@@ -90,8 +90,8 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
   return (
     <div className={cn("flex flex-col rounded-xl border border-border bg-surface shadow-card", height ?? (compact ? "h-[560px]" : "h-[calc(100vh-15rem)] min-h-[520px]"))}>
       <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-        <div className="flex items-center gap-2 text-[13px]"><Sparkles className="h-4 w-4 text-accent" /><span className="font-semibold">Ask this project</span><span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">Context: {projectName}</span></div>
-        {messages.length > 0 && <Button variant="ghost" size="sm" onClick={() => { setMessages([]); setConv(null); setFollowups([]); setError(null); }}><Plus className="h-3.5 w-3.5" />New chat</Button>}
+        <div className="flex min-w-0 items-center gap-2 text-[13px]"><Sparkles className="h-4 w-4 shrink-0 text-accent" /><span className="shrink-0 whitespace-nowrap font-semibold">Ask this project</span><span className="truncate rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground" title={projectName}>{projectName}</span></div>
+        {messages.length > 0 && <Button variant="ghost" size="sm" className="shrink-0" onClick={() => { setMessages([]); setConv(null); setFollowups([]); setError(null); }}><Plus className="h-3.5 w-3.5" />New chat</Button>}
       </div>
       <div className="scroll-thin flex-1 space-y-5 overflow-y-auto px-4 py-4">
         {messages.length === 0 && (
@@ -117,7 +117,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
       <form className="flex items-end gap-2 border-t border-border p-3" onSubmit={(e) => { e.preventDefault(); send(input); }}>
         <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} disabled={!aiEnabled} aria-label="Ask a question about this project"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-          placeholder={aiEnabled ? "Ask about decisions, revisions, research, reviews…" : "AI isn't configured"} className="max-h-32 min-h-9 flex-1 resize-none rounded-md border border-border-strong bg-surface px-3 py-2 text-[13px] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-muted" />
+          placeholder={aiEnabled ? "Ask about decisions, research, reviews…" : "AI isn't configured"} className="max-h-32 min-h-9 flex-1 resize-none rounded-md border border-border-strong bg-surface px-3 py-2 text-[13px] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-muted" />
         <Button type="submit" variant="accent" size="icon" className="h-9 w-9" disabled={!input.trim() || busy || !aiEnabled} aria-label="Send"><ArrowUp className="h-4 w-4" /></Button>
       </form>
     </div>

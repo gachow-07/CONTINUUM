@@ -4,6 +4,7 @@ import { getBundle } from "@/lib/bundle-cache";
 import { loadModel } from "@/lib/cad/load";
 import { createSampleAssembly } from "@/lib/cad/sample";
 import { requireSession } from "@/lib/session";
+import { openaiConfigured } from "@/lib/env";
 
 export default async function ProjectHub({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params;
@@ -24,5 +25,5 @@ export default async function ProjectHub({ params, searchParams }: { params: Pro
   const modelLinks = (allLinks ?? []).filter((l) => l.file_id === b.project.viewer_model_file_id).map(({ part_key, subsystem_id }) => ({ part_key, subsystem_id }));
   const linkCounts: Record<string, number> = {};
   for (const l of allLinks ?? []) linkCounts[l.file_id] = (linkCounts[l.file_id] ?? 0) + 1;
-  return <HubView b={b} parts={parts} placeholder={placeholder} tab={tab} modelLinks={modelLinks} linkCounts={linkCounts} />;
+  return <HubView b={b} parts={parts} placeholder={placeholder} tab={tab} modelLinks={modelLinks} linkCounts={linkCounts} aiEnabled={openaiConfigured()} />;
 }

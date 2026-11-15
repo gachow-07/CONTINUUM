@@ -3,7 +3,8 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronDown, ChevronRight, Grid3x3, Hand, MapPin, Move3d, Orbit, PanelLeft, Scan, ScanSearch, Search, Upload } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronRight, Grid3x3, Hand, MapPin, Move3d, Orbit, PanelLeft, Scan, ScanSearch, Search, Sparkles, Upload } from "lucide-react";
+import { ChatPanel } from "@/components/ai/chat-panel";
 import Link from "next/link";
 import type { HubComponent } from "./assembly-viewer";
 import type { ImportedPart } from "./glb-scene";
@@ -27,7 +28,7 @@ const LIMIT = 50 * 1024 * 1024;
  */
 export type UploadedModel = { id: string; name: string; uploadedAt: string; links: number };
 
-export function ProjectModel({ projectId, model, models = [], components, modelLinks, aside }: { projectId: string; model: FileRow | null; models?: UploadedModel[]; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
+export function ProjectModel({ projectId, projectName = "", aiEnabled = false, model, models = [], components, modelLinks, aside }: { projectId: string; projectName?: string; aiEnabled?: boolean; model: FileRow | null; models?: UploadedModel[]; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const partList = useRef<HTMLUListElement>(null);
@@ -163,7 +164,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
     </>}
     panel={listOpen ? <aside ref={panelRef} aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
       {chosenPart && <div className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
-        <p className="text-[#a9adb3]">Selected part</p><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
+        <div className="flex items-center justify-between gap-2"><p className="text-[#a9adb3]">Selected part</p><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={chosenPart.name} componentName={chosenComponent?.name} /></div><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
         {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={`${chosenComponent.href}?part=${encodeURIComponent(chosenPart.key)}`}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
       </div>}
       <h3 className="flex items-baseline justify-between font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
@@ -334,4 +335,41 @@ function ImmersiveStage({ scene, sceneLabel, pan, title, panel, aside, dock }: {
 
 function Hint({ k, children }: { k: string; children: React.ReactNode }) {
   return <span className="flex items-center gap-1.5"><kbd className="rounded-md border border-white/[0.09] bg-white/[0.07] px-1.5 py-0.5 font-sans text-[10px] font-medium text-[#a9adb3]">{k}</kbd>{children}</span>;
+}
+
+/**
+ * Small Ask AI button on the selected-part card. The chat floats beside the card (outside the scrolling panel, so it isn't
+ * clipped) and opens with a question about that part, so the answer appears on the Overview instead of another page.
+ */
+function PartAskAi({ projectId, projectName, aiEnabled, partName, componentName }: { projectId: string; projectName: string; aiEnabled: boolean; partName: string; componentName?: string }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const popover = useRef<HTMLDivElement>(null);
+  const question = `What is documented about the part "${partName}"${componentName ? ` in the ${componentName} component` : ""}?`;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: PointerEvent) => { const t = e.target as Node; if (!popover.current?.contains(t) && !button.current?.contains(t)) setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("pointerdown", onDown); };
+  }, [open]);
+  const toggle = () => {
+    const r = button.current?.getBoundingClientRect();
+    if (r) setPos({ left: Math.max(12, Math.min(r.right + 14, window.innerWidth - 404)), top: Math.max(12, Math.min(r.top - 10, window.innerHeight - 492)) });
+    setOpen((o) => !o);
+  };
+  return <>
+    <button ref={button} type="button" onClick={toggle} aria-expanded={open} aria-haspopup="dialog" aria-label={`Ask AI about ${partName}`} title="Ask AI about this part"
+      className="ai-gradient ai-glow grid h-6 w-6 shrink-0 place-items-center rounded-md transition-transform duration-300 hover:-translate-y-px"><Sparkles className="h-3.5 w-3.5" /></button>
+    {open && pos && createPortal(
+      <div ref={popover} role="dialog" aria-label={`Ask AI about ${partName}`} style={{ left: pos.left, top: pos.top }}
+        className="animate-fade-in fixed z-50 w-[392px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-border-strong bg-background shadow-[var(--shadow-pop)]">
+        <div className="ai-gradient h-1" />
+        <ChatPanel key={partName} projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} initialMessages={[]} initialConversationId={null}
+          initialQuestion={question} height="h-[480px] rounded-none border-0 shadow-none"
+          suggestions={["Why was this part designed this way?", "Which decisions affect this part?", "What is still undocumented for this part?"]} />
+      </div>, document.body)}
+  </>;
 }
