@@ -144,7 +144,7 @@ export function ProjectMenu({ project }: { project: Project }) {
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-1.5 w-48 overflow-hidden rounded-lg border border-border bg-surface p-1 shadow-[var(--shadow-pop)]" role="menu">
-            <Link role="menuitem" href={`/projects/${project.id}/workspace`} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => setOpen(false)}><Box className="h-4 w-4 text-muted-foreground" />Open 3D editor</Link>
+            <Link role="menuitem" href={`/projects/${project.id}?tab=overview`} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => setOpen(false)}><Box className="h-4 w-4 text-muted-foreground" />Open 3D model</Link>
             <div className="my-1 h-px bg-border" />
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); setEdit(true); }}><Pencil className="h-4 w-4 text-muted-foreground" />Edit project</button>
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); if (project.archived) act(updateProject(project.id, { archived: false }), "Project restored").then(() => router.refresh()); else setArchive(true); }}>
