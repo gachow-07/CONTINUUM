@@ -149,9 +149,9 @@ html:has([data-immersive-stage]) [data-shell="header"] {
   .expand, .ease-premium { transition-duration: 0.01ms; }
 }
 
-/* Ask AI: a slow drift from the brand cyan through sky blue and violet to a soft pink and back, so every AI entry point reads as one thing.
+/* Ask AI: a slow drift from the brand cyan through sky blue to violet and back, so every AI entry point reads as one thing.
    Each half of the 200%-wide background is the same mirrored sweep, so sliding it by half its width loops seamlessly with no hard colour jumps. */
-:root { --ai-spectrum: linear-gradient(100deg, #22d3ee, #60a5fa, #a78bfa, #f0abfc, #a78bfa, #60a5fa, #22d3ee, #60a5fa, #a78bfa, #f0abfc, #a78bfa, #60a5fa, #22d3ee); }
+:root { --ai-spectrum: linear-gradient(100deg, #22d3ee, #60a5fa, #a78bfa, #60a5fa, #22d3ee, #60a5fa, #a78bfa, #60a5fa, #22d3ee); }
 .ai-gradient, .ai-text {
   background-image: var(--ai-spectrum);
   background-size: 200% 100%;
