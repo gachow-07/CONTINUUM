@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronDown, ChevronRight, Grid3x3, Hand, MapPin, Move3d, Orbit, PanelLeft, Scan, ScanSearch, Search, Sparkles, Upload } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, ChevronRight, Grid3x3, Hand, History, Link2, MapPin, Move3d, Orbit, PanelLeft, Plus, Scale, Scan, ScanSearch, Search, Sparkles, Upload } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
 import Link from "next/link";
 import type { HubComponent } from "./assembly-viewer";
@@ -39,6 +39,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
   const [error, setError] = useState("");
   const [parts, setParts] = useState<ImportedPart[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const linkSelect = useRef<HTMLSelectElement>(null);
   const [componentFilter, setComponentFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [links, setLinks] = useState(modelLinks);
@@ -71,6 +72,11 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
     const row = partRows.current.get(selected);
     if (list && row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top;
   }, [revealRequest, selected, partsOpen, listOpen, shownParts.length]);
+  // Opens the part list at the selected part and puts focus on its "Link to a component" selector.
+  function openLinker() {
+    setListOpen(true); setPartsOpen(true); setRevealRequest((value) => value + 1);
+    requestAnimationFrame(() => requestAnimationFrame(() => linkSelect.current?.focus()));
+  }
   function revealPart(key: string) {
     // Clicking the part that is already selected closes it again.
     if (key === selected && !componentFilter) { setSelected(null); setIsolate(false); return; }
@@ -165,10 +171,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
       {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
     </>}
     panel={listOpen ? <aside ref={panelRef} aria-label="Components and model parts" className="glass scroll-thin min-h-0 overflow-y-auto rounded-2xl p-3.5 text-[#f2f4f5]">
-      {chosenPart && <div className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
-        <div className="flex items-center justify-between gap-2"><p className="text-[#a9adb3]">Selected part</p><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={chosenPart.name} componentName={chosenComponent?.name} /></div><p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{chosenPart.name}</p>
-        {chosenComponent ? <><p className="mt-1 text-[#a9adb3]">Component: {chosenComponent.name}</p><Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={`${chosenComponent.href}?part=${encodeURIComponent(chosenPart.key)}`}>Open component details <ArrowRight className="h-3 w-3" /></Link></> : <p className="mt-1 text-[#a9adb3]">Not linked to a component yet. Use the part list below to link it.</p>}
-      </div>}
+      {chosenPart && <SelectedPartCard projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} part={chosenPart} component={chosenComponent} onLink={openLinker} />}
       <h3 className="flex items-baseline justify-between font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
       {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
         <div className="relative mt-2 grid gap-0.5">
@@ -195,7 +198,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
         <ul ref={partList} className="scroll-thin mt-1.5 max-h-40 overflow-y-auto pb-32">{shownParts.map((part) => <li key={part.key} ref={(node) => { if (node) partRows.current.set(part.key, node); else partRows.current.delete(part.key); }}><button type="button" data-part-key={part.key} tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(selected === part.key ? null : part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
           className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#22d3ee]/10 text-[#8be9f7]" : "text-[#6c7178] hover:bg-white/[0.04] hover:text-[#a9adb3]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
         {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6c7178]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
-          <label className="block text-[11px] text-[#6c7178]">Link to a component<select aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          <label className="block text-[11px] text-[#6c7178]">Link to a component<select ref={linkSelect} aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
           {chosenComponent && <Link className="inline-flex items-center gap-1 text-xs font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>}</div>}
       </div></div>
     </aside> : null}
@@ -344,24 +347,8 @@ function Hint({ k, children }: { k: string; children: React.ReactNode }) {
  * clipped) and opens with a question about that part, so the answer appears on the Overview instead of another page.
  */
 function PartAskAi({ projectId, projectName, aiEnabled, partName, componentName }: { projectId: string; projectName: string; aiEnabled: boolean; partName: string; componentName?: string }) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  const popover = useRef<HTMLDivElement>(null);
+  const { open, pos, button, popover, toggle } = usePopover(404, 492);
   const question = `What is documented about the part "${partName}"${componentName ? ` in the ${componentName} component` : ""}?`;
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    const onDown = (e: PointerEvent) => { const t = e.target as Node; if (!popover.current?.contains(t) && !button.current?.contains(t)) setOpen(false); };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onDown);
-    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("pointerdown", onDown); };
-  }, [open]);
-  const toggle = () => {
-    const r = button.current?.getBoundingClientRect();
-    if (r) setPos({ left: Math.max(12, Math.min(r.right + 14, window.innerWidth - 404)), top: Math.max(12, Math.min(r.top - 10, window.innerHeight - 492)) });
-    setOpen((o) => !o);
-  };
   return <>
     <button ref={button} type="button" onClick={toggle} aria-expanded={open} aria-haspopup="dialog" aria-label={`Ask AI about ${partName}`} title="Ask AI about this part"
       className="ai-gradient ai-glow grid h-6 w-6 shrink-0 place-items-center rounded-md transition-transform duration-300 hover:-translate-y-px"><Sparkles className="h-3.5 w-3.5" /></button>
@@ -374,4 +361,67 @@ function PartAskAi({ projectId, projectName, aiEnabled, partName, componentName 
           suggestions={["Why was this part designed this way?", "Which decisions affect this part?", "What is still undocumented for this part?"]} />
       </div>, document.body)}
   </>;
+}
+
+/** A small floating panel anchored beside a button, rendered into <body> so the scrolling side panel can't clip it. */
+function usePopover(width: number, height: number) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const popover = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onDown = (e: PointerEvent) => { const t = e.target as Node; if (!popover.current?.contains(t) && !button.current?.contains(t)) setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("pointerdown", onDown); };
+  }, [open]);
+  const toggle = () => {
+    // Open beside the whole card (not just the button) so the panel never covers the card's other buttons.
+    const r = (button.current?.closest("[data-part-card]") ?? button.current)?.getBoundingClientRect();
+    if (r) setPos({ left: Math.max(12, Math.min(r.right + 14, window.innerWidth - width)), top: Math.max(12, Math.min(r.top, window.innerHeight - height)) });
+    setOpen((o) => !o);
+  };
+  return { open, setOpen, pos, button, popover, toggle };
+}
+
+/** "+" on the selected-part card: quick ways to add documentation to the part's component, or to give the part one. */
+function PartAddMenu({ projectId, partName, component, onLink }: { projectId: string; partName: string; component?: HubComponent; onLink: () => void }) {
+  const { open, setOpen, pos, button, popover, toggle } = usePopover(252, 220);
+  const item = "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] text-foreground hover:bg-muted";
+  const icon = "h-4 w-4 shrink-0 text-muted-foreground";
+  return <>
+    <button ref={button} type="button" onClick={toggle} aria-expanded={open} aria-haspopup="menu" aria-label={`Add details for ${partName}`} title={component ? `Add details to ${component.name}` : "Link this part to a component"}
+      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-white/10 bg-white/[0.06] text-[#8be9f7] transition-[transform,background-color] duration-300 hover:-translate-y-px hover:bg-white/[0.12]"><Plus className="h-3.5 w-3.5" /></button>
+    {open && pos && createPortal(
+      <div ref={popover} role="menu" aria-label={`Add details for ${partName}`} style={{ left: pos.left, top: pos.top }}
+        className="animate-fade-in fixed z-50 w-60 rounded-xl border border-border-strong bg-background p-1 shadow-[var(--shadow-pop)]">
+        <p className="px-2.5 pb-1 pt-1.5 text-[11px] text-muted-foreground">{component ? <>Add to <span className="text-foreground">{component.name}</span></> : "This part has no component yet"}</p>
+        {component ? <>
+          <Link role="menuitem" className={item} href={`${component.href}?tab=decisions`} onClick={() => setOpen(false)}><Scale className={icon} />Add a decision</Link>
+          <Link role="menuitem" className={item} href={`${component.href}?tab=research`} onClick={() => setOpen(false)}><BookOpen className={icon} />Add research</Link>
+          <Link role="menuitem" className={item} href={`${component.href}?tab=revisions`} onClick={() => setOpen(false)}><History className={icon} />Record a revision</Link>
+        </> : <>
+          <button role="menuitem" type="button" className={item} onClick={() => { setOpen(false); onLink(); }}><Link2 className={icon} />Link to a component</button>
+          <Link role="menuitem" className={item} href={`/projects/${projectId}?tab=components`} onClick={() => setOpen(false)}><Plus className={icon} />Create a component</Link>
+        </>}
+      </div>, document.body)}
+  </>;
+}
+
+/** The card for the part selected on the model: its name, its component, Ask AI and "+" to add details. */
+export function SelectedPartCard({ projectId, projectName, aiEnabled, part, component, onLink }: { projectId: string; projectName: string; aiEnabled: boolean; part: ImportedPart; component?: HubComponent; onLink: () => void }) {
+  return <div data-part-card className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
+    <div className="flex items-center justify-between gap-2"><p className="text-[#a9adb3]">Selected part</p>
+      <div className="flex items-center gap-1.5"><PartAddMenu projectId={projectId} partName={part.name} component={component} onLink={onLink} /><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={part.name} componentName={component?.name} /></div></div>
+    <p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{part.name}</p>
+    {component ? <>
+      <p className="mt-1 text-[#a9adb3]">Component: {component.name}</p>
+      <Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={`${component.href}?part=${encodeURIComponent(part.key)}`}>Open component details <ArrowRight className="h-3 w-3" /></Link>
+    </> : <>
+      <p className="mt-1 text-[#a9adb3]">Not linked to a component yet.</p>
+      <button type="button" onClick={onLink} className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline">Component empty <ArrowRight className="h-3 w-3" /></button>
+    </>}
+  </div>;
 }
