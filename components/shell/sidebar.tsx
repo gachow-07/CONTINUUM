@@ -29,7 +29,7 @@ export function AppShell({ user, pendingInvites, children }: { user: { name: str
 
   const sidebar = (
     <div className="flex h-full flex-col bg-sidebar text-white">
-      <div className="flex h-14 items-center justify-between px-4"><Logo /><button className="rounded p-1 text-sidebar-foreground lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu"><X className="h-5 w-5" /></button></div>
+      <div className="flex h-14 items-center justify-between px-4"><Link href="/projects" aria-label="CONTINUUM — My Projects" onClick={() => setOpen(false)} className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"><Logo /></Link><button className="rounded p-1 text-sidebar-foreground lg:hidden" onClick={() => setOpen(false)} aria-label="Close menu"><X className="h-5 w-5" /></button></div>
       <nav className="flex-1 space-y-1 px-3 pt-3" aria-label="Main">
         {nav.map((n) => (
           <Link key={n.label} href={n.href} onClick={() => setOpen(false)} aria-current={n.on ? "page" : undefined}
