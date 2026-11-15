@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Layers } from "lucide-react";
 import { AddComponentButton } from "@/components/hub/add-component";
 import { AssemblyViewer, type HubComponent } from "@/components/hub/assembly-viewer";
-import { ProjectModel } from "@/components/hub/project-model";
+import { ProjectModel, type UploadedModel } from "@/components/hub/project-model";
 import { EmptyModelViewer } from "@/components/hub/empty-model-viewer";
 import { HubResearchPanel } from "@/components/hub/research-panel";
 import { ComponentIcon } from "@/components/hub/icons";
@@ -19,9 +19,12 @@ import { modelPartEntries } from "@/lib/cad/part-markers";
 
 const TABS = [["overview", "Overview"], ["components", "Components"], ["history", "Design History"]] as const;
 
-export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string; modelLinks: { part_key: string; subsystem_id: string }[] }) {
+export function HubView({ b, parts, placeholder, tab, modelLinks, linkCounts = {} }: { b: ProjectBundle; parts: Part[]; placeholder: boolean; tab: string; modelLinks: { part_key: string; subsystem_id: string }[]; linkCounts?: Record<string, number> }) {
   const id = b.project.id;
   const viewerModel = b.files.find((file) => file.id === b.project.viewer_model_file_id) ?? null;
+  const models: UploadedModel[] = b.files.filter((file) => file.name.toLowerCase().endsWith(".glb"))
+    .sort((a, c) => c.created_at.localeCompare(a.created_at))
+    .map((file) => ({ id: file.id, name: file.name, uploadedAt: file.created_at, links: linkCounts[file.id] ?? 0 }));
   const comps = buildComponents(b);
   const hubComps: HubComponent[] = comps.map((c) => ({
     id: c.subsystem.id, name: c.subsystem.name, marker: c.subsystem.marker_position, done: c.done, total: c.total, statusLabel: c.status.label, statusTone: c.status.tone,
@@ -43,7 +46,7 @@ export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: Project
       {tab === "overview" && viewerModel && (
         // Immersive layout: the uploaded model is the page backdrop; the rest of the overview scrolls up over it.
         <div className="space-y-8">
-          <ProjectModel key={viewerModel.id} projectId={id} model={viewerModel} components={hubComps} modelLinks={modelLinks}
+          <ProjectModel key={viewerModel.id} projectId={id} model={viewerModel} models={models} components={hubComps} modelLinks={modelLinks}
             aside={<ReadinessPanel projectId={id} comps={comps} className="glass" />} />
           <div id="overview-details" className="grid scroll-mt-20 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
             <div className="min-w-0 space-y-5">
@@ -60,7 +63,7 @@ export function HubView({ b, parts, placeholder, tab, modelLinks }: { b: Project
       {tab === "overview" && !viewerModel && (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <div className="min-w-0 space-y-5">
-            <ProjectModel key="empty" projectId={id} model={null} components={hubComps} modelLinks={modelLinks} />
+            <ProjectModel key="empty" projectId={id} model={null} models={models} components={hubComps} modelLinks={modelLinks} />
             {(parts.length > 0 ? <AssemblyViewer projectId={id} parts={parts} components={hubComps} individualParts={hubParts.length ? hubParts : undefined} revisionLabel={currentRev ? `Revision ${currentRev.rev_label}` : null} placeholder={placeholder} /> : <EmptyModelViewer />)}
             <HubResearchPanel bundle={b} />
             <LivingSummary b={b} comps={comps} />
