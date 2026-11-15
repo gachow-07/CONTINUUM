@@ -55,7 +55,8 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
   const markers = useMemo(() => {
     if (!markersOn) return [];
     const visibleKeys = isolate && highlighted.length ? new Set(highlighted) : null;
-    return (partMode ? parts.map((part) => ({ id: part.key, name: part.name, partKeys: [part.key] })) : components.map((component) => ({ id: component.id, name: component.name, partKeys: links.filter((link) => link.subsystem_id === component.id).map((link) => link.part_key) })))
+    const colorOf = (componentId?: string) => { const i = components.findIndex((c) => c.id === componentId); return i < 0 ? undefined : componentColor(i); };
+    return (partMode ? parts.map((part) => ({ id: part.key, name: part.name, partKeys: [part.key], color: colorOf(links.find((link) => link.part_key === part.key)?.subsystem_id) })) : components.map((component) => ({ id: component.id, name: component.name, partKeys: links.filter((link) => link.subsystem_id === component.id).map((link) => link.part_key), color: colorOf(component.id) })))
       .map((marker) => ({ ...marker, partKeys: visibleKeys ? marker.partKeys.filter((key) => visibleKeys.has(key)) : marker.partKeys }))
       .filter((marker) => marker.partKeys.length > 0);
   }, [markersOn, partMode, parts, components, links, isolate, highlighted]);
@@ -135,18 +136,19 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
   </div>;
 
   const highlightIndex = componentFilter ? components.findIndex((c) => c.id === componentFilter) : -1;
+  const highlightColor = highlightIndex >= 0 ? componentColor(highlightIndex) : undefined;
   const title = model.name.replace(/\.glb$/i, "");
   return <ImmersiveStage
     sceneLabel={`3D view of ${title}. Drag to ${pan ? "pan" : "orbit"}, right-drag to ${pan ? "orbit" : "pan"}, scroll to zoom, click a part to select it.`}
     pan={pan}
-    scene={(stage) => stage.eventSource && <Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts}
+    scene={(stage) => stage.eventSource && <Scene key={model.storage_path} path={model.storage_path} upright={model.name.toLowerCase() === "f26-aer-0000-501.glb"} showGrid={showGrid} highlighted={highlighted} highlightColor={highlightColor} pan={pan} isolate={isolate} fitRequest={fitRequest} markers={markers} onParts={receiveParts}
       onSelect={revealPart}
       onMarker={(id) => { if (partMode) { revealPart(id); } else { setComponentFilter(id); setSelected(null); setListOpen(true); setIsolate(false); } if (panelRef.current) panelRef.current.scrollTop = 0; }}
       eventSource={stage.eventSource} viewOffset={stage.viewOffset} fitMargin={stage.fitMargin} gizmo={stage.gizmo} />}
     title={<>
       <p className="eyebrow">Current assembly</p>
       <h2 className={cn("mt-1.5 break-words bg-linear-to-b from-white to-[#bfc6cc] bg-clip-text font-semibold leading-[1.1] tracking-[-0.035em] text-transparent", title.length > 12 ? "text-[24px]" : "text-[28px] lg:text-[30px]")}>{title}</h2>
-      <p className="mt-1 font-mono text-[11.5px] text-[#6c7178]">.glb · self-contained · up to 50 MB</p>
+      <p className="mt-1 font-mono text-[10px] text-[#6c7178]">.glb · self-contained · up to 50 MB</p>
       <p className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-[#a9adb3]">
         <span><b className="font-semibold tabular-nums text-[#f2f4f5]">{parts.length}</b> parts</span>
         <span><b className="font-semibold tabular-nums text-[#f2f4f5]">{components.length}</b> components</span>
@@ -167,7 +169,7 @@ export function ProjectModel({ projectId, model, models = [], components, modelL
       <h3 className="flex items-baseline justify-between font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6c7178]">Components <span className="tracking-normal tabular-nums">{components.length}</span></h3>
       {components.length === 0 ? <p className="mt-2 text-xs text-[#a9adb3]">Add components to your project first.</p> : (
         <div className="relative mt-2 grid gap-0.5">
-          <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border border-[#22d3ee]/30 bg-linear-to-b from-[#22d3ee]/18 to-[#22d3ee]/8 transition-[transform,opacity] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)` }} />
+          <span aria-hidden className={cn("ease-premium pointer-events-none absolute inset-x-0 top-0 h-[34px] rounded-[9px] border transition-[transform,opacity,background-color,border-color] duration-500", highlightIndex < 0 && "opacity-0")} style={{ transform: `translateY(${Math.max(highlightIndex, 0) * 36}px)`, borderColor: `color-mix(in srgb, ${highlightColor ?? "#22d3ee"} 30%, transparent)`, backgroundColor: `color-mix(in srgb, ${highlightColor ?? "#22d3ee"} 13%, transparent)` }} />
           {components.map((c, i) => { const count = links.filter((l) => l.subsystem_id === c.id).length; const on = componentFilter === c.id; return (
             <button key={c.id} type="button" aria-pressed={on} onClick={() => { setComponentFilter(on ? null : c.id); setSelected(null); if (on) setIsolate(false); }}
               className={cn("relative flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-left text-xs font-medium transition-colors", on ? "text-[#f2f4f5]" : "text-[#a9adb3] hover:text-[#f2f4f5]")}>

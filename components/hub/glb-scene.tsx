@@ -4,18 +4,21 @@ import { Canvas, events, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Bounds, OrbitControls, GizmoHelper, GizmoViewport, useBounds } from "@react-three/drei";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { Box3, LoadingManager, MeshStandardMaterial, MOUSE, Vector3, type Group, type PerspectiveCamera } from "three";
+import { Box3, Color, LoadingManager, MeshStandardMaterial, MOUSE, Vector3, type Group, type PerspectiveCamera } from "three";
 import { fileUrl } from "@/lib/client";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
 import { importedParts } from "@/lib/cad/imported-parts.mjs";
 import { ModelGrid } from "./fading-grid";
 
 export type ImportedPart = { key: string; name: string };
-type Marker = { id: string; name: string; partKeys: string[] };
+/** A clickable dot at the centre of its parts. `color` matches the component it belongs to. */
+type Marker = { id: string; name: string; partKeys: string[]; color?: string };
+const DEFAULT_ACCENT = "#22d3ee";
 const markerFirstEvents = (store: Parameters<typeof events>[0]) => ({ ...events(store), filter: (hits: import("three").Intersection[]) => [...hits].sort((a, b) => Number(Boolean(b.object.userData.continuumMarker)) - Number(Boolean(a.object.userData.continuumMarker))) });
-function Model({ scene, highlighted, isolate, onSelect, onParts }: { scene: Group; highlighted: string[]; isolate: boolean; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void }) {
+function Model({ scene, highlighted, highlightColor, isolate, onSelect, onParts }: { scene: Group; highlighted: string[]; highlightColor: string; isolate: boolean; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void }) {
   const parts = useMemo(() => importedParts(scene), [scene]);
-  const highlightMaterial = useMemo(() => new MeshStandardMaterial({ color: "#22d3ee", emissive: "#0a5560", emissiveIntensity: 0.5, roughness: 0.5 }), []);
+  // Highlighted parts take the colour of their component, with a darker glow of the same hue.
+  const highlightMaterial = useMemo(() => new MeshStandardMaterial({ color: highlightColor, emissive: new Color(highlightColor).multiplyScalar(0.35), emissiveIntensity: 0.5, roughness: 0.5 }), [highlightColor]);
   useEffect(() => { onParts?.(parts.map(({ key, name }) => ({ key, name }))); }, [parts, onParts]);
   useEffect(() => {
     const original = parts.map(({ mesh }) => mesh.material);
@@ -54,7 +57,7 @@ function Markers({ scene, markers, onMarker }: { scene: Group; markers: Marker[]
       return box.isEmpty() ? [] : [{ ...marker, position: box.getCenter(new Vector3()), radius }];
     });
   }, [scene, markers]);
-  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} userData={{ continuumMarker: true }} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color="#14c3dd" depthTest={false} /></mesh>)}</>;
+  return <>{positions.map((marker) => <mesh key={marker.id} position={marker.position} userData={{ continuumMarker: true }} renderOrder={10} onClick={(event) => { event.stopPropagation(); onMarker?.(marker.id); }}><sphereGeometry args={[marker.radius, 16, 12]} /><meshBasicMaterial color={marker.color ?? DEFAULT_ACCENT} depthTest={false} /></mesh>)}</>;
 }
 /** Shifts the rendered image so the model is centred in the open area between overlay panels, not the canvas centre. */
 function ViewOffset({ x, y }: { x: number; y: number }) {
@@ -71,8 +74,8 @@ function ViewOffset({ x, y }: { x: number; y: number }) {
   return null;
 }
 export type GizmoPlacement = { alignment: "bottom-left" | "bottom-right"; margin: [number, number] };
-export default function GlbScene({ path, localUrl, highlighted = [], onSelect, onParts, pan = false, isolate = false, fitRequest = 0, markers = [], onMarker, upright = false, showGrid = true, eventSource, viewOffset = [0, 0], fitMargin = 1.3, gizmo = { alignment: "bottom-right", margin: [50, 50] } }: {
-  path?: string; localUrl?: string; highlighted?: string[]; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void; pan?: boolean; isolate?: boolean; fitRequest?: number; markers?: Marker[]; onMarker?: (id: string) => void; upright?: boolean; showGrid?: boolean;
+export default function GlbScene({ path, localUrl, highlighted = [], highlightColor = DEFAULT_ACCENT, onSelect, onParts, pan = false, isolate = false, fitRequest = 0, markers = [], onMarker, upright = false, showGrid = true, eventSource, viewOffset = [0, 0], fitMargin = 1.3, gizmo = { alignment: "bottom-right", margin: [50, 50] } }: {
+  path?: string; localUrl?: string; highlighted?: string[]; highlightColor?: string; onSelect?: (key: string) => void; onParts?: (parts: ImportedPart[]) => void; pan?: boolean; isolate?: boolean; fitRequest?: number; markers?: Marker[]; onMarker?: (id: string) => void; upright?: boolean; showGrid?: boolean;
   /** Element that receives pointer input instead of the canvas (used when the canvas sits behind page content). */
   eventSource?: HTMLElement | null;
   /** Pixel offset of the model from the canvas centre. */
@@ -110,5 +113,5 @@ export default function GlbScene({ path, localUrl, highlighted = [], onSelect, o
   }, [path, localUrl, upright]);
   if (error) return <div role="alert" className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">Couldn’t display this model: {error}</div>;
   if (!scene) return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading model…</div>;
-  return <Canvas events={markerFirstEvents} camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
+  return <Canvas events={markerFirstEvents} camera={{ position: [3, 2, 3], fov: 45 }} {...(eventSource ? { eventSource, eventPrefix: "client" as const } : {})}><ambientLight intensity={1.2} /><directionalLight position={[5, 10, 7]} intensity={2.5} /><ViewOffset x={viewOffset[0]} y={viewOffset[1]} /><Suspense fallback={null}><Bounds fit clip observe margin={fitMargin}><Model scene={scene} highlighted={highlighted} highlightColor={highlightColor} isolate={isolate} onSelect={onSelect} onParts={onParts} /><FitView scene={scene} request={fitRequest} /></Bounds>{showGrid && <ModelGrid scene={scene} />}<Markers scene={scene} markers={markers} onMarker={onMarker} /></Suspense><OrbitControls makeDefault mouseButtons={{ LEFT: pan ? MOUSE.PAN : MOUSE.ROTATE, MIDDLE: MOUSE.DOLLY, RIGHT: pan ? MOUSE.ROTATE : MOUSE.PAN }} />{gizmo && <GizmoHelper alignment={gizmo.alignment} margin={gizmo.margin}><GizmoViewport /></GizmoHelper>}</Canvas>;
 }
