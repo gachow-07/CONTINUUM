@@ -104,6 +104,20 @@ export function CreateProjectButton({ label = "Create New Project", variant = "a
   );
 }
 
+/** A full-width list row that opens the same "new project" dialog as CreateProjectButton. */
+export function NewProjectRow({ className }: { className?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
+        <span className="grid h-10 w-[84px] shrink-0 place-items-center rounded-[10px] border border-dashed border-white/15 transition-colors group-hover:border-[#4d94ff]/50"><Plus className="h-4 w-4" /></span>
+        <span className="text-left"><span className="block text-[13.5px] font-semibold">New project</span><span className="block text-[11.5px] text-[#6b7689]">Start a workspace for research, decisions and reviews</span></span>
+      </button>
+      {open && <ProjectFormDialog open={open} onOpenChange={setOpen} />}
+    </>
+  );
+}
+
 export function LoadSampleButton({ variant = "outline" }: { variant?: "outline" | "primary" }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);

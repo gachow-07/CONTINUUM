@@ -32,7 +32,7 @@ function createModel(parts: Part[]) {
 }
 
 /** Render the saved assembly using the same stage as uploaded model previews. */
-export function ModelThumbnail({ parts, name }: { parts: Part[]; name: string }) {
+export function ModelThumbnail({ parts, name, hiRes = false, className = "bg-[#0d131c]" }: { parts: Part[]; name: string; hiRes?: boolean; className?: string }) {
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const hovered = useCardHover(container);
@@ -44,13 +44,13 @@ export function ModelThumbnail({ parts, name }: { parts: Part[]; name: string })
     observer.observe(target);
     return () => observer.disconnect();
   }, []);
-  return <div ref={container} role="img" aria-label={`${name} model preview`} className="pointer-events-none h-full w-full bg-[#0d131c]">{visible && <NativeModel parts={parts} hovered={hovered} />}</div>;
+  return <div ref={container} role="img" aria-label={`${name} model preview`} className={`pointer-events-none h-full w-full ${className}`}>{visible && <NativeModel parts={parts} hovered={hovered} hiRes={hiRes} />}</div>;
 }
 
-function NativeModel({ parts, hovered }: { parts: Part[]; hovered: boolean }) {
+function NativeModel({ parts, hovered, hiRes }: { parts: Part[]; hovered: boolean; hiRes: boolean }) {
   const scene = useMemo(() => createModel(parts), [parts]);
   useEffect(() => () => { scene.traverse((object) => { if (object instanceof Mesh) { object.geometry.dispose(); object.material.dispose(); } }); }, [scene]);
-  return <Canvas frameloop={hovered ? "always" : "demand"} dpr={1} camera={{ position: [3, 2, 3], fov: 45 }}><ThumbnailStage scene={scene} spinning={hovered} /></Canvas>;
+  return <Canvas frameloop={hovered ? "always" : "demand"} dpr={hiRes ? [1, 2] : 1} camera={{ position: [3, 2, 3], fov: 45 }}><ThumbnailStage scene={scene} spinning={hovered} /></Canvas>;
 }
 
 /** Match the model previews while clearly indicating that there is no model to display. */
