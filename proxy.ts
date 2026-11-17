@@ -1,13 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC = ["/login", "/signup", "/auth", "/setup", "/demo", "/judge-demo"];
+const PUBLIC = ["/login", "/signup", "/auth", "/setup", "/demo"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (pathname.startsWith("/setup") || pathname.startsWith("/demo") || pathname.startsWith("/judge-demo")) return NextResponse.next();
+    if (pathname.startsWith("/setup") || pathname.startsWith("/demo")) return NextResponse.next();
     // Without a backend the app still opens straight into the 3D demo workspace.
     return NextResponse.redirect(new URL(pathname === "/" ? "/demo" : "/setup", request.url));
   }
