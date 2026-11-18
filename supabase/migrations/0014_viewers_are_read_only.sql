@@ -15,3 +15,10 @@ create policy conv_insert on public.ai_conversations for insert to authenticated
 drop policy if exists conv_delete on public.ai_conversations;
 create policy conv_delete on public.ai_conversations for delete to authenticated
   using (user_id = auth.uid() and public.can_write_project(project_id));
+
+-- Project editors can update content but cannot silently take ownership or
+-- move the project to another organization by bypassing the UI. Ownership
+-- transfer needs a separate, explicitly authorized workflow.
+revoke update on public.projects from public, anon, authenticated;
+revoke update (id, owner_id, org_id, is_sample, created_at, updated_at) on public.projects from public, anon, authenticated;
+grant update (name, description, category, status, cover_path, archived, viewer_model_file_id) on public.projects to authenticated;
