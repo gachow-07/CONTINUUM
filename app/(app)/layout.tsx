@@ -2,6 +2,7 @@ import { AppShell } from "@/components/shell/sidebar";
 import { requireSession } from "@/lib/session";
 import { SampleOnboarding } from "@/components/projects/sample-onboarding";
 import { anthropicConfigured } from "@/lib/env";
+import { ProjectPermissionsProvider } from "@/components/shell/project-permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user, profile } = await requireSession();
@@ -9,10 +10,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Projects the top-bar Ask AI dropdown can answer about, most recent first (RLS limits this to the user's own).
   const { data: projects } = await supabase.from("projects").select("id,name").eq("archived", false).order("updated_at", { ascending: false }).limit(50);
   const { count } = await supabase.from("project_invitations").select("id", { count: "exact", head: true }).eq("invitee_id", user.id).eq("status", "pending");
+  const { data: roles } = await supabase.from("project_members").select("project_id,role").eq("user_id", user.id);
   return (
+    <ProjectPermissionsProvider roles={roles ?? []}>
     <AppShell pendingInvites={count ?? 0} projects={projects ?? []} aiEnabled={anthropicConfigured()} user={{ name: profile.full_name || user.email || "You", email: user.email ?? "", role: profile.role_title, workspace: org?.name ?? "Workspace", isGuest: user.is_anonymous === true }}>
       <SampleOnboarding pending={user.user_metadata?.continuum_sample_pending === true} />
       {children}
     </AppShell>
+    </ProjectPermissionsProvider>
   );
 }

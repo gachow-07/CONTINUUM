@@ -15,8 +15,11 @@ import type { Scope } from "@/lib/scope";
 import { FileThumb, FilterSelect, NotDocumented, RefChip, Section, SubsystemTag, useOpenParam } from "./common";
 import { REVISION_KIND } from "./meta";
 import { UploadRows, useUploader, type PendingFile } from "./upload-rows";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 export function HistoryView({ scope, projectId, subsystemId }: { scope: Scope; projectId: string; subsystemId?: string }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   const [open, setOpen] = useOpenParam();
   const [adding, setAdding] = useState(false);
   const [comparing, setComparing] = useState(false);
@@ -39,13 +42,13 @@ export function HistoryView({ scope, projectId, subsystemId }: { scope: Scope; p
         <Button variant="ghost" size="sm" onClick={() => setAsc((a) => !a)}>{asc ? "Oldest first" : "Newest first"}</Button>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" onClick={() => setComparing(true)} disabled={scope.revisions.filter((r) => r.project_id === projectId).length < 2}><GitCompare className="h-4 w-4" />Compare revisions</Button>
-          <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />New revision</Button>
+          {editable && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />New revision</Button>}
         </div>
       </div>
 
       {entries.length === 0 ? (
         <EmptyState icon={<GitCompareIcon className="h-5 w-5" />} title="No design history yet" description="Upload a CAD screenshot, calculation or simulation result and explain what changed and why. The timeline builds itself from there."
-          action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Record the first revision</Button>} />
+          action={editable && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Record the first revision</Button>} />
       ) : (
         <ol className="relative ml-3 border-l-2 border-border pl-7">
           {entries.map((r) => {
@@ -83,6 +86,7 @@ export function HistoryView({ scope, projectId, subsystemId }: { scope: Scope; p
 const GitCompareIcon = GitCompare;
 
 function RevisionDrawer({ r, scope, onClose }: { r: Revision; scope: Scope; onClose: () => void }) {
+  const { canWrite } = useProjectPermissions();
   const router = useRouter();
   const [del, setDel] = useState(false);
   const files = scope.files.filter((f) => f.revision_id === r.id);
@@ -94,7 +98,7 @@ function RevisionDrawer({ r, scope, onClose }: { r: Revision; scope: Scope; onCl
 
   return (
     <DrawerContent title={`${r.rev_label} — ${r.title}`} description={`${k.label} · ${formatDate(r.occurred_on)} · ${r.author_name}`}
-      actions={<Button variant="danger-ghost" size="icon" aria-label="Delete revision" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
+      actions={canWrite(r.project_id) && <Button variant="danger-ghost" size="icon" aria-label="Delete revision" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
       <div className="mb-5 flex flex-wrap gap-1.5"><Badge tone={k.tone}>{k.label}</Badge><SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />{r.is_sample && <SampleBadge />}</div>
       <Section title="What changed">{r.description ? <p className="whitespace-pre-wrap">{r.description}</p> : <NotDocumented />}</Section>
       <Section title="Why it changed">{r.reason ? <p className="whitespace-pre-wrap">{r.reason}</p> : <NotDocumented />}</Section>

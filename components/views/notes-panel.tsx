@@ -11,6 +11,7 @@ import { act } from "@/lib/client";
 import { createNote, deleteNote, setNoteStatus } from "@/app/actions/knowledge";
 import type { NoteKind, ProjectNote, Subsystem } from "@/lib/types";
 import { SubsystemTag } from "./common";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 const LABEL: Record<NoteKind, { add: string; empty: string; ph: string }> = {
   background: { add: "Add background", empty: "No background recorded.", ph: "What was the team trying to accomplish?" },
@@ -20,6 +21,8 @@ const LABEL: Record<NoteKind, { add: string; empty: string; ph: string }> = {
 };
 
 export function NotesPanel({ notes, kind, projectId, subsystems, trackStatus }: { notes: ProjectNote[]; kind: NoteKind; projectId: string; subsystems: Subsystem[]; trackStatus?: boolean }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,16 +35,16 @@ export function NotesPanel({ notes, kind, projectId, subsystems, trackStatus }: 
         <ul className="space-y-2.5">
           {items.map((n) => (
             <li key={n.id} className="group flex gap-3 rounded-lg border border-border bg-surface p-3.5">
-              {trackStatus && <button aria-label={n.status === "open" ? "Mark resolved" : "Reopen"} className="mt-0.5 shrink-0 text-muted-foreground hover:text-success" onClick={async () => { const r = await act(setNoteStatus(n.id, n.status === "open" ? "resolved" : "open"), n.status === "open" ? "Marked done" : "Reopened"); if (r.ok) router.refresh(); }}>{n.status === "resolved" ? <CheckCircle2 className="h-4.5 w-4.5 text-success" /> : <Circle className="h-4.5 w-4.5" />}</button>}
+              {trackStatus && (editable ? <button aria-label={n.status === "open" ? "Mark resolved" : "Reopen"} className="mt-0.5 shrink-0 text-muted-foreground hover:text-success" onClick={async () => { const r = await act(setNoteStatus(n.id, n.status === "open" ? "resolved" : "open"), n.status === "open" ? "Marked done" : "Reopened"); if (r.ok) router.refresh(); }}>{n.status === "resolved" ? <CheckCircle2 className="h-4.5 w-4.5 text-success" /> : <Circle className="h-4.5 w-4.5" />}</button> : <span aria-label={n.status === "resolved" ? "Resolved" : "Open"}>{n.status === "resolved" ? <CheckCircle2 className="h-4.5 w-4.5 text-success" /> : <Circle className="h-4.5 w-4.5" />}</span>)}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2"><p className={`text-[13px] font-semibold ${n.status === "resolved" ? "text-muted-foreground line-through" : ""}`}>{n.title}</p><SubsystemTag id={n.subsystem_id} subsystems={subsystems} />{n.is_sample && <SampleBadge />}</div>
                 {n.body && <p className="mt-1 text-[13px] text-muted-foreground">{n.body}</p>}
                 <p className="mt-1.5 text-[11px] text-muted-foreground">{n.author_name}</p>
               </div>
-              <button aria-label="Delete" className="self-start rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100" onClick={() => setDel(n)}><Trash2 className="h-3.5 w-3.5" /></button>
+              {editable && <button aria-label="Delete" className="self-start rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-danger focus:opacity-100 group-hover:opacity-100" onClick={() => setDel(n)}><Trash2 className="h-3.5 w-3.5" /></button>}
             </li>))}
         </ul>)}
-      <Button variant="outline" size="sm" className="mt-3" onClick={() => setAdding(true)}><Plus className="h-3.5 w-3.5" />{LABEL[kind].add}</Button>
+      {editable && <Button variant="outline" size="sm" className="mt-3" onClick={() => setAdding(true)}><Plus className="h-3.5 w-3.5" />{LABEL[kind].add}</Button>}
       {adding && (
         <Dialog open onOpenChange={(o) => !o && setAdding(false)}>
           <DialogContent title={LABEL[kind].add}>

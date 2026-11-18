@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { anthropicConfigured } from "@/lib/env";
+import { requireProjectWriter } from "@/lib/ai/project-permission";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 
 export const maxDuration = 60;
@@ -17,15 +18,20 @@ export async function POST(req: Request) {
   const { kind, id } = parsed.data;
 
   let text = "";
+  let projectId: string;
   if (kind === "research") {
     const { data } = await supabase.from("research_sources").select("*").eq("id", id).maybeSingle();
     if (!data) return Response.json({ error: "Not found" }, { status: 404 });
+    projectId = data.project_id;
     text = `Research source: ${data.title}\nType: ${data.type}\nDescription: ${data.description}\nWhy it matters: ${data.why_important}\nContent: ${(data.content_text ?? "").slice(0, 12000) || "(no text available)"}`;
   } else {
     const { data } = await supabase.from("design_decisions").select("*").eq("id", id).maybeSingle();
     if (!data) return Response.json({ error: "Not found" }, { status: 404 });
+    projectId = data.project_id;
     text = `Decision: ${data.title}\nProblem: ${data.problem}\nSelected: ${data.selected_solution}\nAlternatives: ${JSON.stringify(data.alternatives)}\nReasoning: ${data.reasoning || "(none documented)"}`;
   }
+  const permission = await requireProjectWriter(supabase, projectId);
+  if (permission) return permission;
   const quota = await enforceAnonymousAiLimit(supabase);
   if (quota.error) return quota.error;
 

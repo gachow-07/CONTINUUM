@@ -9,6 +9,7 @@ import { assignResearchModelPart, linkGlbComponent } from "@/app/actions/model";
 import { act, fileUrl } from "@/lib/client";
 import { importedParts } from "@/lib/cad/imported-parts.mjs";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 export type ResearchPart = { key: string; name: string; componentId: string | null; inherited?: boolean };
 type Component = { id: string; name: string };
@@ -19,6 +20,8 @@ export function ResearchParts({ projectId, components, initialParts, model, link
   loadError?: string; preview?: boolean;
 }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
+  const editable = preview || canWrite(projectId);
   const [parts, setParts] = useState(initialParts);
   const [loading, setLoading] = useState(Boolean(model));
   const [modelError, setModelError] = useState("");
@@ -84,18 +87,18 @@ export function ResearchParts({ projectId, components, initialParts, model, link
   const groups = [...components.map((component) => ({ ...component, id: component.id as string | null })), { id: null, name: "Unassigned" }];
   return <section className="mb-6 rounded-lg border border-border bg-surface p-5" aria-label="Project components and model parts">
     <h2 className="text-base font-semibold">Components and model parts</h2>
-    <p className="mt-1 text-sm text-muted-foreground">See your model parts and assign them to a component here.</p>
+    <p className="mt-1 text-sm text-muted-foreground">{editable ? "See your model parts and assign them to a component here." : "Browse the parts assigned to each component."}</p>
     <div className="mt-4 flex flex-wrap gap-2">
       <input aria-label="Search model parts" placeholder="Search model parts" value={query} onChange={(e) => setQuery(e.target.value)} className="min-w-48 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm" />
-      <select aria-label="Choose component for selected parts" disabled={!ready} value={destination} onChange={(e) => setDestination(e.target.value)} className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Choose component</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-      <button type="button" disabled={!ready || !destination || !selected.length || busy !== null} onClick={() => void assignSelected()} className="rounded-md bg-accent px-3 py-2 text-sm text-[#031317] disabled:opacity-40">Assign selected ({selected.length})</button>
+      {editable && <><select aria-label="Choose component for selected parts" disabled={!ready} value={destination} onChange={(e) => setDestination(e.target.value)} className="rounded-md border border-border bg-background px-3 py-2 text-sm"><option value="">Choose component</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+      <button type="button" disabled={!ready || !destination || !selected.length || busy !== null} onClick={() => void assignSelected()} className="rounded-md bg-accent px-3 py-2 text-sm text-[#031317] disabled:opacity-40">Assign selected ({selected.length})</button></>}
     </div>
     {(loadError || modelError) && <p role="alert" className="mt-4 text-sm text-danger">Model parts could not be loaded: {loadError || modelError} Refresh the page to retry.</p>}
     {assignmentError && <p role="alert" className="mt-4 text-sm text-danger">{assignmentError}</p>}
     {!ready ? !(loadError || modelError) && <p className="mt-4 text-sm text-muted-foreground">Loading model parts…</p> : <div className="mt-4 space-y-2">
       {groups.map((group) => { const rows = parts.filter((part) => part.componentId === group.id && part.name.toLowerCase().includes(query.toLowerCase())); return <details key={group.id ?? "unassigned"} open={query ? true : undefined} className="rounded-md border border-border">
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium">{group.name} <span className="ml-1 text-muted-foreground">({rows.length})</span></summary>
-        {rows.length ? <ul className="divide-y divide-border border-t border-border">{rows.map((part) => <li key={part.key} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Select ${part.name}`} disabled={busy !== null || part.inherited} checked={selected.includes(part.key)} onChange={(e) => setSelected((keys) => e.target.checked ? [...keys, part.key] : keys.filter((key) => key !== part.key))} /><span>{part.name}{part.inherited && <span className="ml-2 text-xs text-muted-foreground">Assigned through a parent group</span>}</span></label><select aria-label={`Assign ${part.name} to a component`} value={part.componentId ?? ""} disabled={busy !== null} onChange={(e) => assign(part, e.target.value)} className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"><option value="" disabled={part.inherited}>Unassigned</option>{components.map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}</select></li>)}</ul> : <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">No matching parts.</p>}
+        {rows.length ? <ul className="divide-y divide-border border-t border-border">{rows.map((part) => <li key={part.key} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"><label className="flex items-center gap-2"><input type="checkbox" aria-label={`Select ${part.name}`} disabled={!editable || busy !== null || part.inherited} checked={selected.includes(part.key)} onChange={(e) => setSelected((keys) => e.target.checked ? [...keys, part.key] : keys.filter((key) => key !== part.key))} /><span>{part.name}{part.inherited && <span className="ml-2 text-xs text-muted-foreground">Assigned through a parent group</span>}</span></label><select aria-label={`Assign ${part.name} to a component`} value={part.componentId ?? ""} disabled={!editable || busy !== null} onChange={(e) => assign(part, e.target.value)} className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"><option value="" disabled={part.inherited}>Unassigned</option>{components.map((component) => <option key={component.id} value={component.id}>{component.name}</option>)}</select></li>)}</ul> : <p className="border-t border-border px-4 py-3 text-xs text-muted-foreground">No matching parts.</p>}
       </details>; })}
     </div>}
   </section>;

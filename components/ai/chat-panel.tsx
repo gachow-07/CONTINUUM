@@ -1,4 +1,5 @@
 "use client";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 import { notifyAnonymousAiLimit } from "@/lib/ai/anonymous-limit-notice";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -58,6 +59,8 @@ function CiteNum({ n, cite, onNavigate }: { n: number; cite?: Citation; onNaviga
 export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, initialConversationId, suggestions = DEFAULT_SUGGESTIONS, compact, height, initialQuestion }: {
   projectId: string; projectName: string; aiEnabled: boolean; initialMessages: ChatMessage[]; initialConversationId: string | null; suggestions?: string[]; compact?: boolean; height?: string; initialQuestion?: string;
 }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [conv, setConv] = useState<string | null>(initialConversationId);
   const [input, setInput] = useState("");
@@ -69,12 +72,12 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, busy]);
 
   // A question handed over from another screen (for example "Ask this component…") is sent once.
-  useEffect(() => { if (initialQuestion && aiEnabled && !asked.current && messages.length === 0) { asked.current = true; void send(initialQuestion); } // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (initialQuestion && aiEnabled && editable && !asked.current && messages.length === 0) { asked.current = true; void send(initialQuestion); } // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function send(text: string) {
     const q = text.trim();
-    if (!q || busy) return;
+    if (!q || busy || !editable) return;
     setError(null); setFollowups([]); setInput("");
     setMessages((m) => [...m, { id: `u${Date.now()}`, role: "user", content: q, segments: null, citations: [], created_at: new Date().toISOString() }]);
     setBusy(true);
@@ -102,7 +105,7 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
             <h3 className="text-sm font-semibold">Ask anything about {projectName}</h3>
             <p className="mt-1 text-[13px] text-muted-foreground">Answers come only from what&apos;s documented in this project — research, decisions, revisions, reviews and notes — with sources. If something isn&apos;t documented, it will say so.</p>
             {!aiEnabled && <div className="mt-4 text-left"><SetupNotice title="AI assistant not configured">Add <code className="rounded bg-white/60 px-1">ANTHROPIC_API_KEY</code> to your environment and restart to enable answers.</SetupNotice></div>}
-            <div className="mt-5 flex flex-wrap justify-center gap-2">{suggestions.map((s) => <button key={s} onClick={() => send(s)} disabled={!aiEnabled} className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50">{s}</button>)}</div>
+            {editable && <div className="mt-5 flex flex-wrap justify-center gap-2">{suggestions.map((s) => <button key={s} onClick={() => send(s)} disabled={!aiEnabled} className="rounded-full border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:border-accent hover:bg-accent-soft hover:text-accent disabled:opacity-50">{s}</button>)}</div>}
           </div>
         )}
         {messages.map((m) => m.role === "user" ? (
@@ -115,12 +118,12 @@ export function ChatPanel({ projectId, projectName, aiEnabled, initialMessages, 
         {followups.length > 0 && !busy && <div className="flex flex-wrap gap-2 pl-10">{followups.map((f) => <button key={f} onClick={() => send(f)} className="rounded-full border border-border px-3 py-1 text-xs text-foreground hover:border-accent hover:text-accent">{f}</button>)}</div>}
         <div ref={endRef} />
       </div>
-      {messages.length > 0 && !busy && messages.length < 3 && <div className="flex flex-wrap gap-1.5 px-4 pb-2">{suggestions.slice(0, 3).map((s) => <button key={s} onClick={() => send(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground hover:border-accent hover:text-accent">{s}</button>)}</div>}
+      {editable && messages.length > 0 && !busy && messages.length < 3 && <div className="flex flex-wrap gap-1.5 px-4 pb-2">{suggestions.slice(0, 3).map((s) => <button key={s} onClick={() => send(s)} className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground hover:border-accent hover:text-accent">{s}</button>)}</div>}
       <form className="flex items-end gap-2 border-t border-border p-3" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-        <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} disabled={!aiEnabled} aria-label="Ask a question about this project"
+        <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} disabled={!aiEnabled || !editable} aria-label="Ask a question about this project"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-          placeholder={aiEnabled ? "Ask about decisions, research, reviews…" : "AI isn't configured"} className="max-h-32 min-h-9 flex-1 resize-none rounded-md border border-border-strong bg-surface px-3 py-2 text-[13px] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-muted" />
-        <Button type="submit" variant="accent" size="icon" className="h-9 w-9" disabled={!input.trim() || busy || !aiEnabled} aria-label="Send"><ArrowUp className="h-4 w-4" /></Button>
+          placeholder={!editable ? "View-only access" : aiEnabled ? "Ask about decisions, research, reviews…" : "AI isn't configured"} className="max-h-32 min-h-9 flex-1 resize-none rounded-md border border-border-strong bg-surface px-3 py-2 text-[13px] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-muted" />
+        <Button type="submit" variant="accent" size="icon" className="h-9 w-9" disabled={!input.trim() || busy || !aiEnabled || !editable} aria-label="Send"><ArrowUp className="h-4 w-4" /></Button>
       </form>
     </div>
   );

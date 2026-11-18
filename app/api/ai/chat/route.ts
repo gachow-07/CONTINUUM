@@ -6,6 +6,7 @@ import { nothingRelevant, retrieve } from "@/lib/ai/retrieve";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { CHAT_SCHEMA, GAP_SENTENCE, GROUNDING_RULES } from "@/lib/ai/prompts";
 import { anthropicConfigured } from "@/lib/env";
+import { requireProjectWriter } from "@/lib/ai/project-permission";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { AnswerSegment, Citation } from "@/lib/types";
 
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
 
   const bundle = await loadBundle(supabase, projectId);
   if (!bundle) return Response.json({ error: "Project not found or you don't have access." }, { status: 404 });
+  const permission = await requireProjectWriter(supabase, projectId);
+  if (permission) return permission;
 
   const quota = await enforceAnonymousAiLimit(supabase);
   if (quota.error) return quota.error;

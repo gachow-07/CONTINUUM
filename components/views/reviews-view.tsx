@@ -15,8 +15,11 @@ import type { Scope } from "@/lib/scope";
 import { FileThumb, FilterSelect, RefChip, SearchBox, Section, SubsystemTag, useOpenParam } from "./common";
 import { REVIEW_STATUS } from "./meta";
 import { UploadRows, useUploader, type PendingFile } from "./upload-rows";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; projectId?: string; subsystemId?: string }) {
+  const { canWrite } = useProjectPermissions();
+  const mayRequest = projectId ? canWrite(projectId) : scope.projects.some((p) => canWrite(p.id));
   const [open, setOpen] = useOpenParam();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
@@ -32,11 +35,11 @@ export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; p
         <SearchBox value={q} onChange={setQ} placeholder="Search reviews…" />
         {!projectId && <FilterSelect value={project} onChange={setProject} label="All projects" options={scope.projects.map((p) => ({ value: p.id, label: p.name }))} />}
         <FilterSelect value={status} onChange={setStatus} label="Any status" options={Object.entries(REVIEW_STATUS).map(([v, m]) => ({ value: v, label: m.label }))} />
-        <Button variant="accent" onClick={() => setAdding(true)} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Request review</Button>
+        {mayRequest && <Button variant="accent" onClick={() => setAdding(true)} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Request review</Button>}
       </div>
       {rows.length === 0 ? (
         <EmptyState icon={<ClipboardCheck className="h-5 w-5" />} title={scope.reviews.length ? "No reviews match your filters" : "No reviews yet"} description="Ask a teammate to review a decision or a revision. Comments, questions and their resolutions stay on the record."
-          action={!scope.reviews.length && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Request a review</Button>} />
+          action={mayRequest && !scope.reviews.length && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Request a review</Button>} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
           <ul className="divide-y divide-border">
@@ -71,6 +74,8 @@ export function ReviewsView({ scope, projectId, subsystemId }: { scope: Scope; p
 }
 
 function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose: () => void }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(r.project_id);
   const router = useRouter();
   const [del, setDel] = useState(false);
   const [body, setBody] = useState("");
@@ -107,9 +112,9 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
             {influenced && <p className="mt-2 text-xs text-muted-foreground">This feedback led to <RefChip projectId={r.project_id} type="revision" id={influenced.id} label={`${influenced.rev_label} — ${influenced.title}`} onNavigate={onClose} /></p>}
             {c.resolved && <p className="mt-1.5 flex items-center gap-1 text-xs text-success"><CheckCircle2 className="h-3.5 w-3.5" />Resolved by {c.resolved_by}{c.resolved_at ? ` · ${formatDate(c.resolved_at)}` : ""}</p>}
             <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
-              {!reply && <button className="font-medium text-accent hover:underline" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>Reply</button>}
-              {!reply && <button className="font-medium text-foreground hover:underline" onClick={async () => { const x = await act(setCommentResolved(c.id, !c.resolved), c.resolved ? "Reopened" : "Marked resolved"); if (x.ok) refresh(); }}>{c.resolved ? "Reopen" : "Mark resolved"}</button>}
-              {!reply && (
+              {!reply && editable && <button className="font-medium text-accent hover:underline" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}>Reply</button>}
+              {!reply && editable && <button className="font-medium text-foreground hover:underline" onClick={async () => { const x = await act(setCommentResolved(c.id, !c.resolved), c.resolved ? "Reopened" : "Marked resolved"); if (x.ok) refresh(); }}>{c.resolved ? "Reopen" : "Mark resolved"}</button>}
+              {!reply && editable && (
                 <label className="flex items-center gap-1 text-muted-foreground">Led to revision:
                   <select aria-label="Revision influenced by this comment" className="max-w-[160px] rounded border border-border bg-surface px-1 py-0.5 text-xs" value={c.influenced_revision_id ?? ""} onChange={async (e) => { const x = await act(linkCommentToRevision(c.id, e.target.value || null), "Linked"); if (x.ok) refresh(); }}>
                     <option value="">—</option>{revisions.map((v) => <option key={v.id} value={v.id}>{v.rev_label}</option>)}
@@ -123,13 +128,13 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
 
   return (
     <DrawerContent title={r.title} description={`Requested by ${r.requester_name} · ${formatDate(r.created_at)}`}
-      actions={<Button variant="danger-ghost" size="icon" aria-label="Delete review" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
+      actions={editable && <Button variant="danger-ghost" size="icon" aria-label="Delete review" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
       <div className="mb-5 flex flex-wrap items-center gap-1.5">
         <Badge tone={REVIEW_STATUS[r.status].tone} dot>{REVIEW_STATUS[r.status].label}</Badge><SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} />{r.is_sample && <SampleBadge />}
       </div>
       <div className="mb-5 grid gap-3 sm:grid-cols-2">
-        <Field label="Status"><Select value={r.status} onChange={async (e) => { const x = await act(setReviewStatus(r.id, e.target.value as ReviewStatus), "Status updated"); if (x.ok) refresh(); }}>{Object.entries(REVIEW_STATUS).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}</Select></Field>
-        <Field label="Reviewer"><Select value={r.reviewer_member_id ?? ""} onChange={async (e) => { const x = await act(assignReviewer(r.id, e.target.value || null), "Reviewer assigned"); if (x.ok) refresh(); }}><option value="">Unassigned</option>{members.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}</Select></Field>
+        <Field label="Status"><Select disabled={!editable} value={r.status} onChange={async (e) => { const x = await act(setReviewStatus(r.id, e.target.value as ReviewStatus), "Status updated"); if (x.ok) refresh(); }}>{Object.entries(REVIEW_STATUS).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}</Select></Field>
+        <Field label="Reviewer"><Select disabled={!editable} value={r.reviewer_member_id ?? ""} onChange={async (e) => { const x = await act(assignReviewer(r.id, e.target.value || null), "Reviewer assigned"); if (x.ok) refresh(); }}><option value="">Unassigned</option>{members.filter((m) => m.role !== "viewer" || m.id === r.reviewer_member_id).map((m) => <option key={m.id} value={m.id} disabled={m.role === "viewer"}>{m.display_name}{m.role === "viewer" ? " (view-only)" : ""}</option>)}</Select></Field>
       </div>
       {r.description && <Section title="Request"><p className="whitespace-pre-wrap">{r.description}</p></Section>}
       {(decision || revision || file) && (
@@ -142,7 +147,7 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
           {file && <a href={fileUrl(file.storage_path)} target="_blank" rel="noopener noreferrer" className="mt-3 block aspect-[16/8] max-w-sm overflow-hidden rounded-lg border border-border bg-muted"><FileThumb file={file} /></a>}
         </Section>)}
       <Section title={`Discussion (${comments.length})`}>
-        {top.length === 0 ? <p className="text-muted-foreground">No comments yet. Start the discussion below.</p> : (
+        {top.length === 0 ? <p className="text-muted-foreground">{editable ? "No comments yet. Start the discussion below." : "No comments yet."}</p> : (
           <div className="space-y-3">{top.map((c) => (
             <div key={c.id} className="space-y-2">{renderComment(c)}{comments.filter((x) => x.parent_id === c.id).map((x) => renderComment(x, true))}
               {replyTo === c.id && <div className="ml-6 flex items-start gap-2"><CornerDownRight className="mt-2.5 h-4 w-4 text-muted-foreground" /><Textarea autoFocus value={body} onChange={(e) => setBody(e.target.value)} className="min-h-[64px]" placeholder={`Reply to ${c.author_name}…`} />
@@ -150,7 +155,7 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
             </div>))}
           </div>)}
       </Section>
-      {!replyTo && (
+      {editable && !replyTo && (
         <div className="rounded-lg border border-border bg-muted/40 p-3">
           <div className="mb-2 flex gap-1" role="tablist">{(["comment", "question"] as const).map((k) => <button key={k} role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className={`rounded px-2.5 py-1 text-xs font-medium ${kind === k ? "bg-surface shadow-sm" : "text-muted-foreground"}`}>{k === "comment" ? "Comment" : "Technical question"}</button>)}</div>
           <Textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder={kind === "question" ? "Ask a technical question…" : "Leave feedback…"} className="min-h-[72px] bg-surface" />
@@ -163,21 +168,23 @@ function ReviewDrawer({ r, scope, onClose }: { r: Review; scope: Scope; onClose:
 
 function ReviewDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope; projectId?: string; subsystemId?: string; onClose: () => void }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
+  const writableProjects = scope.projects.filter((p) => canWrite(p.id));
   const { upload, progress } = useUploader();
-  const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
+  const [pid, setPid] = useState(projectId ?? writableProjects[0]?.id ?? "");
   const [f, setF] = useState({ title: "", description: "", subsystem_id: subsystemId ?? "", decision_id: "", revision_id: "", file_id: "", reviewer: "" });
   const [items, setItems] = useState<PendingFile[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = (k: keyof typeof f, v: string) => setF((p) => ({ ...p, [k]: v }));
-  const members = scope.members.filter((m) => m.project_id === pid);
+  const members = scope.members.filter((m) => m.project_id === pid && m.role !== "viewer");
   return (
     <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
       <DialogContent wide title="Request a review" description="Ask a teammate to review a decision, revision or document.">
         <div className="space-y-4">
           <Field label="Title" required><Input value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Review: steering linkage geometry" autoFocus /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); setF({ ...f, subsystem_id: "", decision_id: "", revision_id: "", file_id: "", reviewer: "" }); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
+            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); setF({ ...f, subsystem_id: "", decision_id: "", revision_id: "", file_id: "", reviewer: "" }); }}>{writableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
             <Field label="Reviewer"><Select value={f.reviewer} onChange={(e) => set("reviewer", e.target.value)}><option value="">Assign later</option>{members.map((m) => <option key={m.id} value={m.id}>{m.display_name}</option>)}</Select></Field>
             <Field label="Subsystem"><Select value={f.subsystem_id} onChange={(e) => set("subsystem_id", e.target.value)}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === pid).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
             <Field label="Design decision under review"><Select value={f.decision_id} onChange={(e) => set("decision_id", e.target.value)}><option value="">None</option>{scope.decisions.filter((d) => d.project_id === pid).map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</Select></Field>

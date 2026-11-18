@@ -3,14 +3,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { ChevronUp, Send, Sparkles } from "lucide-react";
 import { ChatPanel } from "@/components/ai/chat-panel";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 /**
  * "Ask this component…": the answer opens right here, under the bar, so the person stays on the component.
  * Without an AI key it says so instead of pretending to answer.
  */
 export function AskBar({ projectId, projectName, componentName, aiEnabled }: { projectId: string; projectName: string; componentName: string; aiEnabled: boolean }) {
+  const { canWrite } = useProjectPermissions();
   const [q, setQ] = useState("");
   const [asked, setAsked] = useState<string | null>(null);
+  if (!canWrite(projectId)) return null;
 
   if (asked) return (
     <div className="ai-ring overflow-hidden rounded-xl shadow-[0_10px_30px_-18px_rgba(59,130,246,0.7)]">
