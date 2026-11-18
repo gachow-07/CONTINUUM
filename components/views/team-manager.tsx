@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/misc";
 import { act } from "@/lib/client";
 import { cancelInvitation } from "@/app/actions/invitations";
 import { addMemberByEmail, addTeammateName, removeMember, updateMemberRole } from "@/app/actions/projects";
+import { transferProjectOwnership } from "@/app/actions/organizations";
 import { initials } from "@/lib/utils";
 import type { Member, Project } from "@/lib/types";
 
@@ -19,6 +20,7 @@ export function TeamManager({ project, members, isOwner, currentUserId, invitati
   const [role, setRole] = useState<"editor" | "viewer">("editor");
   const [busy, setBusy] = useState(false);
   const [rm, setRm] = useState<Member | null>(null);
+  const [transfer, setTransfer] = useState<Member | null>(null);
   const isEmail = value.includes("@");
 
   return (
@@ -33,6 +35,7 @@ export function TeamManager({ project, members, isOwner, currentUserId, invitati
             {m.role === "owner" || !isOwner ? <Badge tone={m.role === "owner" ? "accent" : "neutral"} className="capitalize">{m.role}</Badge> : (
               <>
                 <Select aria-label={`Role for ${m.display_name}`} className="h-8 w-auto py-0 text-xs" value={m.role} onChange={async (e) => { const r = await act(updateMemberRole(m.id, e.target.value as "editor" | "viewer"), "Role updated"); if (r.ok) router.refresh(); }}><option value="editor">Editor</option><option value="viewer">Viewer</option></Select>
+                {m.role === "editor" && m.user_id && <Button variant="ghost" size="sm" onClick={() => setTransfer(m)}>Transfer ownership</Button>}
                 <Button variant="danger-ghost" size="icon" aria-label={`Remove ${m.display_name}`} onClick={() => setRm(m)}><Trash2 className="h-4 w-4" /></Button>
               </>)}
           </li>))}
@@ -49,6 +52,7 @@ export function TeamManager({ project, members, isOwner, currentUserId, invitati
           <Button type="submit" variant="accent" loading={busy} disabled={!value.trim()}><UserPlus className="h-4 w-4" />{isEmail ? "Invite" : "Add"}</Button>
         </form>) : <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">Only the project owner can change the team.</p>}
       <ConfirmDialog open={Boolean(rm)} onOpenChange={(o) => !o && setRm(null)} title={`Remove ${rm?.display_name}?`} description="They lose access to this project immediately. Anything they contributed stays in the record." confirmLabel="Remove" onConfirm={async () => { if (!rm) return; const r = await act(removeMember(rm.id), "Member removed"); if (r.ok) router.refresh(); }} />
+      <ConfirmDialog open={Boolean(transfer)} onOpenChange={(o) => !o && setTransfer(null)} title={`Transfer project ownership to ${transfer?.display_name}?`} description="They become the project owner and manage sharing. You remain an editor." confirmLabel="Transfer ownership" onConfirm={async () => { if (!transfer?.user_id) return; const r = await act(transferProjectOwnership(project.id, transfer.user_id), "Project ownership transferred"); if (r.ok) router.refresh(); }} />
     </Card>
   );
 }
