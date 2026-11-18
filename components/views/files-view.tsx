@@ -14,8 +14,11 @@ import type { FileRow } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
 import { FileThumb, FilterSelect, RefChip, SearchBox, Section, SubsystemTag, useOpenParam } from "./common";
 import { UploadRows, useUploader, type PendingFile } from "./upload-rows";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 export function FilesView({ scope, projectId, subsystemId }: { scope: Scope; projectId: string; subsystemId?: string }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   const [open, setOpen] = useOpenParam();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
@@ -30,11 +33,11 @@ export function FilesView({ scope, projectId, subsystemId }: { scope: Scope; pro
         <SearchBox value={q} onChange={setQ} placeholder="Search files…" />
         {!subsystemId && <FilterSelect value={sub} onChange={setSub} label="All subsystems" options={scope.subsystems.filter((s) => s.project_id === projectId).map((s) => ({ value: s.id, label: s.name }))} />}
         <FilterSelect value={cat} onChange={setCat} label="All categories" options={Object.entries(CATEGORY_LABEL).map(([v, l]) => ({ value: v, label: l }))} />
-        <Button variant="accent" onClick={() => setAdding(true)}><FileUp className="h-4 w-4" />Upload files</Button>
+        {editable && <Button variant="accent" onClick={() => setAdding(true)}><FileUp className="h-4 w-4" />Upload files</Button>}
       </div>
       {rows.length === 0 ? (
         <EmptyState icon={<FolderOpen className="h-5 w-5" />} title={scope.files.some((f) => f.project_id === projectId) ? "No files match your filters" : "No files uploaded yet"} description="Upload CAD screenshots, calculations, FEA/CFD results and documents. Files are private to this project's team."
-          action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Upload files</Button>} />
+          action={editable && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Upload files</Button>} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rows.map((f) => (
@@ -86,6 +89,8 @@ function UploadDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope
 }
 
 function FileDrawer({ f, scope, onClose }: { f: FileRow; scope: Scope; onClose: () => void }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(f.project_id);
   const router = useRouter();
   const [del, setDel] = useState(false);
   const [desc, setDesc] = useState(f.description);
@@ -94,7 +99,7 @@ function FileDrawer({ f, scope, onClose }: { f: FileRow; scope: Scope; onClose: 
   const decisions = scope.evidence.filter((e) => e.file_id === f.id).map((e) => scope.decisions.find((d) => d.id === e.decision_id)).filter(Boolean);
   return (
     <DrawerContent title={f.name} description={`${CATEGORY_LABEL[f.category]} · ${formatBytes(f.size)} · uploaded ${formatDate(f.created_at)}`}
-      actions={<><a href={fileUrl(f.storage_path, f.name)} aria-label="Download" className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Download className="h-4 w-4" /></a><Button variant="danger-ghost" size="icon" aria-label="Delete file" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button></>}>
+      actions={<><a href={fileUrl(f.storage_path, f.name)} aria-label="Download" className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted"><Download className="h-4 w-4" /></a>{editable && <Button variant="danger-ghost" size="icon" aria-label="Delete file" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}</>}>
       <div className="mb-5 flex flex-wrap gap-1.5"><SubsystemTag id={f.subsystem_id} subsystems={scope.subsystems} />{f.is_sample && <SampleBadge />}</div>
       {isImage(f.mime, f.name) ? (
         <a href={fileUrl(f.storage_path)} target="_blank" rel="noopener noreferrer" className="mb-5 block overflow-hidden rounded-lg border border-border bg-muted"><FileThumb file={f} className="max-h-[360px] object-contain" /></a>
@@ -102,8 +107,8 @@ function FileDrawer({ f, scope, onClose }: { f: FileRow; scope: Scope; onClose: 
         <a href={fileUrl(f.storage_path)} target="_blank" rel="noopener noreferrer" className="mb-5 flex items-center justify-center rounded-lg border border-dashed border-border-strong bg-muted/50 py-8 text-[13px] font-medium text-accent hover:underline">Open file</a>
       )}
       <Section title="Description">
-        <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} className="min-h-[64px]" placeholder="Describe what this file shows" />
-        {desc !== f.description && <Button size="sm" variant="accent" className="mt-2" loading={busy} onClick={async () => { setBusy(true); const r = await act(updateFile(f.id, { description: desc }), "Saved"); setBusy(false); if (r.ok) router.refresh(); }}>Save description</Button>}
+        {editable ? <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} className="min-h-[64px]" placeholder="Describe what this file shows" /> : <p>{f.description || "No description."}</p>}
+        {editable && desc !== f.description && <Button size="sm" variant="accent" className="mt-2" loading={busy} onClick={async () => { setBusy(true); const r = await act(updateFile(f.id, { description: desc }), "Saved"); setBusy(false); if (r.ok) router.refresh(); }}>Save description</Button>}
       </Section>
       {rev && <Section title="Part of revision"><RefChip projectId={f.project_id} type="revision" id={rev.id} label={`${rev.rev_label} — ${rev.title}`} onNavigate={onClose} /></Section>}
       {decisions.length > 0 && <Section title="Evidence for decisions"><ul className="space-y-1.5">{decisions.map((d) => d && <li key={d.id}><RefChip projectId={f.project_id} type="decision" id={d.id} label={d.title} onNavigate={onClose} /></li>)}</ul></Section>}

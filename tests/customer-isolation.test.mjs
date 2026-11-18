@@ -65,10 +65,33 @@ test('actual project and storage policies isolate unshared users', async () => {
     await db.query('select public.send_project_invitation($1,$2,$3)',[pb,'a@example.com','viewer']);
     await as(a);
     assert.equal((await db.query('select * from public.list_my_project_invitations()')).rows.length,1,'owner can still invite an account after lookup is restricted');
+    await db.exec('reset role');
+    await db.exec(await readFile(new URL('../supabase/migrations/0014_viewers_are_read_only.sql', import.meta.url), 'utf8'));
+    const review = '40000000-0000-0000-0000-000000000001';
+    const editor = '00000000-0000-0000-0000-000000000004';
+    await db.query(`insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data) values ($1,'editor@example.com',now(),'{}')`, [editor]);
+    await db.query('insert into project_members(project_id,user_id,display_name,role) values ($1,$2,$3,$4)', [pb,editor,'Editor','editor']);
+    await as(b);
+    await db.query('insert into reviews(id,project_id,title) values($1,$2,$3)', [review,pb,'Review']);
+    await db.query('insert into review_comments(project_id,review_id,body) values($1,$2,$3)', [pb,review,'Owner comment']);
+    await as(editor);
+    await db.query('insert into review_comments(project_id,review_id,body) values($1,$2,$3)', [pb,review,'Editor comment']);
+    assert.equal((await db.query('update reviews set status=$1 where id=$2 returning id',['in_review',review])).rows.length,1,'editor can update review');
+    await assert.rejects(db.query('select public.send_project_invitation($1,$2,$3)',[pb,'shared@example.com','viewer']), /Only the project owner/);
     await as(shared);
     assert.equal((await db.query('select * from projects where id=$1',[pb])).rows.length,1,'explicitly shared viewer can read');
     assert.equal((await db.query('select * from storage.objects where name=$1',[`${pb}/b.glb`])).rows.length,1,'shared viewer can read file');
     assert.equal((await db.query('update research_sources set title=$1 where id=$2 returning id',['tampered',doc])).rows.length,0,'viewer cannot edit research');
+    assert.equal((await db.query('select * from review_comments where review_id=$1',[review])).rows.length,2,'viewer can read comments');
+    assert.equal((await db.query('update reviews set status=$1 where id=$2 returning id',['approved',review])).rows.length,0,'viewer cannot approve a review');
+    assert.equal((await db.query('update review_comments set body=$1 where review_id=$2 returning id',['changed',review])).rows.length,0,'viewer cannot edit comments');
+    for (const [sql, args] of [
+      ['insert into reviews(project_id,title) values($1,$2)',[pb,'Viewer review']],
+      ['insert into review_comments(project_id,review_id,body) values($1,$2,$3)',[pb,review,'Viewer comment']],
+      ['insert into project_activity(project_id,kind,summary) values($1,$2,$3)',[pb,'review','Fake activity']],
+      ['insert into ai_conversations(project_id,user_id,title) values($1,$2,$3)',[pb,shared,'Viewer conversation']],
+      ['insert into ai_messages(project_id,conversation_id,role,content) values($1,$2,$3,$4)',[pb,conversation,'user','Viewer message']],
+    ]) await assert.rejects(db.query(sql,args));
     await db.exec('reset role');
     await db.query('delete from project_members where project_id=$1 and user_id=$2',[pb,shared]);
     await as(shared);

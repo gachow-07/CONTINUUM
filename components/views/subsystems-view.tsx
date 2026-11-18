@@ -11,6 +11,7 @@ import { act } from "@/lib/client";
 import { createSubsystem, deleteSubsystem, updateSubsystem } from "@/app/actions/knowledge";
 import type { Subsystem } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 export function SubsystemDialog({ projectId, subsystem, onClose }: { projectId: string; subsystem?: Subsystem; onClose: () => void }) {
   const router = useRouter();
@@ -36,9 +37,11 @@ export function SubsystemDialog({ projectId, subsystem, onClose }: { projectId: 
 }
 
 export function SubsystemActions({ subsystem, redirectTo }: { subsystem: Subsystem; redirectTo?: string }) {
+  const { canWrite } = useProjectPermissions();
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const [del, setDel] = useState(false);
+  if (!canWrite(subsystem.project_id)) return null;
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setEdit(true)}><Pencil className="h-3.5 w-3.5" />Rename / edit</Button>
@@ -50,16 +53,17 @@ export function SubsystemActions({ subsystem, redirectTo }: { subsystem: Subsyst
 }
 
 export function SubsystemsView({ scope, projectId }: { scope: Scope; projectId: string }) {
+  const { canWrite } = useProjectPermissions();
   const [adding, setAdding] = useState(false);
   const subs = scope.subsystems.filter((s) => s.project_id === projectId);
   return (
     <div>
       <div className="mb-4 flex justify-between gap-3">
         <p className="max-w-xl text-[13px] text-muted-foreground">Each subsystem is its own mini-workspace — with its own research, files, decisions and revision history — that stays connected to the project.</p>
-        <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />New subsystem</Button>
+        {canWrite(projectId) && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />New subsystem</Button>}
       </div>
       {subs.length === 0 ? (
-        <EmptyState icon={<Layers className="h-5 w-5" />} title="No subsystems yet" description="Break the project into parts — for an RC car: Suspension, Steering, Chassis, Drivetrain." action={<Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Create subsystem</Button>} />
+        <EmptyState icon={<Layers className="h-5 w-5" />} title="No subsystems yet" description="Break the project into parts — for an RC car: Suspension, Steering, Chassis, Drivetrain." action={canWrite(projectId) && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Create subsystem</Button>} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {subs.map((s) => {

@@ -14,10 +14,13 @@ import { deleteDecision, saveDecision } from "@/app/actions/knowledge";
 import { formatDate } from "@/lib/utils";
 import type { Alternative, Decision } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 import { FilterSelect, NotDocumented, RefChip, SearchBox, Section, SubsystemTag, useOpenParam } from "./common";
 import { DECISION_STATUS } from "./meta";
 
 export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { scope: Scope; projectId?: string; subsystemId?: string; aiEnabled: boolean }) {
+  const { canWrite } = useProjectPermissions();
+  const mayAdd = projectId ? canWrite(projectId) : scope.projects.some((p) => canWrite(p.id));
   const [open, setOpen] = useOpenParam();
   const [editing, setEditing] = useState<Decision | "new" | null>(null);
   const [q, setQ] = useState("");
@@ -37,13 +40,13 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
         {!projectId && <FilterSelect value={project} onChange={(v) => { setProject(v); setSub(""); }} label="All projects" options={scope.projects.map((p) => ({ value: p.id, label: p.name }))} />}
         {!subsystemId && <FilterSelect value={sub} onChange={setSub} label="All subsystems" options={scope.subsystems.filter((s) => !project || s.project_id === project).map((s) => ({ value: s.id, label: s.name }))} />}
         <FilterSelect value={status} onChange={setStatus} label="Any status" options={Object.entries(DECISION_STATUS).map(([v, m]) => ({ value: v, label: m.label }))} />
-        <Button variant="accent" onClick={() => setEditing("new")} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add decision</Button>
+        {mayAdd && <Button variant="accent" onClick={() => setEditing("new")} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add decision</Button>}
       </div>
 
       {rows.length === 0 ? (
         <EmptyState icon={<Scale className="h-5 w-5" />} title={scope.decisions.length ? "No decisions match your filters" : "No design decisions yet"}
           description={scope.decisions.length ? "Try clearing a filter." : "Record what you decided, what you rejected, and why — with the research and revisions that back it up."}
-          action={!scope.decisions.length && <Button variant="accent" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />Add decision</Button>} />
+          action={mayAdd && !scope.decisions.length && <Button variant="accent" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />Add decision</Button>} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
           <ul className="divide-y divide-border">
@@ -83,6 +86,8 @@ export function DecisionsView({ scope, projectId, subsystemId, aiEnabled }: { sc
 }
 
 function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision; scope: Scope; aiEnabled: boolean; onClose: () => void; onEdit: () => void }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(d.project_id);
   const router = useRouter();
   const [del, setDel] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -106,7 +111,7 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
 
   return (
     <DrawerContent title={d.title} description={`${d.author_name} · ${formatDate(d.decided_on)}`}
-      actions={<><Button variant="ghost" size="icon" aria-label="Edit decision" onClick={onEdit}><Pencil className="h-4 w-4" /></Button><Button variant="danger-ghost" size="icon" aria-label="Delete decision" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button></>}>
+      actions={editable && <><Button variant="ghost" size="icon" aria-label="Edit decision" onClick={onEdit}><Pencil className="h-4 w-4" /></Button><Button variant="danger-ghost" size="icon" aria-label="Delete decision" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button></>}>
       <div className="mb-5 flex flex-wrap gap-1.5"><Badge tone={DECISION_STATUS[d.status].tone}>{DECISION_STATUS[d.status].label}</Badge><SubsystemTag id={d.subsystem_id} subsystems={scope.subsystems} />{d.is_sample && <SampleBadge />}</div>
       <Section title="Problem">{d.problem || <NotDocumented />}</Section>
       <Section title="Selected solution">{d.selected_solution || <NotDocumented />}</Section>
@@ -127,7 +132,7 @@ function DecisionDrawer({ d, scope, aiEnabled, onClose, onEdit }: { d: Decision;
       <Section title="Peer reviews">
         {reviews.length === 0 ? <span className="text-muted-foreground">No reviews requested for this decision.</span> : <ul className="space-y-1.5">{reviews.map((r) => <li key={r.id}><RefChip projectId={pid} type="review" id={r.id} label={r.title} onNavigate={onClose} /></li>)}</ul>}
       </Section>
-      <Section title="AI summary" action={aiEnabled ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{d.ai_summary ? "Regenerate" : "Generate"}</button> : undefined}>
+      <Section title="AI summary" action={aiEnabled && editable ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{d.ai_summary ? "Regenerate" : "Generate"}</button> : undefined}>
         {d.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{d.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.</span> : <SetupNotice title="AI not configured">Add ANTHROPIC_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       <ConfirmDialog open={del} onOpenChange={setDel} title="Delete this decision?" description="Evidence links are removed with it. Research, revisions and files are kept." onConfirm={async () => { const r = await act(deleteDecision(d.id), "Decision deleted"); if (r.ok) { onClose(); router.refresh(); } }} />
@@ -143,7 +148,9 @@ interface AssistResult {
 
 function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, onClose }: { scope: Scope; decision: Decision | null; projectId?: string; subsystemId?: string; aiEnabled: boolean; onClose: () => void }) {
   const router = useRouter();
-  const [pid, setPid] = useState(decision?.project_id ?? projectId ?? scope.projects[0]?.id ?? "");
+  const { canWrite } = useProjectPermissions();
+  const writableProjects = scope.projects.filter((p) => canWrite(p.id));
+  const [pid, setPid] = useState(decision?.project_id ?? projectId ?? writableProjects[0]?.id ?? "");
   const [f, setF] = useState({
     title: decision?.title ?? "", subsystem_id: decision?.subsystem_id ?? subsystemId ?? "", status: decision?.status ?? "proposed",
     decided_on: decision?.decided_on ?? new Date().toISOString().slice(0, 10), problem: decision?.problem ?? "", selected_solution: decision?.selected_solution ?? "", reasoning: decision?.reasoning ?? "",
@@ -228,7 +235,7 @@ function DecisionEditor({ scope, decision, projectId, subsystemId, aiEnabled, on
 
           <Field label="Decision title" required><Input value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Switch to double-wishbone suspension" /></Field>
           <div className="grid gap-4 sm:grid-cols-3">
-            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); set("subsystem_id", ""); setEv({}); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
+            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => { setPid(e.target.value); set("subsystem_id", ""); setEv({}); }}>{writableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
             <Field label="Subsystem"><Select value={f.subsystem_id} onChange={(e) => set("subsystem_id", e.target.value)}><option value="">None</option>{scope.subsystems.filter((s) => s.project_id === pid).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
             <Field label="Status"><Select value={f.status} onChange={(e) => set("status", e.target.value)}>{Object.entries(DECISION_STATUS).map(([v, m]) => <option key={v} value={v}>{m.label}</option>)}</Select></Field>
             <Field label="Date"><Input type="date" value={f.decided_on} onChange={(e) => set("decided_on", e.target.value)} /></Field>

@@ -4,6 +4,7 @@ import { loadBundle } from "@/lib/bundle";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { DECISION_SCHEMA, DECISION_SYSTEM } from "@/lib/ai/prompts";
 import { anthropicConfigured } from "@/lib/env";
+import { requireProjectWriter } from "@/lib/ai/project-permission";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import { formatDate } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const bundle = await loadBundle(supabase, projectId);
   if (!bundle) return Response.json({ error: "Project not found" }, { status: 404 });
+  const permission = await requireProjectWriter(supabase, projectId);
+  if (permission) return permission;
 
   const quota = await enforceAnonymousAiLimit(supabase);
   if (quota.error) return quota.error;

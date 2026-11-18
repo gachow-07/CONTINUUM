@@ -5,6 +5,7 @@ import { buildCorpus } from "@/lib/ai/corpus";
 import { callJson, aiErrorResponse, AiNotConfigured } from "@/lib/ai/anthropic";
 import { DOC_SCHEMA, DOC_SYSTEM, DOC_TYPES } from "@/lib/ai/prompts";
 import { anthropicConfigured } from "@/lib/env";
+import { requireProjectWriter } from "@/lib/ai/project-permission";
 import { anonymousAiHeaders, enforceAnonymousAiLimit } from "@/lib/ai/anonymous-limit";
 import type { DocSection } from "@/lib/types";
 
@@ -33,6 +34,8 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const b = await loadBundle(supabase, projectId);
   if (!b) return Response.json({ error: "Project not found" }, { status: 404 });
+  const permission = await requireProjectWriter(supabase, projectId);
+  if (permission) return permission;
 
   // Filter the project's records by the user's selection. Empty selection = everything (within subsystem/date filters).
   const inDate = (d: string) => (!sel.dateFrom || d.slice(0, 10) >= sel.dateFrom) && (!sel.dateTo || d.slice(0, 10) <= sel.dateTo);

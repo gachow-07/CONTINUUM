@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Workspace } from "@/components/cad/workspace";
 import type { Knowledge } from "@/components/cad/panels";
 import { loadBundle } from "@/lib/bundle";
@@ -15,6 +15,9 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
   const { supabase, user } = await requireSession();
   const b = await loadBundle(supabase, id);
   if (!b) notFound();
+  // The standalone editor exposes editing tools throughout. Viewers can use
+  // the project overview's read-only 3D viewer instead.
+  if (!b.members.some((member) => member.user_id === user.id && (member.role === "owner" || member.role === "editor"))) redirect(`/projects/${id}?tab=overview`);
   const [parts, conv] = await Promise.all([loadModel(supabase, id), loadLatestConversation(supabase, id, user.id)]);
 
   const knowledge: Knowledge = {

@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/misc";
 import { act, uploadToProject } from "@/lib/client";
 import { createProject, createSampleProject, updateProject } from "@/app/actions/projects";
 import type { Project } from "@/lib/types";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 const CATEGORIES = ["Mechanical", "Mechanical / Vehicle", "Aerospace", "Electrical", "Robotics", "Embedded / Software", "Civil / Structural", "Biomedical", "Research", "General"];
 
@@ -134,6 +135,7 @@ export function LoadSampleButton({ variant = "outline" }: { variant?: "outline" 
 
 export function ProjectMenu({ project }: { project: Project }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [archive, setArchive] = useState(false);
@@ -145,11 +147,11 @@ export function ProjectMenu({ project }: { project: Project }) {
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-1.5 w-48 overflow-hidden rounded-lg border border-border bg-surface p-1 shadow-[var(--shadow-pop)]" role="menu">
             <Link role="menuitem" href={`/projects/${project.id}?tab=overview`} className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => setOpen(false)}><Box className="h-4 w-4 text-muted-foreground" />Open 3D model</Link>
-            <div className="my-1 h-px bg-border" />
+            {canWrite(project.id) && <><div className="my-1 h-px bg-border" />
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); setEdit(true); }}><Pencil className="h-4 w-4 text-muted-foreground" />Edit project</button>
             <button role="menuitem" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-[13px] hover:bg-muted" onClick={() => { setOpen(false); if (project.archived) act(updateProject(project.id, { archived: false }), "Project restored").then(() => router.refresh()); else setArchive(true); }}>
               {project.archived ? <ArchiveRestore className="h-4 w-4 text-muted-foreground" /> : <Archive className="h-4 w-4 text-muted-foreground" />}{project.archived ? "Restore project" : "Archive project"}
-            </button>
+            </button></>}
           </div>
         </>
       )}

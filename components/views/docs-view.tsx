@@ -18,6 +18,7 @@ import { deleteDocument, saveDocument } from "@/app/actions/knowledge";
 import { formatDate } from "@/lib/utils";
 import type { DocSection, GeneratedDoc } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 import { useOpenParam } from "./common";
 
 const STATUS = {
@@ -30,8 +31,10 @@ interface Draft { id: string | null; docType: string; title: string; sections: D
 
 export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projectId?: string; aiEnabled: boolean }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
+  const writableProjects = scope.projects.filter((p) => canWrite(p.id));
   const [open, setOpen] = useOpenParam();
-  const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
+  const [pid, setPid] = useState(projectId ?? writableProjects[0]?.id ?? "");
   const [docType, setDocType] = useState("one_pager");
   const [subIds, setSubIds] = useState<string[]>([]);
   const [from, setFrom] = useState("");
@@ -71,13 +74,13 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
 
   return (
     <div className="space-y-8">
-      {!draft && (
+      {!draft && (projectId ? canWrite(projectId) : writableProjects.length > 0) && (
         <Card>
           <CardHeader title="Generate documentation" description="Written by AI from the records you select — nothing else. Missing information is flagged, never filled in." />
           <div className="space-y-5 p-5">
             {!aiEnabled && <SetupNotice title="AI documentation needs an Anthropic key">Set <code>ANTHROPIC_API_KEY</code> in your environment and restart. Saved documents below stay available.</SetupNotice>}
             <div className="grid gap-4 sm:grid-cols-2">
-              {!projectId && <Field label="Project"><Select value={pid} onChange={(e) => { setPid(e.target.value); setSubIds([]); setPick({ decisions: [], research: [], revisions: [], reviews: [] }); }}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
+              {!projectId && <Field label="Project"><Select value={pid} onChange={(e) => { setPid(e.target.value); setSubIds([]); setPick({ decisions: [], research: [], revisions: [], reviews: [] }); }}>{writableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
               <Field label="Document type"><Select value={docType} onChange={(e) => setDocType(e.target.value)}>{Object.entries(DOC_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</Select></Field>
             </div>
             <p className="-mt-2 text-xs text-muted-foreground">Sections: {DOC_TYPES[docType].sections.map((s) => s.title).join(" · ")}</p>
@@ -112,7 +115,7 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
                 <p className="truncate text-[13px] font-medium hover:text-accent">{d.title}</p>
                 <p className="text-xs text-muted-foreground">{DOC_TYPES[d.doc_type]?.label ?? d.doc_type} · {scope.projects.find((p) => p.id === d.project_id)?.name} · updated {formatDate(d.updated_at)}</p>
               </button>
-              <Button variant="danger-ghost" size="icon" aria-label={`Delete ${d.title}`} onClick={() => setDel(d)}><Trash2 className="h-4 w-4" /></Button>
+              {canWrite(d.project_id) && <Button variant="danger-ghost" size="icon" aria-label={`Delete ${d.title}`} onClick={() => setDel(d)}><Trash2 className="h-4 w-4" /></Button>}
             </li>))}</ul></div>)}
       </section>
       <ConfirmDialog open={Boolean(del)} onOpenChange={(o) => !o && setDel(null)} title="Delete this document?" description="The saved document is permanently removed." onConfirm={async () => { if (!del) return; const r = await act(deleteDocument(del.id), "Document deleted"); if (r.ok) { if (draft?.id === del.id) setDraft(null); router.refresh(); } }} />
@@ -121,6 +124,8 @@ export function DocsView({ scope, projectId, aiEnabled }: { scope: Scope; projec
 }
 
 function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draft; setDraft: (d: Draft) => void; scope: Scope; aiEnabled: boolean; onClose: () => void }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(draft.projectId);
   const router = useRouter();
   const [editing, setEditing] = useState<string | null>(null);
   const [regen, setRegen] = useState<string | null>(null);
@@ -177,13 +182,13 @@ function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draf
     <Card>
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3">
         <div className="min-w-0 flex-1">
-          <Input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value, dirty: true })} aria-label="Document title" className="h-9 border-transparent px-0 text-[15px] font-semibold shadow-none hover:border-border focus:px-3" />
+          <Input readOnly={!editable} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value, dirty: true })} aria-label="Document title" className="h-9 border-transparent px-0 text-[15px] font-semibold shadow-none hover:border-border focus:px-3" />
           <p className="text-xs text-muted-foreground">{spec?.label} · {project?.name}{project?.is_sample && <span className="ml-1.5"><SampleBadge /></span>}</p>
         </div>
         <div className="flex items-center gap-2">
           {draft.dirty && <span className="text-xs text-warning">Unsaved changes</span>}
           <Button variant="outline" size="sm" onClick={exportPdf} loading={exporting}><Download className="h-3.5 w-3.5" />Export PDF</Button>
-          <Button variant="accent" size="sm" onClick={save} loading={saving}><Save className="h-3.5 w-3.5" />{draft.id ? "Save changes" : "Save to project"}</Button>
+          {editable && <Button variant="accent" size="sm" onClick={save} loading={saving}><Save className="h-3.5 w-3.5" />{draft.id ? "Save changes" : "Save to project"}</Button>}
           <Button variant="ghost" size="sm" onClick={onClose}>Close</Button>
         </div>
       </div>
@@ -198,10 +203,10 @@ function DocEditor({ draft, setDraft, scope, aiEnabled, onClose }: { draft: Draf
             <section key={s.key} className="px-5 py-5">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <h3 className="text-[15px] font-semibold">{s.title}</h3><Badge tone={st.tone}><Icon className="h-3 w-3" />{st.label}</Badge>
-                <div className="ml-auto flex gap-1">
+                {editable && <div className="ml-auto flex gap-1">
                   <Button variant="ghost" size="sm" onClick={() => setEditing(editing === s.key ? null : s.key)}><Pencil className="h-3.5 w-3.5" />{editing === s.key ? "Done" : "Edit"}</Button>
                   <Button variant="ghost" size="sm" disabled={!aiEnabled || regen !== null} onClick={() => regenerate(s.key)} title={aiEnabled ? undefined : "Anthropic key not configured"}>{regen === s.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}Regenerate</Button>
-                </div>
+                </div>}
               </div>
               {editing === s.key ? <Textarea value={s.content} onChange={(e) => update(s.key, { content: e.target.value })} className="min-h-[160px] font-mono text-xs" /> : <RenderContent text={s.content} />}
               {s.sources.length > 0 && (

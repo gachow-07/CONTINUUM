@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { FileRow } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
 import { validateGlb } from "@/lib/cad/validate-glb.mjs";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 
 const Scene = dynamic(() => import("./glb-scene"), { ssr: false, loading: () => <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading 3D viewer…</div> });
 const LIMIT = 50 * 1024 * 1024;
@@ -30,6 +31,8 @@ export type UploadedModel = { id: string; name: string; uploadedAt: string; link
 
 export function ProjectModel({ projectId, projectName = "", aiEnabled = false, model, models = [], components, modelLinks, aside }: { projectId: string; projectName?: string; aiEnabled?: boolean; model: FileRow | null; models?: UploadedModel[]; components: HubComponent[]; modelLinks: { part_key: string; subsystem_id: string }[]; aside?: React.ReactNode }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   const input = useRef<HTMLInputElement>(null);
   const partList = useRef<HTMLUListElement>(null);
   const partRows = useRef(new Map<string, HTMLLIElement>());
@@ -133,7 +136,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
     toast.success("Switched model. Its linked parts are back.");
     router.refresh();
   }
-  const switcher = (variant: "glass" | "plain") => models.length > (model ? 1 : 0) && <label className={cn("flex items-center gap-2 text-xs", variant === "glass" ? "mt-3 text-[#6c7178]" : "text-muted-foreground")}>
+  const switcher = (variant: "glass" | "plain") => editable && models.length > (model ? 1 : 0) && <label className={cn("flex items-center gap-2 text-xs", variant === "glass" ? "mt-3 text-[#6c7178]" : "text-muted-foreground")}>
     {model ? "Model" : "Use an earlier upload"}
     <select aria-label="Choose which uploaded model to show" disabled={busy} value={model?.id ?? ""} onChange={(e) => void switchModel(e.target.value)}
       className={cn("h-8 min-w-0 max-w-[220px] flex-1 truncate rounded-lg border px-2 text-xs", variant === "glass" ? "border-white/[0.08] bg-[#101113]/80 text-[#f2f4f5]" : "border-border bg-surface text-foreground")}>
@@ -145,7 +148,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
   if (!model) return <div className="space-y-3">
     <div className="flex flex-wrap items-center gap-2">
       {uploadInput}
-      <Button variant="outline" size="sm" loading={busy} onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Upload GLB model</Button>
+      {editable && <Button variant="outline" size="sm" loading={busy} onClick={() => input.current?.click()}><Upload className="h-4 w-4" />Upload GLB model</Button>}
       <span className="text-xs text-muted-foreground">Self-contained .glb · up to 50 MB</span>
       {switcher("plain")}
     </div>
@@ -173,7 +176,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {uploadInput}
-        <GlassButton disabled={busy} onClick={() => input.current?.click()}><Upload className="h-3.5 w-3.5" />{busy ? "Working…" : "Replace model"}</GlassButton>
+        {editable && <GlassButton disabled={busy} onClick={() => input.current?.click()}><Upload className="h-3.5 w-3.5" />{busy ? "Working…" : "Replace model"}</GlassButton>}
       </div>
       {switcher("glass")}
       {error && <p role="alert" className="mt-3 max-w-xs rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
@@ -206,7 +209,7 @@ export function ProjectModel({ projectId, projectName = "", aiEnabled = false, m
         <ul ref={partList} className="scroll-thin mt-1.5 max-h-40 overflow-y-auto pb-32">{shownParts.map((part) => <li key={part.key} ref={(node) => { if (node) partRows.current.set(part.key, node); else partRows.current.delete(part.key); }}><button type="button" data-part-key={part.key} tabIndex={partsOpen ? 0 : -1} onClick={() => { setSelected(selected === part.key ? null : part.key); setComponentFilter(null); }} aria-pressed={selected === part.key}
           className={cn("flex w-full items-center gap-2 truncate rounded-md px-2 py-1.5 text-left font-mono text-[11.5px] transition-colors", selected === part.key ? "bg-[#22d3ee]/10 text-[#8be9f7]" : "text-[#6c7178] hover:bg-white/[0.04] hover:text-[#a9adb3]")}><span className="h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />{part.name}</button></li>)}</ul>
         {chosenPart && <div className="mt-2 space-y-1.5 border-t border-white/[0.07] pt-2.5"><p className="text-[11px] text-[#6c7178]">Selected part</p><p className="break-words text-[13px] font-semibold">{chosenPart.name}</p>
-          <label className="block text-[11px] text-[#6c7178]">Link to a component<select ref={linkSelect} aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          {editable && <label className="block text-[11px] text-[#6c7178]">Link to a component<select ref={linkSelect} aria-label="Link selected part to component" disabled={linkBusy} value={selectedLink?.subsystem_id ?? ""} onChange={(e) => void assign(e.target.value)} className="mt-1 h-8 w-full rounded-lg border border-white/[0.08] bg-[#101113] px-2 text-xs text-[#f2f4f5]"><option value="">Not linked</option>{components.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
           {chosenComponent && <Link className="inline-flex items-center gap-1 text-xs font-medium text-[#8be9f7] hover:underline" href={chosenComponent.href}>Open {chosenComponent.name} <ArrowRight className="h-3 w-3" /></Link>}</div>}
       </div></div>
     </aside> : null}
@@ -450,16 +453,18 @@ function PartAddMenu({ projectId, partName, component, components, onAssign, onC
 
 /** The card for the part selected on the model: its name, its component, Ask AI and "+" to add details. */
 export function SelectedPartCard({ projectId, projectName, aiEnabled, part, component, components, onLink, onAssign, onCreate }: { projectId: string; projectName: string; aiEnabled: boolean; part: ImportedPart; component?: HubComponent; components: HubComponent[]; onLink: () => void; onAssign: (componentId: string) => Promise<void>; onCreate: (name: string) => Promise<boolean> }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(projectId);
   return <div data-part-card className="mb-3 rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/10 p-3 text-xs" aria-live="polite">
     <div className="flex items-center justify-between gap-2"><p className="text-[#a9adb3]">Selected part</p>
-      <div className="flex items-center gap-1.5"><PartAddMenu projectId={projectId} partName={part.name} component={component} components={components} onAssign={onAssign} onCreate={onCreate} /><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={part.name} componentName={component?.name} /></div></div>
+      {editable && <div className="flex items-center gap-1.5"><PartAddMenu projectId={projectId} partName={part.name} component={component} components={components} onAssign={onAssign} onCreate={onCreate} /><PartAskAi projectId={projectId} projectName={projectName} aiEnabled={aiEnabled} partName={part.name} componentName={component?.name} /></div>}</div>
     <p className="mt-1 break-words text-sm font-semibold text-[#f2f4f5]">{part.name}</p>
     {component ? <>
       <p className="mt-1 text-[#a9adb3]">Component: {component.name}</p>
       <Link className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline" href={`${component.href}?part=${encodeURIComponent(part.key)}`}>Open component details <ArrowRight className="h-3 w-3" /></Link>
     </> : <>
       <p className="mt-1 text-[#a9adb3]">Not linked to a component yet.</p>
-      <button type="button" onClick={onLink} className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline">Component empty <ArrowRight className="h-3 w-3" /></button>
+      {editable && <button type="button" onClick={onLink} className="mt-2 inline-flex items-center gap-1 font-medium text-[#8be9f7] hover:underline">Component empty <ArrowRight className="h-3 w-3" /></button>}
     </>}
   </div>;
 }

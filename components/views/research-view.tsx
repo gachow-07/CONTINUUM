@@ -14,12 +14,15 @@ import { createResearch, deleteResearch, linkResearchToDecision, unlinkEvidence,
 import { formatDate } from "@/lib/utils";
 import type { Research, ResearchType } from "@/lib/types";
 import type { Scope } from "@/lib/scope";
+import { useProjectPermissions } from "@/components/shell/project-permissions";
 import { FilterSelect, NotDocumented, RefChip, SearchBox, Section, SubsystemTag, TagList, useOpenParam } from "./common";
 import { RESEARCH_TYPE } from "./meta";
 
 const TYPE_ICON: Record<ResearchType, React.ComponentType<{ className?: string }>> = { url: ExternalLink, pdf: FileText, paper: BookOpen, article: BookOpen, image: FileText, note: StickyNote };
 
 export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { scope: Scope; projectId?: string; subsystemId?: string; aiEnabled: boolean }) {
+  const { canWrite } = useProjectPermissions();
+  const mayAdd = projectId ? canWrite(projectId) : scope.projects.some((p) => canWrite(p.id));
   const [open, setOpen] = useOpenParam();
   const [adding, setAdding] = useState(false);
   const [q, setQ] = useState("");
@@ -49,7 +52,7 @@ export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { sco
         {!projectId && <FilterSelect value={project} onChange={(v) => { setProject(v); setSub(""); setTag(""); }} label="All projects" options={scope.projects.map((p) => ({ value: p.id, label: p.name }))} />}
         {!subsystemId && <FilterSelect value={sub} onChange={setSub} label="All subsystems" options={subsystems.map((s) => ({ value: s.id, label: s.name }))} />}
         <FilterSelect value={type} onChange={setType} label="All types" options={Object.entries(RESEARCH_TYPE).map(([v, l]) => ({ value: v, label: l }))} />
-        <Button variant="accent" onClick={() => setAdding(true)} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add research</Button>
+        {mayAdd && <Button variant="accent" onClick={() => setAdding(true)} disabled={scope.projects.length === 0}><Plus className="h-4 w-4" />Add research</Button>}
       </div>
       {allTags.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-1.5">
@@ -62,7 +65,7 @@ export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { sco
       {rows.length === 0 ? (
         <EmptyState icon={<BookOpen className="h-5 w-5" />} title={scope.research.length ? "No research matches your filters" : "No research saved yet"}
           description={scope.research.length ? "Try clearing a filter or searching for something else." : "Save links, PDFs and notes — with why they matter — so the reasoning behind your design never gets lost."}
-          action={scope.research.length === 0 && scope.projects.length > 0 && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add research</Button>} />
+          action={mayAdd && scope.research.length === 0 && <Button variant="accent" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />Add research</Button>} />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-card">
           <ul className="divide-y divide-border">
@@ -101,6 +104,8 @@ export function ResearchView({ scope, projectId, subsystemId, aiEnabled }: { sco
 }
 
 function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: Scope; aiEnabled: boolean; onClose: () => void }) {
+  const { canWrite } = useProjectPermissions();
+  const editable = canWrite(r.project_id);
   const router = useRouter();
   const [del, setDel] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -125,13 +130,13 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
 
   return (
     <DrawerContent title={r.title} description={`${RESEARCH_TYPE[r.type]} · saved ${formatDate(r.created_at)}${r.site_name ? ` · ${r.site_name}` : ""}`}
-      actions={<Button variant="danger-ghost" size="icon" aria-label="Delete research" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
+      actions={editable && <Button variant="danger-ghost" size="icon" aria-label="Delete research" onClick={() => setDel(true)}><Trash2 className="h-4 w-4" /></Button>}>
       <div className="mb-4 flex flex-wrap gap-1.5">{r.is_sample && <SampleBadge />}<SubsystemTag id={r.subsystem_id} subsystems={scope.subsystems} /><TagList tags={r.tags} /></div>
       {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" className="mb-5 inline-flex items-center gap-1.5 break-all text-[13px] font-medium text-accent hover:underline"><ExternalLink className="h-3.5 w-3.5 shrink-0" />{r.url}</a>}
       {r.file_path && <a href={fileUrl(r.file_path)} target="_blank" className="mb-5 flex items-center gap-1.5 text-[13px] font-medium text-accent hover:underline"><FileText className="h-3.5 w-3.5" />Open original file</a>}
-      <Section title="Why this matters" action={<button className="text-xs text-accent hover:underline" onClick={() => setEdit(true)}>Edit</button>}>{r.why_important || <NotDocumented>The author hasn&apos;t said why this source matters</NotDocumented>}</Section>
+      <Section title="Why this matters" action={editable && <button className="text-xs text-accent hover:underline" onClick={() => setEdit(true)}>Edit</button>}>{r.why_important || <NotDocumented>The author hasn&apos;t said why this source matters</NotDocumented>}</Section>
       {r.description && <Section title="Description"><p className="whitespace-pre-wrap">{r.description}</p></Section>}
-      <Section title="AI summary" action={aiEnabled && (r.content_text || r.description) ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{r.ai_summary ? "Regenerate" : "Summarize"}</button> : undefined}>
+      <Section title="AI summary" action={editable && aiEnabled && (r.content_text || r.description) ? <button disabled={busy} onClick={summarize} className="ai-gradient inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}{r.ai_summary ? "Regenerate" : "Summarize"}</button> : undefined}>
         {r.ai_summary ? <p className="rounded-md bg-accent-soft/50 p-3">{r.ai_summary}</p> : aiEnabled ? <span className="text-muted-foreground">Not generated yet.{!r.content_text && !r.description && " There is no text to summarize."}</span> : <SetupNotice title="AI not configured">Add ANTHROPIC_API_KEY to enable summaries.</SetupNotice>}
       </Section>
       {r.content_text && (
@@ -145,10 +150,10 @@ function ResearchDrawer({ r, scope, aiEnabled, onClose }: { r: Research; scope: 
           <ul className="space-y-2">{links.map((l) => { const d = scope.decisions.find((x) => x.id === l.decision_id); return d ? (
             <li key={l.id} className="rounded-md border border-border p-2.5">
               <div className="flex items-start justify-between gap-2"><RefChip projectId={r.project_id} type="decision" id={d.id} label={d.title} onNavigate={onClose} />
-                <button aria-label="Unlink" className="text-xs text-muted-foreground hover:text-danger" onClick={async () => { const x = await act(unlinkEvidence(l.id), "Unlinked"); if (x.ok) router.refresh(); }}>Unlink</button></div>
+                {editable && <button aria-label="Unlink" className="text-xs text-muted-foreground hover:text-danger" onClick={async () => { const x = await act(unlinkEvidence(l.id), "Unlinked"); if (x.ok) router.refresh(); }}>Unlink</button>}</div>
               {l.note && <p className="mt-1.5 text-xs text-muted-foreground">“{l.note}”</p>}
             </li>) : null; })}</ul>)}
-        {linkable.length > 0 && (
+        {editable && linkable.length > 0 && (
           <div className="mt-3 space-y-2 rounded-md bg-muted/50 p-3">
             <Select value={decisionId} onChange={(e) => setDecisionId(e.target.value)} aria-label="Decision to connect"><option value="">Connect to a design decision…</option>{linkable.map((d) => <option key={d.id} value={d.id}>{d.title}</option>)}</Select>
             {decisionId && <>
@@ -198,8 +203,10 @@ type Mode = "url" | "pdf" | "note" | "image";
 
 export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { scope: Scope; projectId?: string; subsystemId?: string; onClose: () => void }) {
   const router = useRouter();
+  const { canWrite } = useProjectPermissions();
+  const writableProjects = scope.projects.filter((p) => canWrite(p.id));
   const [mode, setMode] = useState<Mode>("note");
-  const [pid, setPid] = useState(projectId ?? scope.projects[0]?.id ?? "");
+  const [pid, setPid] = useState(projectId ?? writableProjects[0]?.id ?? "");
   const [url, setUrl] = useState("");
   const [meta, setMeta] = useState({ title: "", site_name: "", description: "" });
   const [kind, setKind] = useState<"url" | "article" | "paper">("url");
@@ -285,7 +292,7 @@ export function AddResearchDialog({ scope, projectId, subsystemId, onClose }: { 
             <Field label="Note" required><Textarea value={noteText} onChange={(e) => setNoteText(e.target.value)} className="min-h-[120px]" placeholder="What did you learn or observe?" /></Field>
           </>)}
           <div className="grid gap-4 sm:grid-cols-2">
-            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => setPid(e.target.value)}>{scope.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
+            {!projectId && <Field label="Project" required><Select value={pid} onChange={(e) => setPid(e.target.value)}>{writableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>}
             <Field label="Subsystem"><Select name="sub" defaultValue={subsystemId ?? ""} key={pid}><option value="">None</option>{subs.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></Field>
           </div>
           <Field label="Tags" hint="Comma-separated, e.g. suspension, roll, geometry"><Input name="tags" /></Field>
