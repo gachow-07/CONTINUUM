@@ -78,6 +78,9 @@ test('actual project and storage policies isolate unshared users', async () => {
     await db.query('insert into review_comments(project_id,review_id,body) values($1,$2,$3)', [pb,review,'Editor comment']);
     assert.equal((await db.query('update reviews set status=$1 where id=$2 returning id',['in_review',review])).rows.length,1,'editor can update review');
     await assert.rejects(db.query('select public.send_project_invitation($1,$2,$3)',[pb,'shared@example.com','viewer']), /Only the project owner/);
+    await assert.rejects(db.query('update projects set owner_id=$1 where id=$2',[editor,pb]), /owner|ownership|permission/i, 'editor cannot take ownership');
+    await assert.rejects(db.query('update projects set org_id=$1 where id=$2',[pa,pb]), /permission/i, 'editor cannot move a project between organizations');
+    assert.equal((await db.query('update projects set description=$1 where id=$2 returning id',['Editor changes',pb])).rows.length,1,'editor can update project content');
     await as(shared);
     assert.equal((await db.query('select * from projects where id=$1',[pb])).rows.length,1,'explicitly shared viewer can read');
     assert.equal((await db.query('select * from storage.objects where name=$1',[`${pb}/b.glb`])).rows.length,1,'shared viewer can read file');
