@@ -33,7 +33,9 @@ export async function POST(req: Request) {
   let conversationId = parsed.data.conversationId ?? null;
   let history: { role: "user" | "assistant"; content: string }[] = [];
   if (conversationId) {
-    const { data } = await supabase.from("ai_messages").select("role,content").eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(12);
+    const { data: conversation, error } = await supabase.from("ai_conversations").select("id").eq("id", conversationId).eq("project_id", projectId).eq("user_id", auth.user.id).maybeSingle();
+    if (error || !conversation) return Response.json({ error: "Conversation not found for this project." }, { status: 404 });
+    const { data } = await supabase.from("ai_messages").select("role,content").eq("project_id", projectId).eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(12);
     history = (data ?? []) as typeof history;
   }
 
